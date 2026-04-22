@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  USER
+  ADMIN
+}
+
+enum EstadoCaja {
+  DISPONIBLE
+  RESERVADA
+  VENDIDA
+}
+
+enum EstadoSorteo {
+  PENDIENTE
+  EN_CURSO
+  FINALIZADO
+}
+
+enum CategoriaPremio {
+  CUATRO_CIFRAS
+  TRES_CIFRAS
+  DOS_CIFRAS
+  UNA_CIFRA
+}
+
+enum EstadoRetiro {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  PAGADO
+}
+
+enum TipoTransaccion {
+  COMPRA
+  PREMIO
+  RETIRO
+  RECARGA
+}
+
+model User {
+  id              String        @id @default(cuid())
+  nombre          String
+  apellido        String
+  documento       String        @unique
+  correo          String        @unique
+  celular         String
+  ciudad          String
+  departamento    String
+  cuentaBancaria  String?
+  banco           String?
+  tipoCuenta      String?
+  avatar          String?
+  password        String
+  rol             Rol           @default(USER)
+  saldoPuntos     Float         @default(0)
+  activo          Boolean       @default(true)
+  confirmado      Boolean       @default(false)
+  fechaRegistro   DateTime      @default(now())
+
+  cajas           Caja[]
+  transacciones   Transaccion[]
+  premios         Premio[]
+  retiros         Retiro[]
+
+  @@map("users")
+}
+
+model Caja {
+  id          String     @id @default(cuid())
+  numero      String     @unique
+  estado      EstadoCaja @default(DISPONIBLE)
+  userId      String?
+  fechaCompra DateTime?
+  idCompra    String?
+
+  user        User?      @relation(fields: [userId], references: [id])
+
+  @@map("cajas")
+}
+
+model Transaccion {
+  id          String          @id @default(cuid())
+  userId      String
+  tipo        TipoTransaccion
+  monto       Float
+  descripcion String
+  fecha       DateTime        @default(now())
+  referencia  String?
+
+  user        User            @relation(fields: [userId], references: [id])
+
+  @@map("transacciones")
+}
+
+model Sorteo {
+  id            String       @id @default(cuid())
+  fecha         DateTime
+  numeroGanador String?
+  estado        EstadoSorteo @default(PENDIENTE)
+  totalVendidas Int          @default(0)
+  totalRecaudo  Float        @default(0)
+  ganancia      Float        @default(0)
+  fondoPremios  Float        @default(0)
+  configuracion Json?
+
+  premios       Premio[]
+
+  @@map("sorteos")
+}
+
+model Premio {
+  id        String          @id @default(cuid())
+  sorteoId  String
+  userId    String
+  categoria CategoriaPremio
+  monto     Float
+  pagado    Boolean         @default(false)
+
+  sorteo    Sorteo          @relation(fields: [sorteoId], references: [id])
+  user      User            @relation(fields: [userId], references: [id])
+
+  @@map("premios")
+}
+
+model Retiro {
+  id             String       @id @default(cuid())
+  userId         String
+  monto          Float
+  estado         EstadoRetiro @default(PENDIENTE)
+  cuentaDestino  String
+  fecha          DateTime     @default(now())
+
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@map("retiros")
+}
+
+model Config {
+  id             String    @id @default("singleton")
+  precioCaja     Float     @default(10000)
+  margenGanancia Float     @default(0.40)
+  pct4Cifras     Float     @default(0.35)
+  pct3Cifras     Float     @default(0.15)
+  pct2Cifras     Float     @default(0.10)
+  fechaSorteo    DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  @@map("config")
+}

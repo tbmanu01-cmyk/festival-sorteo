@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  --azul: #1B4F8A;
+  --dorado: #F5A623;
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+}
+
+/* Animación shimmer para skeleton loaders */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f8fafc 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
