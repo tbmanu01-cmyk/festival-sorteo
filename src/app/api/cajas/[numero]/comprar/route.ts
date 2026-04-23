@@ -70,6 +70,35 @@ export async function POST(
       })
       .catch(() => undefined);
 
+    // Referidos: marcar compra y emitir cupones si corresponde — fire and forget
+    Promise.resolve().then(async () => {
+      type RefRow = { id: string; referidorId: string; compro: boolean };
+      const [ref] = await prisma.$queryRaw<RefRow[]>`
+        SELECT id, "referidorId", compro FROM referidos WHERE "referidoId" = ${userId} LIMIT 1
+      `;
+      if (!ref || ref.compro) return;
+
+      // ¿Es la primera compra del referido?
+      const cajasCount = await prisma.caja.count({ where: { userId, estado: "VENDIDA" } });
+      if (cajasCount !== 1) return; // solo en la primera compra
+
+      await prisma.$executeRaw`UPDATE referidos SET compro = true WHERE id = ${ref.id}`;
+
+      // Contar referidos comprados del referidor
+      const [{ total }] = await prisma.$queryRaw<{ total: bigint }[]>`
+        SELECT COUNT(*) AS total FROM referidos WHERE "referidorId" = ${ref.referidorId} AND compro = true
+      `;
+      const totalNum = Number(total);
+      if (totalNum > 0 && totalNum % 5 === 0) {
+        const cuponId = crypto.randomUUID();
+        const cuponCodigo = `LIBRE-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+        await prisma.$executeRaw`
+          INSERT INTO cupones (id, "usuarioId", codigo, usado, "fechaCreacion")
+          VALUES (${cuponId}, ${ref.referidorId}, ${cuponCodigo}, false, NOW())
+        `;
+      }
+    }).catch((err) => console.error("Referidos post-compra error:", err));
+
     return NextResponse.json({
       mensaje: `¡Caja ${numero} comprada exitosamente!`,
       caja: cajaActualizada,

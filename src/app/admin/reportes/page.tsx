@@ -102,11 +102,11 @@ function abrirPDF(titulo: string, subtitulo: string, tablaHTML: string) {
 </style>
 </head>
 <body>
-<div class="logo">🎁 Festival Sorteo Escolar</div>
+<div class="logo">🎁 Cajas Sorpresa 10K</div>
 <div class="sub">${subtitulo}</div>
 <h1>${titulo}</h1>
 ${tablaHTML}
-<div class="footer">Generado el ${new Date().toLocaleString("es-CO")} · Festival Sorteo Escolar</div>
+<div class="footer">Generado el ${new Date().toLocaleString("es-CO")} · Cajas Sorpresa 10K</div>
 <br>
 <button class="btn" onclick="window.print()">Imprimir / Guardar como PDF</button>
 </body></html>`);
@@ -252,7 +252,7 @@ function ReporteSorteo() {
         <tr><td style="padding:7px 16px;">Total vendidas</td><td style="padding:7px 16px;">${s.totalVendidas}</td></tr>
         <tr><td style="padding:7px 16px;">Total recaudo</td><td style="padding:7px 16px;color:green;font-weight:700;">$${s.totalRecaudo.toLocaleString("es-CO")}</td></tr>
         <tr><td style="padding:7px 16px;">Fondo de premios</td><td style="padding:7px 16px;">$${s.fondoPremios.toLocaleString("es-CO")}</td></tr>
-        <tr><td style="padding:7px 16px;">Ganancia festival</td><td style="padding:7px 16px;font-weight:700;">$${s.ganancia.toLocaleString("es-CO")}</td></tr>
+        <tr><td style="padding:7px 16px;">Ganancia operación</td><td style="padding:7px 16px;font-weight:700;">$${s.ganancia.toLocaleString("es-CO")}</td></tr>
       </table>
       <h2 style="color:#1B4F8A;">Ganadores</h2>
       <table><thead><tr><th>Categoría</th><th>Nombre</th><th>Correo</th><th>Premio</th></tr></thead>
@@ -285,7 +285,7 @@ function ReporteSorteo() {
           { label: "Número ganador", valor: s.numeroGanador ?? "—", grande: true, color: "text-[#1B4F8A]" },
           { label: "Total recaudo", valor: `$${s.totalRecaudo.toLocaleString("es-CO")}`, color: "text-green-600" },
           { label: "Fondo premios", valor: `$${s.fondoPremios.toLocaleString("es-CO")}`, color: "text-[#F5A623]" },
-          { label: "Ganancia festival", valor: `$${s.ganancia.toLocaleString("es-CO")}`, color: "text-purple-600" },
+          { label: "Ganancia operación", valor: `$${s.ganancia.toLocaleString("es-CO")}`, color: "text-purple-600" },
           { label: "Cajas vendidas", valor: String(s.totalVendidas), color: "text-gray-700" },
           { label: "Total ganadores", valor: String(s.premios.length), color: "text-gray-700" },
         ].map((c) => (
@@ -492,7 +492,7 @@ export default function PaginaReportes() {
           {/* Encabezado */}
           <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] rounded-2xl p-6 text-white mb-6">
             <h1 className="text-2xl font-extrabold mb-0.5">Reportes</h1>
-            <p className="text-blue-200 text-sm">Consulta, filtra y exporta datos del festival</p>
+            <p className="text-blue-200 text-sm">Consulta, filtra y exporta datos del sorteo</p>
           </div>
 
           {/* Tabs */}

@@ -20,7 +20,7 @@ export async function GET() {
     data: { estado: "DISPONIBLE", userId: null, fechaCompra: null, idCompra: null },
   });
 
-  const [reservadas, vendidas, premios, retiros, usuario] = await Promise.all([
+  const [reservadas, vendidas, premios, retiros, usuario, todasAnticipadas] = await Promise.all([
     prisma.caja.findMany({
       where: { userId, estado: "RESERVADA" },
       select: { numero: true, fechaCompra: true },
@@ -45,6 +45,10 @@ export async function GET() {
       where: { id: userId },
       select: { nombre: true, saldoPuntos: true, banco: true, tipoCuenta: true, cuentaBancaria: true },
     }),
+    prisma.sorteoAnticipado.findMany({
+      where: { estado: "EJECUTADO" },
+      select: { id: true, nombre: true, premioDescripcion: true, premioValor: true, fecha: true, ganadores: true },
+    }).catch(() => [] as never[]),
   ]);
 
   const expiraMs = MINUTOS_RESERVA * 60 * 1000;
@@ -54,6 +58,25 @@ export async function GET() {
       ? new Date(r.fechaCompra.getTime() + expiraMs).toISOString()
       : null,
   }));
+
+  type GanadorJSON = { userId: string; nombre: string; apellido: string; correo: string; numeroCaja: string };
+  const anticipadasGanadas = todasAnticipadas
+    .filter((a) => {
+      const gs = a.ganadores as GanadorJSON[] | null;
+      return Array.isArray(gs) && gs.some((g) => g.userId === userId);
+    })
+    .map((a) => {
+      const gs = a.ganadores as GanadorJSON[];
+      const miGanador = gs.find((g) => g.userId === userId);
+      return {
+        id: a.id,
+        nombre: a.nombre,
+        premioDescripcion: a.premioDescripcion,
+        premioValor: a.premioValor,
+        fecha: a.fecha,
+        numeroCaja: miGanador?.numeroCaja ?? null,
+      };
+    });
 
   return NextResponse.json({
     reservadas: reservadasConExpiry,
@@ -65,5 +88,6 @@ export async function GET() {
     banco: usuario?.banco ?? null,
     tipoCuenta: usuario?.tipoCuenta ?? null,
     cuentaBancaria: usuario?.cuentaBancaria ?? null,
+    anticipadasGanadas,
   });
 }

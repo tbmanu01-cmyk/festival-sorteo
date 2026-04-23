@@ -13,7 +13,7 @@ function crearTransporter() {
 }
 
 const FROM =
-  process.env.EMAIL_FROM ?? `"Festival Sorteo" <${process.env.EMAIL_USER ?? "no-reply@festival.com"}>`;
+  process.env.EMAIL_FROM ?? `"Cajas Sorpresa 10K" <${process.env.EMAIL_USER ?? "no-reply@festival.com"}>`;
 
 function base(cuerpo: string, colorCabecera = "#1B4F8A") {
   return `<!DOCTYPE html>
@@ -22,7 +22,7 @@ function base(cuerpo: string, colorCabecera = "#1B4F8A") {
 <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;margin:24px auto;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
   <tr><td style="background:${colorCabecera};padding:28px 32px;">
-    <p style="margin:0;color:#F5A623;font-size:22px;font-weight:900;letter-spacing:1px;">🎁 Festival Sorteo Escolar</p>
+    <p style="margin:0;color:#F5A623;font-size:22px;font-weight:900;letter-spacing:1px;">🎁 Cajas Sorpresa 10K</p>
   </td></tr>
   <tr><td style="background:#ffffff;padding:32px;">
     ${cuerpo}
@@ -68,7 +68,7 @@ export async function enviarComprobante(opts: {
   await crearTransporter().sendMail({
     from: FROM,
     to: correo,
-    subject: `¡Compra exitosa! Caja #${numeroCaja} — Festival Sorteo`,
+    subject: `¡Compra exitosa! Caja #${numeroCaja} — Cajas Sorpresa 10K`,
     html: base(cuerpo),
   });
 }
@@ -105,7 +105,7 @@ export async function enviarPremio(opts: {
   await crearTransporter().sendMail({
     from: FROM,
     to: correo,
-    subject: `¡Ganaste $${monto.toLocaleString("es-CO")} en el Festival Sorteo! 🏆`,
+    subject: `¡Ganaste $${monto.toLocaleString("es-CO")} en Cajas Sorpresa 10K! 🏆`,
     html: base(cuerpo, "#1B4F8A"),
   });
 }
@@ -128,13 +128,43 @@ export async function enviarRetiroAprobado(opts: {
     </table>
     <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
       El pago será efectuado en las próximas <strong>24–48 horas hábiles</strong>.
-      Si tienes dudas, contacta al administrador del festival.
+      Si tienes dudas, contacta al administrador.
     </p>`;
   await crearTransporter().sendMail({
     from: FROM,
     to: correo,
-    subject: "Tu retiro fue aprobado — Festival Sorteo",
+    subject: "Tu retiro fue aprobado — Cajas Sorpresa 10K",
     html: base(cuerpo, "#16a34a"),
+  });
+}
+
+// ── Premio selección anticipada ───────────────────────────────────────────
+
+export async function enviarPremioAnticipado(opts: {
+  correo: string;
+  nombre: string;
+  nombreEvento: string;
+  premioDescripcion: string;
+  numeroCaja: string;
+}) {
+  const { correo, nombre, nombreEvento, premioDescripcion, numeroCaja } = opts;
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">¡Ganaste en una selección anticipada! 🎉</h2>
+    <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, ¡felicitaciones!</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;">
+      ${fila("Evento", `<strong>${nombreEvento}</strong>`)}
+      ${fila("Tu número de caja ganador", `<span style="font-size:24px;font-weight:900;color:#1B4F8A;">#${numeroCaja}</span>`)}
+      ${fila("Premio", `<span style="font-size:20px;font-weight:900;color:#F5A623;">${premioDescripcion}</span>`)}
+    </table>
+    <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
+      El administrador se pondrá en contacto contigo para coordinar la entrega del premio.
+      ¡Mucha suerte en el sorteo principal también! 🍀
+    </p>`;
+  await crearTransporter().sendMail({
+    from: FROM,
+    to: correo,
+    subject: `¡Ganaste en ${nombreEvento} — Cajas Sorpresa 10K! 🎉`,
+    html: base(cuerpo, "#1B4F8A"),
   });
 }
 
@@ -159,7 +189,7 @@ export async function enviarRetiroRechazado(opts: {
   await crearTransporter().sendMail({
     from: FROM,
     to: correo,
-    subject: "Solicitud de retiro rechazada — Festival Sorteo",
+    subject: "Solicitud de retiro rechazada — Cajas Sorpresa 10K",
     html: base(cuerpo, "#dc2626"),
   });
 }

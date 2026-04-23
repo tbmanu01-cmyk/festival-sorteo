@@ -9,10 +9,10 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Festival Sorteo 10000 | Cajas Sorpresa",
+  title: "Cajas Sorpresa | 10,000 números",
   description:
-    "Participa en el sorteo de cajas sorpresa del festival escolar. Elige tu número del 0000 al 9999 y gana increíbles premios.",
-  keywords: "sorteo, festival, cajas sorpresa, lotería escolar, Colombia",
+    "Elige tu número del 0000 al 9999 y gana increíbles premios en Cajas Sorpresa 10K.",
+  keywords: "cajas sorpresa, selección de cajas, Colombia, sorteo",
 };
 
 export default function RootLayout({

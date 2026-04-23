@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import RuletaSorteo from "@/components/RuletaSorteo";
 import Link from "next/link";
 
 type Categoria = "CUATRO_CIFRAS" | "TRES_CIFRAS" | "DOS_CIFRAS" | "UNA_CIFRA";
@@ -39,24 +40,26 @@ interface Resumen {
 
 const CATEGORIA_LABELS: Record<Categoria, string> = {
   CUATRO_CIFRAS: "4 cifras exactas",
-  TRES_CIFRAS: "3 últimas cifras",
-  DOS_CIFRAS: "2 últimas cifras",
-  UNA_CIFRA: "1 última cifra",
+  TRES_CIFRAS:   "3 últimas cifras",
+  DOS_CIFRAS:    "2 últimas cifras",
+  UNA_CIFRA:     "1 última cifra",
 };
 
 const CATEGORIA_COLORES: Record<Categoria, string> = {
   CUATRO_CIFRAS: "bg-yellow-50 border-yellow-300 text-yellow-800",
-  TRES_CIFRAS: "bg-gray-50 border-gray-300 text-gray-700",
-  DOS_CIFRAS: "bg-amber-50 border-amber-300 text-amber-800",
-  UNA_CIFRA: "bg-blue-50 border-blue-300 text-blue-800",
+  TRES_CIFRAS:   "bg-gray-50 border-gray-300 text-gray-700",
+  DOS_CIFRAS:    "bg-amber-50 border-amber-300 text-amber-800",
+  UNA_CIFRA:     "bg-blue-50 border-blue-300 text-blue-800",
 };
 
 const CATEGORIA_ICONOS: Record<Categoria, string> = {
   CUATRO_CIFRAS: "🏆",
-  TRES_CIFRAS: "🥈",
-  DOS_CIFRAS: "🥉",
-  UNA_CIFRA: "🎁",
+  TRES_CIFRAS:   "🥈",
+  DOS_CIFRAS:    "🥉",
+  UNA_CIFRA:     "🎁",
 };
+
+// ── Grupo de ganadores ─────────────────────────────────────────────────────
 
 function GrupoGanadores({ categoria, premios }: { categoria: Categoria; premios: Premio[] }) {
   const [expandido, setExpandido] = useState(categoria === "CUATRO_CIFRAS");
@@ -111,18 +114,27 @@ function GrupoGanadores({ categoria, premios }: { categoria: Categoria; premios:
   );
 }
 
+// ── Página principal ───────────────────────────────────────────────────────
+
 export default function AdminSorteo() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   const [sorteoExistente, setSorteoExistente] = useState<SorteoData | null>(null);
-  const [resumen, setResumen] = useState<Resumen | null>(null);
-  const [modo, setModo] = useState<"auto" | "manual">("auto");
-  const [numeroManual, setNumeroManual] = useState("");
-  const [ejecutando, setEjecutando] = useState(false);
-  const [reiniciando, setReiniciando] = useState(false);
-  const [error, setError] = useState("");
-  const [cargandoSorteo, setCargandoSorteo] = useState(true);
+  const [resumen,         setResumen]         = useState<Resumen | null>(null);
+  const [modo,            setModo]            = useState<"auto" | "manual">("auto");
+  const [numeroManual,    setNumeroManual]     = useState("");
+  const [ejecutando,      setEjecutando]      = useState(false);
+  const [reiniciando,     setReiniciando]     = useState(false);
+  const [error,           setError]           = useState("");
+  const [cargandoSorteo,  setCargandoSorteo]  = useState(true);
+
+  // Estado de la animación
+  const [overlayActivo,   setOverlayActivo]   = useState(false);
+  const [numAnimacion,    setNumAnimacion]     = useState("0000");
+  const [animTerminada,   setAnimTerminada]    = useState(false);
+  const [modoDemo,        setModoDemo]        = useState(false);
+  const [pendienteJSON,   setPendienteJSON]   = useState<{ sorteo: SorteoData; resumen: Resumen } | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") { router.push("/login"); return; }
@@ -136,6 +148,8 @@ export default function AdminSorteo() {
       .then((r) => r.json())
       .then((d) => { setSorteoExistente(d.sorteo); setCargandoSorteo(false); });
   }, []);
+
+  // ── Ejecutar sorteo real ──────────────────────────────────────────────
 
   async function ejecutarSorteo() {
     if (modo === "manual" && !/^\d{4}$/.test(numeroManual)) {
@@ -159,9 +173,37 @@ export default function AdminSorteo() {
       return;
     }
 
-    setSorteoExistente(json.sorteo);
-    setResumen(json.resumen);
+    // Guardar resultado y mostrar animación
+    setPendienteJSON({ sorteo: json.sorteo, resumen: json.resumen });
+    setNumAnimacion(json.sorteo.numeroGanador);
+    setModoDemo(false);
+    setAnimTerminada(false);
+    setOverlayActivo(true);
   }
+
+  // ── Demo sin sorteo real ──────────────────────────────────────────────
+
+  function verDemo() {
+    const num = String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+    setNumAnimacion(num);
+    setModoDemo(true);
+    setAnimTerminada(false);
+    setOverlayActivo(true);
+  }
+
+  // ── Cerrar overlay ────────────────────────────────────────────────────
+
+  function cerrarOverlay() {
+    setOverlayActivo(false);
+    setAnimTerminada(false);
+    if (!modoDemo && pendienteJSON) {
+      setSorteoExistente(pendienteJSON.sorteo);
+      setResumen(pendienteJSON.resumen);
+      setPendienteJSON(null);
+    }
+  }
+
+  // ── Reiniciar sorteo (pruebas) ────────────────────────────────────────
 
   async function reiniciarSorteo() {
     if (!confirm("¿Seguro que quieres eliminar el sorteo actual? Esta acción no se puede deshacer.")) return;
@@ -260,12 +302,22 @@ export default function AdminSorteo() {
                   </div>
                 )}
 
+                {/* Botón ejecutar */}
                 <button
                   onClick={ejecutarSorteo}
                   disabled={ejecutando || (modo === "manual" && numeroManual.length !== 4)}
-                  className="w-full bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-extrabold py-4 rounded-xl text-lg transition-all shadow-md hover:shadow-lg"
+                  className="w-full bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-extrabold py-4 rounded-xl text-lg transition-all shadow-md hover:shadow-lg mb-3"
                 >
-                  {ejecutando ? "Ejecutando sorteo..." : "🎯 Ejecutar sorteo"}
+                  {ejecutando ? "⏳ Procesando..." : "🎯 Ejecutar sorteo"}
+                </button>
+
+                {/* Botón demo */}
+                <button
+                  onClick={verDemo}
+                  disabled={ejecutando}
+                  className="w-full border-2 border-[#1B4F8A] text-[#1B4F8A] hover:bg-[#1B4F8A]/5 font-semibold py-3 rounded-xl text-sm transition-all"
+                >
+                  🎬 Ver demo de animación
                 </button>
 
                 <p className="text-center text-gray-400 text-xs mt-3">
@@ -278,11 +330,11 @@ export default function AdminSorteo() {
                 <h2 className="text-lg font-bold text-gray-900 mb-5">Distribución de premios</h2>
                 <div className="space-y-3">
                   {[
-                    { label: "🏆 4 cifras exactas", pct: "35%", desc: "1 ganador máximo" },
-                    { label: "🥈 3 últimas cifras", pct: "15%", desc: "Hasta 9 ganadores" },
-                    { label: "🥉 2 últimas cifras", pct: "10%", desc: "Hasta 90 ganadores" },
-                    { label: "🎁 1 última cifra", pct: "Devolución", desc: "Hasta 900 ganadores" },
-                    { label: "🎪 Festival", pct: "40%", desc: "Gastos del evento" },
+                    { label: "🏆 4 cifras exactas", pct: "35%",        desc: "1 ganador máximo" },
+                    { label: "🥈 3 últimas cifras", pct: "15%",        desc: "Hasta 9 ganadores" },
+                    { label: "🥉 2 últimas cifras", pct: "10%",        desc: "Hasta 90 ganadores" },
+                    { label: "🎁 1 última cifra",   pct: "Devolución", desc: "Hasta 900 ganadores" },
+                    { label: "🎪 Operación",        pct: "40%",        desc: "Gastos del evento" },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
                       <div>
@@ -293,8 +345,38 @@ export default function AdminSorteo() {
                     </div>
                   ))}
                 </div>
+
+                {/* Preview estático de la animación */}
+                <div className="mt-6 rounded-xl overflow-hidden border border-gray-100">
+                  <div
+                    className="py-4 px-3 text-center"
+                    style={{ background: "linear-gradient(145deg,#04070e,#0b1929,#04070e)" }}
+                  >
+                    <p className="text-xs font-bold tracking-widest uppercase mb-3"
+                      style={{ color: "#F5A623", letterSpacing: "3px" }}>
+                      ✨ Vista previa ✨
+                    </p>
+                    <div className="flex gap-2 justify-center">
+                      {["?","?","?","?"].map((d, i) => (
+                        <div key={i} style={{
+                          width: "44px", height: "56px", borderRadius: "10px",
+                          background: "linear-gradient(180deg,#0b1929,#050d18)",
+                          border: "1.5px solid #122035",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: "28px", fontWeight: 900,
+                          fontFamily: "'Courier New',monospace",
+                          color: "#243d5c",
+                        }}>{d}</div>
+                      ))}
+                    </div>
+                    <p className="text-xs mt-3" style={{ color: "#243d5c" }}>
+                      Presiona "Ver demo" para previsualizar
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
+
           ) : (
             /* ── Resultados del sorteo ────────────────────────────────── */
             <div className="space-y-6">
@@ -303,7 +385,8 @@ export default function AdminSorteo() {
                 <p className="text-blue-200 text-sm font-medium mb-2 uppercase tracking-widest">
                   Número ganador
                 </p>
-                <div className="text-8xl md:text-9xl font-extrabold tracking-widest text-[#F5A623] my-4">
+                <div className="text-8xl md:text-9xl font-extrabold tracking-widest text-[#F5A623] my-4"
+                  style={{ fontFamily: "'Courier New', monospace" }}>
                   {sorteoExistente.numeroGanador}
                 </div>
                 <p className="text-blue-200 text-sm">
@@ -319,9 +402,9 @@ export default function AdminSorteo() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
                   { label: "Cajas vendidas", valor: sorteoExistente.totalVendidas.toLocaleString("es-CO"), icono: "📦" },
-                  { label: "Recaudo total", valor: `$${(sorteoExistente.totalRecaudo / 1_000_000).toFixed(2)}M`, icono: "💰" },
-                  { label: "Fondo premios", valor: `$${(sorteoExistente.fondoPremios / 1_000_000).toFixed(2)}M`, icono: "🏆" },
-                  { label: "Ganancia festival", valor: `$${(sorteoExistente.ganancia / 1_000_000).toFixed(2)}M`, icono: "🎪" },
+                  { label: "Recaudo total",  valor: `$${(sorteoExistente.totalRecaudo / 1_000_000).toFixed(2)}M`, icono: "💰" },
+                  { label: "Fondo premios",  valor: `$${(sorteoExistente.fondoPremios / 1_000_000).toFixed(2)}M`, icono: "🏆" },
+                  { label: "Ganancia operación", valor: `$${(sorteoExistente.ganancia / 1_000_000).toFixed(2)}M`, icono: "🎪" },
                 ].map((item) => (
                   <div key={item.label} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
                     <span className="text-2xl">{item.icono}</span>
@@ -331,7 +414,7 @@ export default function AdminSorteo() {
                 ))}
               </div>
 
-              {/* Resumen ejecutado (si recién se ejecutó) */}
+              {/* Resumen si recién se ejecutó */}
               {resumen && (
                 <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
                   <h3 className="font-bold text-green-800 mb-3">✅ Sorteo ejecutado exitosamente</h3>
@@ -340,7 +423,7 @@ export default function AdminSorteo() {
                       { label: "Ganadores 4 cifras", val: resumen.ganadores4, monto: resumen.monto4 },
                       { label: "Ganadores 3 cifras", val: resumen.ganadores3, monto: resumen.monto3 },
                       { label: "Ganadores 2 cifras", val: resumen.ganadores2, monto: resumen.monto2 },
-                      { label: "Ganadores 1 cifra", val: resumen.ganadores1, monto: resumen.monto1 },
+                      { label: "Ganadores 1 cifra",  val: resumen.ganadores1, monto: resumen.monto1 },
                     ].map((item) => (
                       <div key={item.label} className="bg-white rounded-xl p-3 text-center border border-green-100">
                         <p className="text-2xl font-extrabold text-[#1B4F8A]">{item.val}</p>
@@ -371,7 +454,7 @@ export default function AdminSorteo() {
                 </div>
               </div>
 
-              {/* Botón reiniciar (pruebas) */}
+              {/* Zona de peligro */}
               <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
                 <h3 className="font-bold text-red-800 mb-1">Zona de peligro</h3>
                 <p className="text-red-600 text-sm mb-3">
@@ -390,6 +473,98 @@ export default function AdminSorteo() {
         </div>
       </main>
       <Footer />
+
+      {/* ── Overlay de animación ─────────────────────────────────────── */}
+      {overlayActivo && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 50,
+          background: "rgba(0, 0, 0, 0.97)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "16px",
+        }}>
+          <div style={{ maxWidth: "520px", width: "100%" }}>
+
+            {/* Badge modo demo */}
+            {modoDemo && (
+              <div style={{
+                textAlign: "center",
+                marginBottom: "12px",
+              }}>
+                <span style={{
+                  background: "rgba(27,79,138,0.4)",
+                  border: "1px solid rgba(27,79,138,0.6)",
+                  color: "#7eb3e8",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  letterSpacing: "2px",
+                  textTransform: "uppercase",
+                  padding: "4px 14px",
+                  borderRadius: "20px",
+                }}>
+                  Modo demo — sin sorteo real
+                </span>
+              </div>
+            )}
+
+            {/* Componente de animación */}
+            <RuletaSorteo
+              numeroGanador={numAnimacion}
+              activo={overlayActivo}
+              onTerminado={() => setAnimTerminada(true)}
+            />
+
+            {/* Botón de acción tras terminar la animación */}
+            {animTerminada && (
+              <div style={{ marginTop: "20px", textAlign: "center" }}>
+                <button
+                  onClick={cerrarOverlay}
+                  style={{
+                    background: "#F5A623",
+                    color: "#1B4F8A",
+                    border: "none",
+                    borderRadius: "14px",
+                    padding: "14px 36px",
+                    fontSize: "16px",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                    boxShadow: "0 4px 24px rgba(245,166,35,0.55)",
+                    letterSpacing: "0.5px",
+                    transition: "transform 0.15s, box-shadow 0.15s",
+                  }}
+                  onMouseOver={e => (e.currentTarget.style.transform = "scale(1.04)")}
+                  onMouseOut={e  => (e.currentTarget.style.transform = "scale(1)")}
+                >
+                  {modoDemo ? "✕  Cerrar demo" : "Ver resultados →"}
+                </button>
+              </div>
+            )}
+
+            {/* Botón de saltar (siempre visible) */}
+            {!animTerminada && (
+              <div style={{ marginTop: "16px", textAlign: "center" }}>
+                <button
+                  onClick={cerrarOverlay}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "rgba(255,255,255,0.25)",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    padding: "8px 16px",
+                  }}
+                >
+                  Saltar animación
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

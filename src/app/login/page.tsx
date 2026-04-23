@@ -140,7 +140,7 @@ export default function PaginaLogin() {
           FS
         </div>
         <div>
-          <p className="text-white font-bold text-xl">Festival Sorteo</p>
+          <p className="text-white font-bold text-xl">Cajas Sorpresa 10K</p>
           <p className="text-[#F5A623] text-sm">10,000 Cajas Sorpresa</p>
         </div>
       </Link>

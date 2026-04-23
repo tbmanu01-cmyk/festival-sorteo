@@ -36,3 +36,7 @@
 - Mobile-first
 - No romper lo que ya funciona
 - Imports dinámicos para Prisma y bcryptjs (evita bug Turbopack)
+
+## Estado actual: COMPLETADO Y EN PRODUCCIÓN
+## URL: https://festival-sorteo.vercel.app
+## Pendiente: Integración Wompi (pagos reales)

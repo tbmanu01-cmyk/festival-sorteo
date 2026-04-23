@@ -6,6 +6,12 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const QRCodeCanvas = dynamic(
+  () => import("qrcode.react").then((m) => m.QRCodeCanvas),
+  { ssr: false }
+);
 
 const MINUTOS_RESERVA = 15;
 
@@ -35,6 +41,15 @@ interface Retiro {
   cuentaDestino: string;
 }
 
+interface AnticipadaGanada {
+  id: string;
+  nombre: string;
+  premioDescripcion: string;
+  premioValor: number | null;
+  fecha: string;
+  numeroCaja: string | null;
+}
+
 interface MisCajas {
   reservadas: CajaReservada[];
   vendidas: CajaVendida[];
@@ -45,6 +60,7 @@ interface MisCajas {
   banco: string | null;
   tipoCuenta: string | null;
   cuentaBancaria: string | null;
+  anticipadasGanadas: AnticipadaGanada[];
 }
 
 // ── Hook de cuenta regresiva ──────────────────────────────────────────────
@@ -279,7 +295,7 @@ function ModalRetiro({
         {!tieneCuenta ? (
           <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-sm text-orange-700">
             No tienes una cuenta bancaria registrada. Contacta al administrador
-            del festival para agregar tu cuenta antes de solicitar el retiro.
+            del administrador para agregar tu cuenta antes de solicitar el retiro.
           </div>
         ) : (
           <>
@@ -354,6 +370,220 @@ function ModalRetiro({
   );
 }
 
+// ── Sección de referidos (autónoma, fetch propio) ─────────────────────────
+
+interface DatosReferidosAPI {
+  codigoRef: string | null;
+  comprados: number;
+  progreso: number;
+  cuponesDisponibles: number;
+}
+
+function SeccionReferidos() {
+  const [datos, setDatos] = useState<DatosReferidosAPI | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [copiado, setCopiado] = useState(false);
+  const [mostrarQR, setMostrarQR] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/referidos")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        if (json) {
+          setDatos({
+            codigoRef: json.codigoRef ?? null,
+            comprados: json.comprados ?? 0,
+            progreso: json.progreso ?? 0,
+            cuponesDisponibles: json.cuponesDisponibles ?? 0,
+          });
+        }
+        setCargando(false);
+      })
+      .catch(() => setCargando(false));
+  }, []);
+
+  const base = typeof window !== "undefined" ? window.location.origin : "";
+  const linkRef = datos?.codigoRef ? `${base}/registro?ref=${datos.codigoRef}` : null;
+
+  function copiarLink() {
+    if (!linkRef) return;
+    navigator.clipboard.writeText(linkRef).then(() => {
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2500);
+    });
+  }
+
+  function descargarQR() {
+    const canvas = document.querySelector("#qr-ref-canvas canvas") as HTMLCanvasElement;
+    if (!canvas) return;
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `mi-referido-${datos?.codigoRef ?? "qr"}.png`;
+    a.click();
+  }
+
+  // Progreso dentro del ciclo actual (0-4). Si comprados % 5 === 0 y comprados > 0 → ciclo completo
+  const comprados = datos?.comprados ?? 0;
+  const enCiclo = comprados % 5; // 0-4
+  const barPct = (enCiclo / 5) * 100;
+  const faltan = enCiclo === 0 ? 5 : 5 - enCiclo;
+
+  return (
+    <section className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+
+      {/* Cabecera */}
+      <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] px-6 py-5">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-white font-extrabold text-lg leading-tight">
+              Invita amigos y gana cajas gratis
+            </h2>
+            <p className="text-blue-200 text-sm mt-0.5">
+              Por cada 5 amigos que compren su primera caja, recibes 1 cupón gratis
+            </p>
+          </div>
+          <Link
+            href="/ranking"
+            className="flex-shrink-0 text-[#F5A623] text-xs font-bold hover:underline"
+          >
+            Ver ranking →
+          </Link>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-5">
+
+        {/* Cargando */}
+        {cargando && (
+          <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-4">
+            <div className="w-4 h-4 rounded-full border-2 border-[#1B4F8A] border-t-transparent animate-spin" />
+            <span className="text-sm text-gray-400">Cargando tu código de referido...</span>
+          </div>
+        )}
+
+        {/* Código + acciones */}
+        {!cargando && datos?.codigoRef && (
+          <div className="bg-[#1B4F8A]/5 border border-[#1B4F8A]/15 rounded-xl p-4">
+            <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">
+              Tu código de referido
+            </p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-3xl font-extrabold tracking-[0.2em] text-[#1B4F8A] font-mono">
+                {datos.codigoRef}
+              </span>
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={copiarLink}
+                  className={`text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm ${
+                    copiado
+                      ? "bg-green-500 text-white"
+                      : "bg-[#1B4F8A] hover:bg-[#1a5fa8] text-white"
+                  }`}
+                >
+                  {copiado ? "✓ ¡Link copiado!" : "Copiar link"}
+                </button>
+                <button
+                  onClick={() => setMostrarQR((v) => !v)}
+                  className="text-sm font-bold px-4 py-2 rounded-xl border-2 border-[#1B4F8A] text-[#1B4F8A] hover:bg-[#1B4F8A]/5 transition-colors"
+                >
+                  {mostrarQR ? "Ocultar QR" : "Ver QR"}
+                </button>
+              </div>
+            </div>
+            {linkRef && (
+              <p className="text-xs text-gray-400 mt-2 truncate font-mono">{linkRef}</p>
+            )}
+          </div>
+        )}
+
+        {/* Sin código */}
+        {!cargando && !datos?.codigoRef && (
+          <div className="bg-gray-50 rounded-xl px-4 py-4 text-sm text-gray-400 text-center">
+            No se pudo cargar tu código. Recarga la página.
+          </div>
+        )}
+
+        {/* QR descargable */}
+        {mostrarQR && linkRef && (
+          <div className="flex flex-col items-center gap-3 bg-gray-50 rounded-xl p-5">
+            <p className="text-xs text-gray-500 font-semibold">
+              Comparte este QR para que tus amigos se registren directamente
+            </p>
+            <div id="qr-ref-canvas" className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
+              <QRCodeCanvas
+                value={linkRef}
+                size={180}
+                bgColor="#ffffff"
+                fgColor="#1B4F8A"
+                level="M"
+              />
+            </div>
+            <button
+              onClick={descargarQR}
+              className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] text-sm font-bold px-6 py-2.5 rounded-xl transition-colors shadow-md"
+            >
+              Descargar QR
+            </button>
+          </div>
+        )}
+
+        {/* Contador de progreso */}
+        {!cargando && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold text-gray-700">
+                {enCiclo} de 5 amigos han comprado
+              </span>
+              {comprados > 0 && (
+                <span className="text-xs text-gray-400">{comprados} en total</span>
+              )}
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+              <div
+                className="h-3 rounded-full bg-gradient-to-r from-[#1B4F8A] to-[#F5A623] transition-all duration-700"
+                style={{ width: enCiclo === 0 && comprados > 0 ? "100%" : `${barPct}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              {comprados === 0
+                ? "Por cada 5 amigos que compren su primera caja, recibes 1 cupón gratis"
+                : enCiclo === 0
+                ? "¡Completaste 5 referidos! Sigue invitando para ganar otro cupón."
+                : `Te ${faltan === 1 ? "falta 1 amigo" : `faltan ${faltan} amigos`} para ganar tu ${
+                    Math.floor(comprados / 5) + 1 === 1 ? "primer" : "próximo"
+                  } cupón gratis`}
+            </p>
+          </div>
+        )}
+
+        {/* Cupones disponibles */}
+        {!cargando && (datos?.cuponesDisponibles ?? 0) > 0 && (
+          <div className="bg-[#F5A623]/10 border border-[#F5A623]/40 rounded-xl px-4 py-4 flex items-center gap-4">
+            <span className="text-3xl flex-shrink-0">🎁</span>
+            <div>
+              <p className="font-extrabold text-[#b87b00]">
+                Tienes {datos!.cuponesDisponibles} cupón{datos!.cuponesDisponibles > 1 ? "es" : ""} para {datos!.cuponesDisponibles > 1 ? "cajas gratis" : "caja gratis"}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Úsalos al comprar tu próxima caja en la tienda
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Sin cupones — explicación */}
+        {!cargando && (datos?.cuponesDisponibles ?? 0) === 0 && (
+          <div className="border border-dashed border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-400 text-center">
+            Aún no tienes cupones — ¡invita amigos para ganarlos!
+          </div>
+        )}
+
+      </div>
+    </section>
+  );
+}
+
 // ── Dashboard principal ────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -417,6 +647,7 @@ export default function Dashboard() {
   const premios = datos?.premios ?? [];
   const retiros = datos?.retiros ?? [];
   const saldo = datos?.saldoPuntos ?? 0;
+  const anticipadasGanadas = datos?.anticipadasGanadas ?? [];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -437,6 +668,11 @@ export default function Dashboard() {
               <span className="text-2xl">📦</span>
               <p className="text-xl font-extrabold mt-1 text-[#1B4F8A]">{cajas.length}</p>
               <p className="text-gray-500 text-xs mt-0.5">Cajas compradas</p>
+              {cajas.length >= 10 && (
+                <span className="inline-block mt-1 text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
+                  ⭐ VIP 10+
+                </span>
+              )}
             </div>
 
             {/* Saldo — con botón de retiro si hay saldo */}
@@ -528,6 +764,22 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* Mensaje motivacional 10+ cajas */}
+          {cajas.length >= 10 && (
+            <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl p-5 text-white">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">⭐</span>
+                <div>
+                  <p className="font-extrabold text-lg">¡Eres VIP!</p>
+                  <p className="text-purple-200 text-sm">Con 10+ cajas participas en sorteos exclusivos para grandes compradores.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sección de referidos */}
+          <SeccionReferidos />
+
           {/* Cajas compradas */}
           {cajas.length > 0 && (
             <section>
@@ -548,6 +800,38 @@ export default function Dashboard() {
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
                 {cajas.map((caja) => (
                   <TarjetaCajaComprada key={caja.numero} caja={caja} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Selecciones anticipadas ganadas */}
+          {anticipadasGanadas.length > 0 && (
+            <section>
+              <h2 className="text-lg font-bold text-gray-900 mb-3">Selecciones anticipadas ganadas 🎯</h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {anticipadasGanadas.map((a) => (
+                  <div key={a.id} className="bg-gradient-to-br from-[#1B4F8A]/5 to-[#F5A623]/10 border border-[#F5A623]/30 rounded-xl p-4 flex items-center gap-4">
+                    <div className="text-3xl flex-shrink-0">🎉</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-extrabold text-[#1B4F8A] text-sm truncate">{a.nombre}</p>
+                      <p className="text-[#F5A623] font-extrabold text-lg">{a.premioDescripcion}</p>
+                      {a.premioValor && (
+                        <p className="text-gray-500 text-xs">${a.premioValor.toLocaleString("es-CO")} COP</p>
+                      )}
+                      {a.numeroCaja && (
+                        <p className="text-gray-500 text-xs mt-0.5">
+                          Caja ganadora: <span className="font-extrabold text-[#1B4F8A] font-mono">#{a.numeroCaja}</span>
+                        </p>
+                      )}
+                      <p className="text-gray-400 text-xs mt-0.5">
+                        {new Date(a.fecha).toLocaleDateString("es-CO", { dateStyle: "medium" })}
+                      </p>
+                    </div>
+                    <span className="flex-shrink-0 bg-orange-100 text-orange-700 text-xs font-bold px-2 py-1 rounded-full">
+                      Pendiente entrega
+                    </span>
+                  </div>
                 ))}
               </div>
             </section>

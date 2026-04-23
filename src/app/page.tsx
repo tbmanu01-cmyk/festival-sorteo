@@ -1,8 +1,18 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import CountdownAnticipada from "@/components/CountdownAnticipada";
 
 const TOTAL_CAJAS = 10000;
+
+interface Anticipada {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  premioDescripcion: string;
+  fecha: Date;
+  cantidadGanadores: number;
+}
 
 async function obtenerDatos() {
   try {
@@ -11,6 +21,17 @@ async function obtenerDatos() {
       prisma.config.findUnique({ where: { id: "singleton" } }),
       prisma.caja.count({ where: { estado: "VENDIDA" } }),
     ]);
+
+    let anticipadas: Anticipada[] = [];
+    try {
+      anticipadas = await prisma.sorteoAnticipado.findMany({
+        where: { estado: "PENDIENTE", fecha: { gte: new Date() } },
+        select: { id: true, nombre: true, descripcion: true, premioDescripcion: true, fecha: true, cantidadGanadores: true },
+        orderBy: { fecha: "asc" },
+        take: 5,
+      });
+    } catch { /* tabla aún no creada */ }
+
     return {
       precioCaja: config?.precioCaja ?? 10_000,
       fechaSorteo: config?.fechaSorteo ?? null,
@@ -19,9 +40,10 @@ async function obtenerDatos() {
       pct2: config?.pct2Cifras ?? 0.10,
       margen: config?.margenGanancia ?? 0.40,
       vendidas,
+      anticipadas,
     };
   } catch {
-    return { precioCaja: 10_000, fechaSorteo: null, pct4: 0.35, pct3: 0.15, pct2: 0.10, margen: 0.40, vendidas: 0 };
+    return { precioCaja: 10_000, fechaSorteo: null, pct4: 0.35, pct3: 0.15, pct2: 0.10, margen: 0.40, vendidas: 0, anticipadas: [] };
   }
 }
 
@@ -86,7 +108,7 @@ const premios = [
     premio: "35% del recaudo",
     color: "from-yellow-400 to-yellow-600",
     icono: "🏆",
-    descripcion: "El número completo coincide con el sorteo",
+    descripcion: "El número completo coincide con el resultado",
   },
   {
     categoria: "3 últimas cifras",
@@ -107,12 +129,12 @@ const premios = [
     premio: "Devolución del valor",
     color: "from-blue-400 to-blue-600",
     icono: "🎁",
-    descripcion: "La última cifra coincide con el sorteo",
+    descripcion: "La última cifra coincide con el resultado",
   },
 ];
 
 export default async function Inicio() {
-  const { precioCaja, fechaSorteo, pct4, pct3, pct2, vendidas } = await obtenerDatos();
+  const { precioCaja, fechaSorteo, pct4, pct3, pct2, vendidas, anticipadas } = await obtenerDatos();
   const pctPremios = Math.round((pct4 + pct3 + pct2) * 100);
   const fechaStr = fechaSorteo
     ? new Date(fechaSorteo).toLocaleString("es-CO", { dateStyle: "full", timeStyle: "short" })
@@ -126,7 +148,7 @@ export default async function Inicio() {
         {/* Fecha del sorteo — banner si está configurada */}
         {fechaStr && (
           <div className="bg-[#F5A623] text-[#1B4F8A] py-2.5 px-4 text-center text-sm font-bold">
-            🗓️ Fecha del sorteo: {fechaStr}
+            🗓️ Fecha del resultado: {fechaStr}
           </div>
         )}
 
@@ -136,23 +158,22 @@ export default async function Inicio() {
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
                 <span className="inline-block bg-[#F5A623]/20 text-[#F5A623] text-sm font-semibold px-4 py-1.5 rounded-full mb-4 border border-[#F5A623]/30">
-                  Festival Escolar 2025
+                  Cajas Sorpresa
                 </span>
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-                  Sorteo de{" "}
                   <span className="text-[#F5A623]">Cajas Sorpresa</span>
                   <br />
                   <span className="text-3xl md:text-4xl">10,000 números</span>
                 </h1>
                 <p className="text-blue-200 text-lg md:text-xl leading-relaxed mb-8">
-                  Participa en el sorteo solidario de nuestro festival escolar. Elige tu número favorito
+                  Elige tu número favorito
                   del <strong className="text-white">0000 al 9999</strong>, paga solo{" "}
                   <strong className="text-[#F5A623]">${precioCaja.toLocaleString("es-CO")} COP</strong> y gana hasta el{" "}
                   <strong className="text-white">{Math.round(pct4 * 100)}% del recaudo total</strong>.
                 </p>
                 {fechaStr && (
                   <div className="bg-white/10 border border-[#F5A623]/40 rounded-xl px-5 py-3 mb-6 text-sm">
-                    <span className="text-[#F5A623] font-bold">🗓️ Sorteo:</span>{" "}
+                    <span className="text-[#F5A623] font-bold">🗓️ Resultado:</span>{" "}
                     <span className="text-white">{fechaStr}</span>
                   </div>
                 )}
@@ -161,7 +182,7 @@ export default async function Inicio() {
                     href="/registro"
                     className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold text-lg px-8 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-center"
                   >
-                    Participar ahora
+                    Adquiere tu caja
                   </Link>
                   <Link
                     href="#como-funciona"
@@ -221,6 +242,65 @@ export default async function Inicio() {
           </div>
         </section>
 
+        {/* Próximas selecciones anticipadas */}
+        {anticipadas.length > 0 && (
+          <section id="anticipadas" className="py-16 md:py-24 bg-white">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-12">
+                <span className="inline-block bg-[#F5A623]/15 text-[#b87b00] text-sm font-bold px-4 py-1.5 rounded-full mb-4 border border-[#F5A623]/30">
+                  ¡Antes del sorteo principal!
+                </span>
+                <h2 className="text-3xl md:text-4xl font-extrabold text-[#1B4F8A] mb-4">
+                  Próximas selecciones
+                </h2>
+                <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+                  Sorteos anticipados con premios especiales. ¡Tu caja puede ganar antes del evento principal!
+                </p>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {anticipadas.map((a) => (
+                  <div
+                    key={a.id}
+                    className="bg-gradient-to-br from-[#1B4F8A]/5 to-[#F5A623]/5 rounded-2xl border border-[#1B4F8A]/10 p-6 hover:shadow-lg transition-shadow"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <span className="text-3xl">🎯</span>
+                      <span className="bg-[#1B4F8A]/10 text-[#1B4F8A] text-xs font-bold px-2.5 py-1 rounded-full">
+                        {a.cantidadGanadores} ganador{a.cantidadGanadores !== 1 ? "es" : ""}
+                      </span>
+                    </div>
+                    <h3 className="font-extrabold text-[#1B4F8A] text-lg mb-1">{a.nombre}</h3>
+                    {a.descripcion && (
+                      <p className="text-gray-500 text-sm mb-3">{a.descripcion}</p>
+                    )}
+                    <div className="bg-[#F5A623]/10 rounded-xl px-4 py-3 mb-4">
+                      <p className="text-xs text-gray-500 mb-0.5">Premio</p>
+                      <p className="font-extrabold text-[#b87b00] text-lg">{a.premioDescripcion}</p>
+                    </div>
+                    <div className="border-t border-[#1B4F8A]/10 pt-4">
+                      <p className="text-xs text-gray-500 mb-1.5">
+                        {new Date(a.fecha).toLocaleString("es-CO", { dateStyle: "full", timeStyle: "short" })}
+                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-gray-500">Faltan:</span>
+                        <CountdownAnticipada fecha={a.fecha.toISOString()} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-center mt-8">
+                <Link
+                  href="/registro"
+                  className="inline-block bg-[#1B4F8A] hover:bg-[#1a5fa8] text-white font-bold px-8 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
+                >
+                  Participar en las selecciones →
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Premios */}
         <section id="premios" className="py-16 md:py-24 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -256,7 +336,7 @@ export default async function Inicio() {
                   { label: "Premio 4 cifras", valor: `${Math.round(pct4 * 100)}%` },
                   { label: "Premio 3 cifras", valor: `${Math.round(pct3 * 100)}%` },
                   { label: "Premio 2 cifras", valor: `${Math.round(pct2 * 100)}%` },
-                  { label: "Festival (gastos)", valor: `${Math.round((1 - pct4 - pct3 - pct2) * 100)}%` },
+                  { label: "Operación (gastos)", valor: `${Math.round((1 - pct4 - pct3 - pct2) * 100)}%` },
                 ].map((item) => (
                   <div key={item.label}>
                     <p className="text-2xl font-extrabold text-[#1B4F8A]">{item.valor}</p>
@@ -285,7 +365,7 @@ export default async function Inicio() {
               href="/registro"
               className="inline-block bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold text-xl px-10 py-4 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
             >
-              Participar ahora — ${precioCaja.toLocaleString("es-CO")} COP
+              Adquiere tu caja — ${precioCaja.toLocaleString("es-CO")} COP
             </Link>
           </div>
         </section>

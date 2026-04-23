@@ -64,13 +64,43 @@ model User {
   activo          Boolean       @default(true)
   confirmado      Boolean       @default(false)
   fechaRegistro   DateTime      @default(now())
+  codigoRef       String?       @unique
 
   cajas           Caja[]
   transacciones   Transaccion[]
   premios         Premio[]
   retiros         Retiro[]
+  referidosHechos    Referido[] @relation("Referidor")
+  referidoRegistrado Referido?  @relation("Referido")
+  cupones            Cupon[]
 
   @@map("users")
+}
+
+model Referido {
+  id          String   @id @default(cuid())
+  referidorId String
+  referidoId  String   @unique
+  fecha       DateTime @default(now())
+  compro      Boolean  @default(false)
+
+  referidor   User     @relation("Referidor", fields: [referidorId], references: [id])
+  referido    User     @relation("Referido", fields: [referidoId], references: [id])
+
+  @@map("referidos")
+}
+
+model Cupon {
+  id            String    @id @default(cuid())
+  usuarioId     String
+  codigo        String    @unique
+  usado         Boolean   @default(false)
+  fechaCreacion DateTime  @default(now())
+  fechaUso      DateTime?
+
+  usuario       User      @relation(fields: [usuarioId], references: [id])
+
+  @@map("cupones")
 }
 
 model Caja {
@@ -154,4 +184,25 @@ model Config {
   updatedAt      DateTime  @updatedAt
 
   @@map("config")
+}
+
+enum EstadoAnticipada {
+  PENDIENTE
+  EJECUTADO
+}
+
+model SorteoAnticipado {
+  id                String           @id @default(cuid())
+  nombre            String
+  descripcion       String?
+  premioDescripcion String
+  premioValor       Float?
+  cantidadGanadores Int              @default(5)
+  soloVendidas      Boolean          @default(true)
+  minCajas          Int              @default(0)
+  fecha             DateTime
+  estado            EstadoAnticipada @default(PENDIENTE)
+  ganadores         Json?
+
+  @@map("sorteos_anticipados")
 }

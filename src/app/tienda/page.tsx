@@ -169,7 +169,7 @@ function CeldaCaja({
       disabled={!disponible}
       title={tooltip}
       className={`
-        aspect-square flex flex-col items-center justify-center rounded-lg text-xs font-bold
+        aspect-square flex flex-col items-center rounded-xl font-bold py-1.5
         transition-all duration-150 border relative
         ${disponible
           ? "bg-green-50 border-green-300 text-green-800 hover:bg-green-100 hover:border-green-500 hover:scale-110 hover:shadow-md cursor-pointer active:scale-95"
@@ -179,9 +179,15 @@ function CeldaCaja({
         }
       `}
     >
-      <span className="leading-none">{caja.numero}</span>
+      <div className="flex-1 flex items-center justify-center">
+        <span className="text-4xl leading-none">🎁</span>
+      </div>
+      <span className="text-xs leading-none font-extrabold">{caja.numero}</span>
+      <span className="text-[10px] leading-none font-semibold mt-0.5 opacity-90">
+        {caja.estado === "DISPONIBLE" ? "Libre" : caja.estado === "RESERVADA" ? "Reservado" : "Vendido"}
+      </span>
       {reservada && (
-        <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-orange-400 rounded-full" />
+        <span className="absolute top-1 right-1 w-2 h-2 bg-orange-400 rounded-full" />
       )}
     </button>
   );
@@ -373,7 +379,7 @@ export default function TiendaCajas() {
         {/* Fecha del sorteo */}
         {fechaSorteo && (
           <div className="bg-[#F5A623] text-[#1B4F8A] py-2 px-4 text-center text-sm font-bold">
-            🗓️ Fecha del sorteo: {fechaSorteo}
+            🗓️ Fecha del resultado: {fechaSorteo}
           </div>
         )}
         {/* Encabezado */}
@@ -468,16 +474,16 @@ export default function TiendaCajas() {
 
           {/* Grid de cajas */}
           {cargando ? (
-            <div className="grid grid-cols-10 sm:grid-cols-10 md:grid-cols-20 gap-1 mb-6">
+            <div className="grid grid-cols-8 gap-1.5 mb-6">
               {Array.from({ length: 100 }).map((_, i) => (
-                <div key={i} className="aspect-square rounded-lg shimmer" />
+                <div key={i} className="aspect-square rounded-xl shimmer" />
               ))}
             </div>
           ) : datos && datos.cajas.length > 0 ? (
             <>
               <div
-                className="grid gap-1 mb-6"
-                style={{ gridTemplateColumns: "repeat(10, minmax(0, 1fr))" }}
+                className="grid gap-1.5 mb-6"
+                style={{ gridTemplateColumns: "repeat(8, minmax(0, 1fr))" }}
               >
                 {datos.cajas.map((caja) => (
                   <CeldaCaja key={caja.numero} caja={caja} onClick={abrirModal} />

@@ -139,7 +139,7 @@ export default function PaginaConfiguracion() {
 
               <div className="space-y-4">
                 {[
-                  { label: "Margen del festival", value: margen, set: setMargen, color: "bg-purple-400" },
+                  { label: "Margen de operación", value: margen, set: setMargen, color: "bg-purple-400" },
                   { label: "Premio 4 cifras exactas 🏆", value: pct4,  set: setPct4,  color: "bg-yellow-400" },
                   { label: "Premio 3 últimas cifras 🥈",  value: pct3,  set: setPct3,  color: "bg-gray-400" },
                   { label: "Premio 2 últimas cifras 🥉",  value: pct2,  set: setPct2,  color: "bg-amber-600" },
@@ -201,7 +201,7 @@ export default function PaginaConfiguracion() {
                 ))}
               </div>
               <div className="flex gap-3 mt-2 text-xs text-gray-400 flex-wrap">
-                <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-purple-400 mr-1" />Festival {margen.toFixed(1)}%</span>
+                <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-purple-400 mr-1" />Operación {margen.toFixed(1)}%</span>
                 <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-400 mr-1" />4 cifras {pct4.toFixed(1)}%</span>
                 <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-gray-400 mr-1" />3 cifras {pct3.toFixed(1)}%</span>
                 <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-amber-600 mr-1" />2 cifras {pct2.toFixed(1)}%</span>

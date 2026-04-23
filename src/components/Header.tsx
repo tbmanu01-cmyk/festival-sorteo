@@ -15,11 +15,11 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 bg-[#F5A623] rounded-full flex items-center justify-center font-bold text-[#1B4F8A] text-sm group-hover:scale-110 transition-transform">
-              FS
+              CS
             </div>
             <div className="hidden sm:block">
-              <p className="text-white font-bold text-lg leading-tight">Festival Sorteo</p>
-              <p className="text-[#F5A623] text-xs font-medium">10,000 Cajas Sorpresa</p>
+              <p className="text-white font-bold text-lg leading-tight">10K</p>
+              <p className="text-[#F5A623] text-xs font-medium">Cajas Sorpresa</p>
             </div>
           </Link>
 
@@ -30,6 +30,9 @@ export default function Header() {
             </Link>
             <Link href="/#premios" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
               Premios
+            </Link>
+            <Link href="/ranking" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
+              Ranking
             </Link>
             {session ? (
               <>
@@ -96,6 +99,9 @@ export default function Header() {
             </Link>
             <Link href="/#premios" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
               Premios
+            </Link>
+            <Link href="/ranking" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+              Ranking
             </Link>
             {session ? (
               <>

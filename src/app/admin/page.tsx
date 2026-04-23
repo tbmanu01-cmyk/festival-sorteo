@@ -326,7 +326,7 @@ export default function AdminPanel() {
             <div>
               <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Panel de Administración</h1>
               <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-gray-500 text-sm">Festival Sorteo 10,000 Cajas</p>
+                <p className="text-gray-500 text-sm">Cajas Sorpresa 10K</p>
                 {ultimaActualizacion && (
                   <span className="text-gray-400 text-xs">
                     · Actualizado {ultimaActualizacion.toLocaleTimeString("es-CO", { timeStyle: "short" })}
@@ -354,10 +354,16 @@ export default function AdminPanel() {
                 ⚙️ Configuración
               </Link>
               <Link
+                href="/admin/anticipadas"
+                className="border border-[#F5A623] text-[#b87b00] hover:bg-[#F5A623]/10 font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
+              >
+                🎯 Anticipadas
+              </Link>
+              <Link
                 href="/admin/sorteo"
                 className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-5 py-2.5 rounded-xl transition-colors shadow-md text-sm flex items-center gap-1.5"
               >
-                🎯 Ejecutar Sorteo
+                🎰 Sorteo Principal
               </Link>
             </div>
           </div>
@@ -386,7 +392,7 @@ export default function AdminPanel() {
               icono="🏆"
             />
             <StatCard
-              titulo="Ganancia festival"
+              titulo="Ganancia operación"
               valor={`$${(stats.gananciaEstimada / 1_000_000).toFixed(1)}M`}
               subtitulo="40% del recaudo"
               color="border-purple-500"

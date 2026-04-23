@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -49,8 +49,10 @@ function CampoSelect({
   );
 }
 
-export default function PaginaRegistro() {
+function FormularioRegistro() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const refCode = searchParams.get("ref") ?? "";
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [ciudades, setCiudades] = useState<string[]>([]);
@@ -79,7 +81,7 @@ export default function PaginaRegistro() {
       const res = await fetch("/api/auth/registro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, refCode: refCode || undefined }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -102,7 +104,7 @@ export default function PaginaRegistro() {
           <div className="w-9 h-9 bg-[#F5A623] rounded-full flex items-center justify-center font-bold text-[#1B4F8A] text-sm">
             FS
           </div>
-          <span className="text-white font-bold">Festival Sorteo 10000</span>
+          <span className="text-white font-bold">Cajas Sorpresa 10K</span>
         </Link>
       </div>
 
@@ -112,11 +114,19 @@ export default function PaginaRegistro() {
           <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] px-8 py-6">
             <h1 className="text-2xl font-extrabold text-white">Crear cuenta</h1>
             <p className="text-blue-200 text-sm mt-1">
-              Completa el formulario para participar en el sorteo
+              Completa el formulario para adquirir tu caja sorpresa
             </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="px-8 py-6 space-y-6">
+            {refCode && (
+              <div className="bg-[#1B4F8A]/5 border border-[#1B4F8A]/20 rounded-lg px-4 py-3 flex items-center gap-2">
+                <span className="text-lg">🎁</span>
+                <p className="text-[#1B4F8A] text-sm font-medium">
+                  Fuiste invitado con el código <span className="font-extrabold">{refCode}</span> — ¡bienvenido!
+                </p>
+              </div>
+            )}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
                 <p className="text-red-700 text-sm">{error}</p>
@@ -308,5 +318,13 @@ export default function PaginaRegistro() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaginaRegistro() {
+  return (
+    <Suspense>
+      <FormularioRegistro />
+    </Suspense>
   );
 }
