@@ -57,6 +57,7 @@ model User {
   cuentaBancaria  String?
   banco           String?
   tipoCuenta      String?
+  whatsapp        String?
   avatar          String?
   password        String
   rol             Rol           @default(USER)
@@ -205,4 +206,15 @@ model SorteoAnticipado {
   ganadores         Json?
 
   @@map("sorteos_anticipados")
+}
+
+model VerificacionWhatsApp {
+  id         String   @id @default(cuid())
+  numero     String
+  codigo     String
+  verificado Boolean  @default(false)
+  expiraEn   DateTime
+  creadoEn   DateTime @default(now())
+
+  @@map("verificaciones_whatsapp")
 }
