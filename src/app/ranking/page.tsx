@@ -8,9 +8,19 @@ import Link from "next/link";
 interface RankEntry {
   posicion: number;
   nombre: string;
+  apellido: string;
   ciudad: string;
   totalCajas: number;
   esStar: boolean;
+}
+
+// "Luisa" → "Lui***" | "Suárez García" → "Suá***"
+function mask(s: string): string {
+  return s.split(" ")[0].slice(0, 3) + "***";
+}
+
+function nombreOculto(entry: RankEntry): string {
+  return `${mask(entry.nombre)} ${mask(entry.apellido)}`;
 }
 
 const MEDALLAS = ["🥇", "🥈", "🥉"];
@@ -38,7 +48,7 @@ function TarjetaRanking({ entry }: { entry: RankEntry }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <p className={`font-bold truncate ${esPodio ? "text-gray-900 text-base" : "text-gray-800 text-sm"}`}>
-            {entry.nombre}
+            {nombreOculto(entry)}
           </p>
           {entry.esStar && (
             <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full flex-shrink-0">
@@ -136,7 +146,7 @@ export default function PaginaRanking() {
                       <div className="flex flex-col items-center text-center w-24">
                         <span className="text-3xl mb-2">🥈</span>
                         <div className="bg-white/10 rounded-xl px-3 py-3 w-full h-24 flex flex-col items-center justify-center">
-                          <p className="font-extrabold text-sm leading-tight">{podio[1].nombre}</p>
+                          <p className="font-extrabold text-sm leading-tight whitespace-nowrap">{nombreOculto(podio[1])}</p>
                           <p className="text-blue-200 text-xs mt-1">{podio[1].totalCajas} cajas</p>
                         </div>
                       </div>
@@ -146,7 +156,7 @@ export default function PaginaRanking() {
                       <div className="flex flex-col items-center text-center w-28">
                         <span className="text-4xl mb-2">🥇</span>
                         <div className="bg-[#F5A623]/20 border border-[#F5A623]/40 rounded-xl px-3 py-4 w-full h-32 flex flex-col items-center justify-center">
-                          <p className="font-extrabold text-base leading-tight">{podio[0].nombre}</p>
+                          <p className="font-extrabold text-base leading-tight whitespace-nowrap">{nombreOculto(podio[0])}</p>
                           <p className="text-[#F5A623] font-bold text-sm mt-1">{podio[0].totalCajas} cajas</p>
                           <p className="text-blue-300 text-xs mt-0.5">{podio[0].ciudad}</p>
                         </div>
@@ -157,7 +167,7 @@ export default function PaginaRanking() {
                       <div className="flex flex-col items-center text-center w-24">
                         <span className="text-3xl mb-2">🥉</span>
                         <div className="bg-white/10 rounded-xl px-3 py-3 w-full h-20 flex flex-col items-center justify-center">
-                          <p className="font-extrabold text-sm leading-tight">{podio[2].nombre}</p>
+                          <p className="font-extrabold text-sm leading-tight whitespace-nowrap">{nombreOculto(podio[2])}</p>
                           <p className="text-blue-200 text-xs mt-1">{podio[2].totalCajas} cajas</p>
                         </div>
                       </div>

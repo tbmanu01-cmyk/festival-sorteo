@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ mensaje: "Acceso denegado." }, { status: 403 });
   }
 
+  try {
   const body = await req.json() as { modo: "auto" | "manual"; numeroGanador?: string };
   const { modo, numeroGanador: numManual } = body;
 
@@ -167,7 +168,7 @@ export async function POST(req: NextRequest) {
     }
 
     return nuevoSorteo;
-  });
+  }, { timeout: 30_000 });
 
   const sorteoCompleto = await prisma.sorteo.findUnique({
     where: { id: sorteo.id },
@@ -211,6 +212,13 @@ export async function POST(req: NextRequest) {
       monto1,
     },
   });
+  } catch (err) {
+    console.error("[POST /api/admin/sorteo]", err);
+    return NextResponse.json(
+      { mensaje: "Error interno al ejecutar el sorteo. Revisa los logs del servidor." },
+      { status: 500 }
+    );
+  }
 }
 
 // DELETE: reiniciar sorteo (solo para pruebas)

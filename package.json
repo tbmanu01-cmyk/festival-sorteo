@@ -12,7 +12,11 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
-    "seed:admin": "tsx prisma/seed-admin.ts"
+    "seed:admin": "tsx prisma/seed-admin.ts",
+    "seed:realistic": "tsx prisma/seed-realistic.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed-realistic.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

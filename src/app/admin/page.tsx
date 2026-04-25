@@ -11,7 +11,7 @@ interface Stats {
   vendidas: number; reservadas: number; disponibles: number;
   usuarios: number; retirosPendientes: number;
   totalRecaudo: number; fondoPremios: number; gananciaEstimada: number;
-  porcentajeVendido: string;
+  precioCaja: number; porcentajeVendido: string;
 }
 
 interface Usuario {
@@ -380,7 +380,7 @@ export default function AdminPanel() {
             <StatCard
               titulo="Recaudo total"
               valor={`$${(stats.totalRecaudo / 1_000_000).toFixed(1)}M`}
-              subtitulo={`${stats.vendidas} × $10,000`}
+              subtitulo={`${stats.vendidas} × $${stats.precioCaja.toLocaleString("es-CO")}`}
               color="border-green-500"
               icono="💰"
             />

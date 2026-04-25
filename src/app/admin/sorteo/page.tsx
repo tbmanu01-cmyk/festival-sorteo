@@ -159,26 +159,40 @@ export default function AdminSorteo() {
     setEjecutando(true);
     setError("");
 
-    const res = await fetch("/api/admin/sorteo", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ modo, numeroGanador: modo === "manual" ? numeroManual : undefined }),
-    });
-    const json = await res.json();
-    setEjecutando(false);
+    try {
+      const res = await fetch("/api/admin/sorteo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ modo, numeroGanador: modo === "manual" ? numeroManual : undefined }),
+      });
 
-    if (!res.ok) {
-      setError(json.mensaje);
-      if (json.sorteo) setSorteoExistente(json.sorteo);
-      return;
+      let json: Record<string, unknown>;
+      try {
+        json = await res.json();
+      } catch (parseErr) {
+        console.error("[Sorteo] Respuesta no es JSON válido:", parseErr);
+        throw new Error("El servidor no respondió correctamente. Revisa la consola del servidor.");
+      }
+
+      if (!res.ok) {
+        console.error("[Sorteo] Error HTTP", res.status, json);
+        setError((json.mensaje as string) ?? "Error desconocido al ejecutar el sorteo.");
+        if (json.sorteo) setSorteoExistente(json.sorteo as SorteoData);
+        return;
+      }
+
+      // Guardar resultado y mostrar animación
+      setPendienteJSON({ sorteo: json.sorteo as SorteoData, resumen: json.resumen as Resumen });
+      setNumAnimacion((json.sorteo as SorteoData).numeroGanador);
+      setModoDemo(false);
+      setAnimTerminada(false);
+      setOverlayActivo(true);
+    } catch (err) {
+      console.error("[Sorteo] Error al ejecutar:", err);
+      setError(err instanceof Error ? err.message : "Error de conexión. Intenta nuevamente.");
+    } finally {
+      setEjecutando(false);
     }
-
-    // Guardar resultado y mostrar animación
-    setPendienteJSON({ sorteo: json.sorteo, resumen: json.resumen });
-    setNumAnimacion(json.sorteo.numeroGanador);
-    setModoDemo(false);
-    setAnimTerminada(false);
-    setOverlayActivo(true);
   }
 
   // ── Demo sin sorteo real ──────────────────────────────────────────────

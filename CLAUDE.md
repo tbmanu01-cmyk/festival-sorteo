@@ -40,3 +40,53 @@
 ## Estado actual: COMPLETADO Y EN PRODUCCIÓN
 ## URL: https://festival-sorteo.vercel.app
 ## Pendiente: Integración Wompi (pagos reales)
+
+## ACTUALIZACIÓN - 25 de abril 2026
+
+### Deploy en producción
+URL: https://festival-sorteo.vercel.app
+Estado: ✅ Funcionando correctamente
+Problema resuelto: eliminado y reimportado proyecto en Vercel 
+por error de colaboración en repo privado
+
+### Módulos completados hoy (Parte 1-5)
+- ✅ Cambio global de lenguaje: "Festival Sorteo" → "Cajas Sorpresa 10K"
+- ✅ Logo actualizado: "10K" en blanco + "Cajas Sorpresa" en dorado
+- ✅ Iconos 🎁 grandes en tienda de cajas (80% del espacio)
+- ✅ Sistema completo de selecciones anticipadas:
+  * Tabla SorteoAnticipado en BD
+  * Panel /admin/anticipadas para crear eventos
+  * Premios editables (texto libre)
+  * Ejecución con selección aleatoria de ganadores
+  * Notificación por email
+  * Próximas selecciones en página de inicio
+- ✅ Sistema de referidos y fidelización:
+  * Código de referido único por usuario
+  * Link y QR descargable en dashboard
+  * Cupones para cajas gratis (1 por cada 5 referidos que compren)
+  * Tabla Referido y Cupon en BD
+- ✅ Ranking público /ranking con top 20 compradores
+  * Medallas para top 3
+  * Badge especial para compradores de 10+ cajas
+- ✅ Sorteo exclusivo para 10+ cajas (configurable en anticipadas)
+- ✅ Mensaje motivacional en dashboard si está cerca de 10 cajas
+
+### Pendientes
+- **Parte 3 (URGENTE):** Animación ruleta/bombo para sorteo en vivo
+  * 4 compartimientos (1 por cifra)
+  * Números cayendo de arriba hacia abajo
+  * Se detienen de izquierda a derecha con suspenso
+  * Efecto dorado + confetti al final
+  * Grabable para redes sociales
+- Logo personalizado (cuando esté diseñado)
+- Integración Wompi producción (cuenta en trámite con socio)
+
+### Lecciones de hoy
+- Vercel bloquea deploys en repos privados si detecta commits 
+  de usuarios que no son owner del proyecto en plan Hobby
+- Solución: eliminar proyecto y reimportarlo limpio
+- Deploy automático funciona perfecto después de esto
+- Consumo: ~2 USD en esta sesión, quedan ~$8 USD
+
+### Próxima sesión
+Continuar con Parte 3: animación del sorteo tipo bombo/ruleta

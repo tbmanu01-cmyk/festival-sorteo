@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import CarouselInicio from "@/components/CarouselInicio";
 import CountdownAnticipada from "@/components/CountdownAnticipada";
 
 const TOTAL_CAJAS = 10000;
@@ -14,6 +15,10 @@ interface Anticipada {
   cantidadGanadores: number;
 }
 
+interface CajaPreview {
+  numero: string;
+}
+
 async function obtenerDatos() {
   try {
     const { prisma } = await import("@/lib/prisma");
@@ -21,6 +26,11 @@ async function obtenerDatos() {
       prisma.config.findUnique({ where: { id: "singleton" } }),
       prisma.caja.count({ where: { estado: "VENDIDA" } }),
     ]);
+
+    // 12 cajas disponibles verdaderamente aleatorias para la vista previa
+    const cajasPreview = await prisma.$queryRaw<CajaPreview[]>`
+      SELECT numero FROM cajas WHERE estado = 'DISPONIBLE' ORDER BY RANDOM() LIMIT 12
+    `;
 
     let anticipadas: Anticipada[] = [];
     try {
@@ -34,39 +44,28 @@ async function obtenerDatos() {
 
     return {
       precioCaja: config?.precioCaja ?? 10_000,
-      fechaSorteo: config?.fechaSorteo ?? null,
+      fechaSorteo: config?.fechaSorteo ? config.fechaSorteo.toISOString() : null,
       pct4: config?.pct4Cifras ?? 0.35,
       pct3: config?.pct3Cifras ?? 0.15,
       pct2: config?.pct2Cifras ?? 0.10,
       margen: config?.margenGanancia ?? 0.40,
       vendidas,
+      cajasPreview,
       anticipadas,
     };
   } catch {
-    return { precioCaja: 10_000, fechaSorteo: null, pct4: 0.35, pct3: 0.15, pct2: 0.10, margen: 0.40, vendidas: 0, anticipadas: [] };
+    return {
+      precioCaja: 10_000,
+      fechaSorteo: null,
+      pct4: 0.35,
+      pct3: 0.15,
+      pct2: 0.10,
+      margen: 0.40,
+      vendidas: 0,
+      cajasPreview: [],
+      anticipadas: [],
+    };
   }
-}
-
-function ContadorCajas({ vendidas }: { vendidas: number }) {
-  const disponibles = TOTAL_CAJAS - vendidas;
-  const porcentaje = (vendidas / TOTAL_CAJAS) * 100;
-
-  return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/20">
-      <p className="text-blue-200 text-sm font-medium mb-1">Cajas disponibles</p>
-      <p className="text-5xl font-bold text-white mb-1">
-        {disponibles.toLocaleString("es-CO")}
-      </p>
-      <p className="text-[#F5A623] text-sm mb-4">de {TOTAL_CAJAS.toLocaleString("es-CO")} totales</p>
-      <div className="w-full bg-white/20 rounded-full h-3 mb-2">
-        <div
-          className="bg-[#F5A623] h-3 rounded-full transition-all"
-          style={{ width: `${porcentaje}%` }}
-        />
-      </div>
-      <p className="text-blue-200 text-xs">{porcentaje.toFixed(1)}% vendido</p>
-    </div>
-  );
 }
 
 const pasos = [
@@ -83,7 +82,7 @@ const pasos = [
   {
     numero: "02",
     titulo: "Elige tu número",
-    descripcion: "Selecciona uno o más números del 0000 al 9999. Cada caja cuesta $10.000 COP.",
+    descripcion: "Selecciona uno o más números del 0000 al 9999. Participa con una o varias cajas.",
     icono: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -103,115 +102,88 @@ const pasos = [
 ];
 
 const premios = [
-  {
-    categoria: "4 cifras exactas",
-    premio: "35% del recaudo",
-    color: "from-yellow-400 to-yellow-600",
-    icono: "🏆",
-    descripcion: "El número completo coincide con el resultado",
-  },
-  {
-    categoria: "3 últimas cifras",
-    premio: "15% del recaudo",
-    color: "from-gray-300 to-gray-500",
-    icono: "🥈",
-    descripcion: "Las 3 últimas cifras coinciden",
-  },
-  {
-    categoria: "2 últimas cifras",
-    premio: "10% del recaudo",
-    color: "from-amber-600 to-amber-800",
-    icono: "🥉",
-    descripcion: "Las 2 últimas cifras coinciden",
-  },
-  {
-    categoria: "1 última cifra",
-    premio: "Devolución del valor",
-    color: "from-blue-400 to-blue-600",
-    icono: "🎁",
-    descripcion: "La última cifra coincide con el resultado",
-  },
+  { categoria: "4 cifras exactas", premio: "35% del recaudo", color: "from-yellow-400 to-yellow-600", icono: "🏆", descripcion: "El número completo coincide con el resultado" },
+  { categoria: "3 últimas cifras", premio: "15% del recaudo", color: "from-gray-300 to-gray-500",   icono: "🥈", descripcion: "Las 3 últimas cifras coinciden" },
+  { categoria: "2 últimas cifras", premio: "10% del recaudo", color: "from-amber-600 to-amber-800", icono: "🥉", descripcion: "Las 2 últimas cifras coinciden" },
+  { categoria: "1 última cifra",   premio: "Devolución del valor", color: "from-blue-400 to-blue-600", icono: "🎁", descripcion: "La última cifra coincide con el resultado" },
 ];
 
 export default async function Inicio() {
-  const { precioCaja, fechaSorteo, pct4, pct3, pct2, vendidas, anticipadas } = await obtenerDatos();
-  const pctPremios = Math.round((pct4 + pct3 + pct2) * 100);
-  const fechaStr = fechaSorteo
-    ? new Date(fechaSorteo).toLocaleString("es-CO", { dateStyle: "full", timeStyle: "short" })
-    : null;
+  const { precioCaja, fechaSorteo, pct4, pct3, pct2, vendidas, cajasPreview, anticipadas } = await obtenerDatos();
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
       <main className="flex-1">
-        {/* Fecha del sorteo — banner si está configurada */}
-        {fechaStr && (
-          <div className="bg-[#F5A623] text-[#1B4F8A] py-2.5 px-4 text-center text-sm font-bold">
-            🗓️ Fecha del resultado: {fechaStr}
-          </div>
-        )}
+        {/* ── Carousel ──────────────────────────────────── */}
+        <CarouselInicio
+          vendidas={vendidas}
+          precioCaja={precioCaja}
+          fechaSorteo={fechaSorteo}
+          pct4={pct4}
+        />
 
-        {/* Hero */}
-        <section className="bg-gradient-to-br from-[#1B4F8A] via-[#1a5fa8] to-[#0d3b6e] text-white py-16 md:py-24">
+        {/* ── Vista previa tienda ───────────────────────── */}
+        <section className="py-10 bg-gray-50 border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Cabecera */}
+            <div className="flex items-center justify-between mb-6">
               <div>
-                <span className="inline-block bg-[#F5A623]/20 text-[#F5A623] text-sm font-semibold px-4 py-1.5 rounded-full mb-4 border border-[#F5A623]/30">
-                  Cajas Sorpresa
-                </span>
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-                  <span className="text-[#F5A623]">Cajas Sorpresa</span>
-                  <br />
-                  <span className="text-3xl md:text-4xl">10,000 números</span>
-                </h1>
-                <p className="text-blue-200 text-lg md:text-xl leading-relaxed mb-8">
-                  Elige tu número favorito
-                  del <strong className="text-white">0000 al 9999</strong>, paga solo{" "}
-                  <strong className="text-[#F5A623]">${precioCaja.toLocaleString("es-CO")} COP</strong> y gana hasta el{" "}
-                  <strong className="text-white">{Math.round(pct4 * 100)}% del recaudo total</strong>.
+                <h2 className="text-xl md:text-2xl font-extrabold text-[#1B4F8A]">
+                  Cajas Sorpresa Disponibles
+                </h2>
+                <p className="text-gray-400 text-sm mt-0.5">
+                  {(TOTAL_CAJAS - vendidas).toLocaleString("es-CO")} cajas disponibles
                 </p>
-                {fechaStr && (
-                  <div className="bg-white/10 border border-[#F5A623]/40 rounded-xl px-5 py-3 mb-6 text-sm">
-                    <span className="text-[#F5A623] font-bold">🗓️ Resultado:</span>{" "}
-                    <span className="text-white">{fechaStr}</span>
-                  </div>
-                )}
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link
-                    href="/registro"
-                    className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold text-lg px-8 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-center"
-                  >
-                    Adquiere tu caja
-                  </Link>
-                  <Link
-                    href="#como-funciona"
-                    className="border-2 border-white/40 hover:border-white text-white font-semibold text-lg px-8 py-4 rounded-xl transition-all text-center hover:bg-white/10"
-                  >
-                    ¿Cómo funciona?
-                  </Link>
-                </div>
               </div>
-              <div className="space-y-4">
-                <ContadorCajas vendidas={vendidas} />
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">
-                    <p className="text-2xl font-bold text-[#F5A623]">
+              <Link
+                href="/tienda"
+                className="text-[#1B4F8A] text-sm font-bold hover:underline whitespace-nowrap"
+              >
+                Ver todas →
+              </Link>
+            </div>
+
+            {/* Grid de cajas */}
+            {cajasPreview.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-7">
+                {cajasPreview.map((caja) => (
+                  <Link
+                    key={caja.numero}
+                    href="/tienda"
+                    className="rounded-2xl border border-green-100 p-4 text-center hover:shadow-md hover:border-[#1B4F8A]/30 transition-all group"
+                    style={{ backgroundColor: "rgba(220,252,231,0.6)" }}
+                  >
+                    <div className="text-4xl mb-2 group-hover:scale-110 transition-transform select-none">
+                      🎁
+                    </div>
+                    <p className="font-extrabold text-[#1B4F8A] text-lg tracking-widest">
+                      {caja.numero}
+                    </p>
+                    <p className="text-emerald-600 text-xs font-semibold mt-1">Disponible</p>
+                    <p className="text-gray-400 text-xs mt-0.5">
                       ${precioCaja.toLocaleString("es-CO")}
                     </p>
-                    <p className="text-blue-200 text-xs mt-1">Precio por caja</p>
-                  </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">
-                    <p className="text-2xl font-bold text-[#F5A623]">{pctPremios}%</p>
-                    <p className="text-blue-200 text-xs mt-1">Va a premios</p>
-                  </div>
-                </div>
+                  </Link>
+                ))}
               </div>
+            ) : (
+              <p className="text-center text-gray-400 py-8 text-sm">Cargando cajas disponibles…</p>
+            )}
+
+            <div className="text-center">
+              <Link
+                href="/tienda"
+                className="inline-flex items-center gap-2 bg-[#1B4F8A] hover:bg-[#0d3b6e] text-white font-bold px-8 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg text-sm md:text-base"
+              >
+                🛒 Ver todas las cajas
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* Cómo funciona */}
+        {/* ── Cómo funciona ─────────────────────────────── */}
         <section id="como-funciona" className="py-16 md:py-24 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-14">
@@ -242,9 +214,9 @@ export default async function Inicio() {
           </div>
         </section>
 
-        {/* Próximas selecciones anticipadas */}
+        {/* ── Próximas selecciones anticipadas ──────────── */}
         {anticipadas.length > 0 && (
-          <section id="anticipadas" className="py-16 md:py-24 bg-white">
+          <section className="py-16 md:py-24 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-12">
                 <span className="inline-block bg-[#F5A623]/15 text-[#b87b00] text-sm font-bold px-4 py-1.5 rounded-full mb-4 border border-[#F5A623]/30">
@@ -301,7 +273,7 @@ export default async function Inicio() {
           </section>
         )}
 
-        {/* Premios */}
+        {/* ── Tabla de premios ──────────────────────────── */}
         <section id="premios" className="py-16 md:py-24 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-14">
@@ -333,9 +305,9 @@ export default async function Inicio() {
               <h3 className="font-bold text-[#1B4F8A] mb-3 text-lg">Distribución del recaudo</h3>
               <div className="grid sm:grid-cols-4 gap-4 text-center">
                 {[
-                  { label: "Premio 4 cifras", valor: `${Math.round(pct4 * 100)}%` },
-                  { label: "Premio 3 cifras", valor: `${Math.round(pct3 * 100)}%` },
-                  { label: "Premio 2 cifras", valor: `${Math.round(pct2 * 100)}%` },
+                  { label: "Premio 4 cifras",   valor: `${Math.round(pct4 * 100)}%` },
+                  { label: "Premio 3 cifras",   valor: `${Math.round(pct3 * 100)}%` },
+                  { label: "Premio 2 cifras",   valor: `${Math.round(pct2 * 100)}%` },
                   { label: "Operación (gastos)", valor: `${Math.round((1 - pct4 - pct3 - pct2) * 100)}%` },
                 ].map((item) => (
                   <div key={item.label}>
@@ -348,7 +320,7 @@ export default async function Inicio() {
           </div>
         </section>
 
-        {/* CTA final */}
+        {/* ── CTA final ─────────────────────────────────── */}
         <section className="bg-gradient-to-r from-[#1B4F8A] to-[#0d3b6e] py-16 text-white text-center">
           <div className="max-w-3xl mx-auto px-4">
             <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
