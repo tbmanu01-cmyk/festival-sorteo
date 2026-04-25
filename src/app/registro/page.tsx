@@ -296,7 +296,6 @@ function FormularioRegistro() {
     register,
     handleSubmit,
     watch,
-    getValues,
     formState: { errors },
   } = useForm<RegistroFormData>({
     resolver: zodResolver(registroSchema),
@@ -313,21 +312,45 @@ function FormularioRegistro() {
   async function onSubmit(data: RegistroFormData) {
     setCargando(true);
     setError("");
+    console.log("[Registro] Enviando código a:", data.whatsapp);
     try {
       const res = await fetch("/api/auth/enviar-codigo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, refCode: refCode || undefined }),
       });
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.mensaje ?? "Error al enviar el código. Intenta nuevamente.");
+
+      console.log("[Registro] Respuesta HTTP:", res.status);
+
+      let json: Record<string, unknown> = {};
+      try {
+        json = await res.json();
+      } catch (parseErr) {
+        console.error("[Registro] Respuesta no es JSON:", parseErr);
+        setError("Error inesperado del servidor. Intenta nuevamente.");
         return;
       }
+
+      if (!res.ok) {
+        const msg = (json.mensaje as string) ?? "Error al enviar el código. Intenta nuevamente.";
+        console.error("[Registro] Error del servidor:", res.status, json);
+        setError(msg);
+        return;
+      }
+
+      const vid = json.verificacionId as string;
+      if (!vid) {
+        console.error("[Registro] Falta verificacionId en respuesta:", json);
+        setError("Error al procesar la respuesta. Intenta nuevamente.");
+        return;
+      }
+
+      console.log("[Registro] Código enviado OK. Mostrando pantalla de verificación.");
       setDatosRegistro(data);
-      setVerificacionId(json.verificacionId);
+      setVerificacionId(vid);
       setPaso(2);
-    } catch {
+    } catch (e) {
+      console.error("[Registro] Error de red:", e);
       setError("Error de conexión. Verifica tu internet e intenta nuevamente.");
     } finally {
       setCargando(false);
@@ -390,12 +413,6 @@ function FormularioRegistro() {
                 </p>
               </div>
             )}
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            )}
-
             {/* Datos personales */}
             <section>
               <h2 className="text-[#1B4F8A] font-bold text-sm uppercase tracking-wide mb-3 flex items-center gap-2">
@@ -584,6 +601,14 @@ function FormularioRegistro() {
                 <p className="text-red-500 text-xs mt-1">{errors.terminos.message}</p>
               )}
             </div>
+
+            {/* Error — visible justo antes del botón */}
+            {error && (
+              <div className="bg-red-50 border border-red-300 rounded-xl px-4 py-3 flex items-start gap-2">
+                <span className="text-red-500 mt-0.5 shrink-0">⚠</span>
+                <p className="text-red-700 text-sm font-medium">{error}</p>
+              </div>
+            )}
 
             {/* Botón */}
             <button
