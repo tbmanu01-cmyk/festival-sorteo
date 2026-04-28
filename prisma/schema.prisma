@@ -21,7 +21,13 @@ enum EstadoCaja {
 enum EstadoSorteo {
   PENDIENTE
   EN_CURSO
+  ACTIVO
   FINALIZADO
+}
+
+enum TipoSorteo {
+  PRINCIPAL
+  GRAN_SORTEO
 }
 
 enum CategoriaPremio {
@@ -105,28 +111,33 @@ model Cupon {
 }
 
 model Caja {
-  id          String     @id @default(cuid())
-  numero      String     @unique
-  estado      EstadoCaja @default(DISPONIBLE)
-  userId      String?
-  fechaCompra DateTime?
-  idCompra    String?
+  id           String      @id @default(cuid())
+  numero       String      @unique
+  estado       EstadoCaja  @default(DISPONIBLE)
+  userId       String?
+  fechaCompra  DateTime?
+  idCompra     String?
+  tipoSorteo   TipoSorteo  @default(PRINCIPAL)
+  granSorteoId String?
 
-  user        User?      @relation(fields: [userId], references: [id])
+  user         User?       @relation(fields: [userId], references: [id])
+  granSorteo   GranSorteo? @relation(fields: [granSorteoId], references: [id])
 
   @@map("cajas")
 }
 
 model Transaccion {
-  id          String          @id @default(cuid())
-  userId      String
-  tipo        TipoTransaccion
-  monto       Float
-  descripcion String
-  fecha       DateTime        @default(now())
-  referencia  String?
+  id           String          @id @default(cuid())
+  userId       String
+  tipo         TipoTransaccion
+  monto        Float
+  descripcion  String
+  fecha        DateTime        @default(now())
+  referencia   String?
+  granSorteoId String?
 
-  user        User            @relation(fields: [userId], references: [id])
+  user         User            @relation(fields: [userId], references: [id])
+  granSorteo   GranSorteo?     @relation(fields: [granSorteoId], references: [id])
 
   @@map("transacciones")
 }
@@ -208,13 +219,46 @@ model SorteoAnticipado {
   @@map("sorteos_anticipados")
 }
 
-model VerificacionWhatsApp {
-  id         String   @id @default(cuid())
-  numero     String
-  codigo     String
-  verificado Boolean  @default(false)
-  expiraEn   DateTime
-  creadoEn   DateTime @default(now())
 
-  @@map("verificaciones_whatsapp")
+model GranSorteo {
+  id                  String             @id @default(cuid())
+  nombre              String
+  descripcion         String
+  premioDescripcion   String
+  valorCaja           Int
+  fechaInicio         DateTime
+  fechaSorteo         DateTime
+  numeroGanador       String?
+  estado              EstadoSorteo       @default(ACTIVO)
+  recaudo             Int                @default(0)
+  fondoPremios        Int                @default(0)
+  ganancia            Int                @default(0)
+  distribucionPremios Json?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  cajas               Caja[]
+  sorteosPrevios      SorteoPrevioGran[]
+  transacciones       Transaccion[]
+
+  @@map("grandes_sorteos")
+}
+
+model SorteoPrevioGran {
+  id                String       @id @default(cuid())
+  granSorteoId      String
+  nombre            String
+  premioDescripcion String
+  premioValor       Int?
+  fechaSorteo       DateTime
+  cantidadGanadores Int          @default(5)
+  requisitos        Json
+  ganadores         Json?
+  estado            EstadoSorteo @default(ACTIVO)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  granSorteo        GranSorteo   @relation(fields: [granSorteoId], references: [id])
+
+  @@map("sorteos_previos_gran")
 }

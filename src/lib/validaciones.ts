@@ -9,19 +9,6 @@ export const registroSchema = z
     celular: z
       .string()
       .regex(/^3\d{9}$/, "El celular debe ser un número colombiano válido (10 dígitos, empieza por 3)"),
-    whatsapp: z
-      .string()
-      .min(1, "El número de WhatsApp es requerido")
-      .refine(
-        (val) => {
-          const digits = val.replace(/[\s\-\(\)+]/g, "");
-          return (
-            (digits.length === 10 && digits.startsWith("3")) ||
-            (digits.length === 12 && digits.startsWith("573"))
-          );
-        },
-        "Número colombiano inválido (ej: +57 300 000 0000 o 300 000 0000)"
-      ),
     ciudad: z.string().min(2, "Selecciona una ciudad"),
     departamento: z.string().min(2, "Selecciona un departamento"),
     banco: z.string().min(2, "Selecciona un banco"),

@@ -43,12 +43,26 @@ export default function Header() {
                   Mi cuenta
                 </Link>
                 {(session.user as { rol?: string })?.rol === "ADMIN" && (
-                  <Link
-                    href="/admin"
-                    className="text-[#F5A623] hover:text-yellow-300 text-sm font-medium transition-colors"
-                  >
-                    Administrar
-                  </Link>
+                  <>
+                    <Link
+                      href="/admin"
+                      className="text-[#F5A623] hover:text-yellow-300 text-sm font-medium transition-colors"
+                    >
+                      Administrar
+                    </Link>
+                    <Link
+                      href="/admin/grandes-sorteos"
+                      className="text-[#F5A623]/80 hover:text-yellow-300 text-sm font-medium transition-colors"
+                    >
+                      Grandes Sorteos
+                    </Link>
+                    <Link
+                      href="/admin/sorteos-previos"
+                      className="text-[#F5A623]/80 hover:text-yellow-300 text-sm font-medium transition-colors"
+                    >
+                      Sorteos Previos
+                    </Link>
+                  </>
                 )}
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
@@ -108,6 +122,19 @@ export default function Header() {
                 <Link href="/dashboard" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
                   Mi cuenta
                 </Link>
+                {(session.user as { rol?: string })?.rol === "ADMIN" && (
+                  <>
+                    <Link href="/admin" className="block text-[#F5A623] hover:text-yellow-300 px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+                      Administrar
+                    </Link>
+                    <Link href="/admin/grandes-sorteos" className="block text-[#F5A623]/80 hover:text-yellow-300 px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+                      Grandes Sorteos
+                    </Link>
+                    <Link href="/admin/sorteos-previos" className="block text-[#F5A623]/80 hover:text-yellow-300 px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+                      Sorteos Previos
+                    </Link>
+                  </>
+                )}
                 <button
                   onClick={() => { setMenuAbierto(false); signOut({ callbackUrl: "/" }); }}
                   className="block w-full text-left text-red-300 hover:text-red-200 px-2 py-2 text-sm"
