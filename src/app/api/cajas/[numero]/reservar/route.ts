@@ -49,7 +49,7 @@ export async function POST(
 
     if (caja.estado !== "DISPONIBLE") {
       return NextResponse.json(
-        { mensaje: "Esta caja ya está reservada o vendida. Elige otro número." },
+        { mensaje: "Esta caja ya está reservada o comprada. Elige otro número." },
         { status: 409 }
       );
     }

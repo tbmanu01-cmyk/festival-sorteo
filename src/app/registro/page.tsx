@@ -118,7 +118,7 @@ function FormularioRegistro() {
           <div className="w-9 h-9 bg-[#F5A623] rounded-full flex items-center justify-center font-bold text-[#1B4F8A] text-sm">
             10K
           </div>
-          <span className="text-white font-bold">Cajas Sorpresa 10K</span>
+          <span className="text-white font-bold">Club 10K</span>
         </Link>
       </div>
 

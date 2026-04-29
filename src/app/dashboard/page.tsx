@@ -208,7 +208,7 @@ function TarjetaCajaComprada({ caja }: { caja: CajaVendida }) {
         </span>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-900">Caja #{caja.numero}</p>
+        <p className="font-semibold text-gray-900">Membresía #{caja.numero}</p>
         <p className="text-gray-400 text-xs mt-0.5">
           {caja.fechaCompra
             ? new Date(caja.fechaCompra).toLocaleString("es-CO", {
@@ -437,10 +437,10 @@ function SeccionReferidos() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-white font-extrabold text-lg leading-tight">
-              Invita amigos y gana cajas gratis
+              Invita amigos y gana membresías gratis
             </h2>
             <p className="text-blue-200 text-sm mt-0.5">
-              Por cada 5 amigos que compren su primera caja, recibes 1 cupón gratis
+              Por cada 5 amigos que adquieran su primera membresía, recibes 1 cupón gratis
             </p>
           </div>
           <Link
@@ -547,7 +547,7 @@ function SeccionReferidos() {
             </div>
             <p className="text-xs text-gray-400 mt-2">
               {comprados === 0
-                ? "Por cada 5 amigos que compren su primera caja, recibes 1 cupón gratis"
+                ? "Por cada 5 amigos que adquieran su primera membresía, recibes 1 cupón gratis"
                 : enCiclo === 0
                 ? "¡Completaste 5 referidos! Sigue invitando para ganar otro cupón."
                 : `Te ${faltan === 1 ? "falta 1 amigo" : `faltan ${faltan} amigos`} para ganar tu ${
@@ -563,10 +563,10 @@ function SeccionReferidos() {
             <span className="text-3xl flex-shrink-0">🎁</span>
             <div>
               <p className="font-extrabold text-[#b87b00]">
-                Tienes {datos!.cuponesDisponibles} cupón{datos!.cuponesDisponibles > 1 ? "es" : ""} para {datos!.cuponesDisponibles > 1 ? "cajas gratis" : "caja gratis"}
+                Tienes {datos!.cuponesDisponibles} cupón{datos!.cuponesDisponibles > 1 ? "es" : ""} para {datos!.cuponesDisponibles > 1 ? "membresías gratis" : "membresía gratis"}
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
-                Úsalos al comprar tu próxima caja en la tienda
+                Úsalos al adquirir tu próxima membresía en la tienda
               </p>
             </div>
           </div>
@@ -667,7 +667,7 @@ export default function Dashboard() {
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
               <span className="text-2xl">📦</span>
               <p className="text-xl font-extrabold mt-1 text-[#1B4F8A]">{cajas.length}</p>
-              <p className="text-gray-500 text-xs mt-0.5">Cajas compradas</p>
+              <p className="text-gray-500 text-xs mt-0.5">Membresías compradas</p>
               {cajas.length >= 10 && (
                 <span className="inline-block mt-1 text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">
                   ⭐ VIP 10+
@@ -695,7 +695,7 @@ export default function Dashboard() {
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
               <span className="text-2xl">🏆</span>
               <p className="text-xl font-extrabold mt-1 text-[#F5A623]">{premios.length}</p>
-              <p className="text-gray-500 text-xs mt-0.5">Premios ganados</p>
+              <p className="text-gray-500 text-xs mt-0.5">Beneficios ganados</p>
             </div>
           </div>
 
@@ -753,13 +753,13 @@ export default function Dashboard() {
               <p className="text-gray-500 text-sm mb-4">
                 {cajas.length === 0
                   ? "Elige tu número de la suerte del 0000 al 9999."
-                  : "Puedes comprar más cajas y aumentar tus chances de ganar."}
+                  : "Puedes adquirir más membresías y aumentar tus chances de obtener beneficios."}
               </p>
               <Link
                 href="/tienda"
                 className="inline-block bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-7 py-3 rounded-xl transition-colors shadow-md"
               >
-                Ir a la tienda
+                Ir a las membresías
               </Link>
             </div>
           )}
@@ -771,7 +771,7 @@ export default function Dashboard() {
                 <span className="text-3xl">⭐</span>
                 <div>
                   <p className="font-extrabold text-lg">¡Eres VIP!</p>
-                  <p className="text-purple-200 text-sm">Con 10+ cajas participas en sorteos exclusivos para grandes compradores.</p>
+                  <p className="text-purple-200 text-sm">Con 10+ membresías participas en eventos exclusivos del club para grandes miembros.</p>
                 </div>
               </div>
             </div>
@@ -785,7 +785,7 @@ export default function Dashboard() {
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-bold text-gray-900">
-                  Mis cajas compradas
+                  Mis membresías compradas
                   <span className="ml-2 text-sm font-normal text-gray-500">
                     ({cajas.length})
                   </span>
@@ -794,7 +794,7 @@ export default function Dashboard() {
                   href="/tienda"
                   className="text-[#1B4F8A] text-sm font-semibold hover:underline"
                 >
-                  + Comprar más
+                  + Adquirir más
                 </Link>
               </div>
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
@@ -821,7 +821,7 @@ export default function Dashboard() {
                       )}
                       {a.numeroCaja && (
                         <p className="text-gray-500 text-xs mt-0.5">
-                          Caja ganadora: <span className="font-extrabold text-[#1B4F8A] font-mono">#{a.numeroCaja}</span>
+                          Membresía ganadora: <span className="font-extrabold text-[#1B4F8A] font-mono">#{a.numeroCaja}</span>
                         </p>
                       )}
                       <p className="text-gray-400 text-xs mt-0.5">
@@ -840,7 +840,7 @@ export default function Dashboard() {
           {/* Premios ganados */}
           {premios.length > 0 && (
             <section>
-              <h2 className="text-lg font-bold text-gray-900 mb-3">Premios ganados 🏆</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-3">Beneficios ganados 🏆</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 {premios.map((p, i) => (
                   <div key={i} className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-4">

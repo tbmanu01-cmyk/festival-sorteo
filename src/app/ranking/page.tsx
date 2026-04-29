@@ -64,7 +64,7 @@ function TarjetaRanking({ entry }: { entry: RankEntry }) {
         <p className={`font-extrabold ${esPodio ? "text-[#1B4F8A] text-lg" : "text-gray-700 text-sm"}`}>
           {entry.totalCajas}
         </p>
-        <p className="text-gray-400 text-xs">{entry.totalCajas === 1 ? "caja" : "cajas"}</p>
+        <p className="text-gray-400 text-xs">{entry.totalCajas === 1 ? "membresía" : "membresías"}</p>
       </div>
     </div>
   );
@@ -108,8 +108,8 @@ export default function PaginaRanking() {
                 ← Inicio
               </Link>
             </div>
-            <h1 className="text-3xl font-extrabold text-[#1B4F8A]">Ranking de compradores</h1>
-            <p className="text-gray-500 text-sm mt-2">Top 20 participantes con más cajas</p>
+            <h1 className="text-3xl font-extrabold text-[#1B4F8A]">Ranking de miembros</h1>
+            <p className="text-gray-500 text-sm mt-2">Top 20 miembros con más membresías</p>
             {ultimaActualizacion && (
               <p className="text-gray-300 text-xs mt-1">
                 Actualizado: {ultimaActualizacion.toLocaleTimeString("es-CO", { timeStyle: "short" })}
@@ -147,7 +147,7 @@ export default function PaginaRanking() {
                         <span className="text-3xl mb-2">🥈</span>
                         <div className="bg-white/10 rounded-xl px-3 py-3 w-full h-24 flex flex-col items-center justify-center">
                           <p className="font-extrabold text-sm leading-tight whitespace-nowrap">{nombreOculto(podio[1])}</p>
-                          <p className="text-blue-200 text-xs mt-1">{podio[1].totalCajas} cajas</p>
+                          <p className="text-blue-200 text-xs mt-1">{podio[1].totalCajas} membresías</p>
                         </div>
                       </div>
                     )}
@@ -157,7 +157,7 @@ export default function PaginaRanking() {
                         <span className="text-4xl mb-2">🥇</span>
                         <div className="bg-[#F5A623]/20 border border-[#F5A623]/40 rounded-xl px-3 py-4 w-full h-32 flex flex-col items-center justify-center">
                           <p className="font-extrabold text-base leading-tight whitespace-nowrap">{nombreOculto(podio[0])}</p>
-                          <p className="text-[#F5A623] font-bold text-sm mt-1">{podio[0].totalCajas} cajas</p>
+                          <p className="text-[#F5A623] font-bold text-sm mt-1">{podio[0].totalCajas} membresías</p>
                           <p className="text-blue-300 text-xs mt-0.5">{podio[0].ciudad}</p>
                         </div>
                       </div>
@@ -168,7 +168,7 @@ export default function PaginaRanking() {
                         <span className="text-3xl mb-2">🥉</span>
                         <div className="bg-white/10 rounded-xl px-3 py-3 w-full h-20 flex flex-col items-center justify-center">
                           <p className="font-extrabold text-sm leading-tight whitespace-nowrap">{nombreOculto(podio[2])}</p>
-                          <p className="text-blue-200 text-xs mt-1">{podio[2].totalCajas} cajas</p>
+                          <p className="text-blue-200 text-xs mt-1">{podio[2].totalCajas} membresías</p>
                         </div>
                       </div>
                     )}
@@ -193,7 +193,7 @@ export default function PaginaRanking() {
               <div className="flex items-center gap-4 text-xs text-gray-400 justify-center">
                 <span className="flex items-center gap-1">
                   <span className="inline-block bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold text-[10px]">⭐ VIP</span>
-                  10+ cajas compradas
+                  10+ membresías adquiridas
                 </span>
                 <span>·</span>
                 <span>Se actualiza cada 30 segundos</span>

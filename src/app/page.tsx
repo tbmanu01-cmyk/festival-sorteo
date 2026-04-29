@@ -82,7 +82,7 @@ const pasos = [
   {
     numero: "02",
     titulo: "Elige tu número",
-    descripcion: "Selecciona uno o más números del 0000 al 9999. Participa con una o varias cajas.",
+    descripcion: "Selecciona uno o más números del 0000 al 9999. Participa con una o varias membresías.",
     icono: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -91,7 +91,7 @@ const pasos = [
   },
   {
     numero: "03",
-    titulo: "Gana premios",
+    titulo: "Obtén beneficios",
     descripcion: "El número ganador se saca de la lotería de Bogotá. ¡Coincide 4, 3, 2 o 1 cifra y gana!",
     icono: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,10 +131,10 @@ export default async function Inicio() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl md:text-2xl font-extrabold text-[#1B4F8A]">
-                  Cajas Sorpresa Disponibles
+                  Membresías disponibles
                 </h2>
                 <p className="text-gray-400 text-sm mt-0.5">
-                  {(TOTAL_CAJAS - vendidas).toLocaleString("es-CO")} cajas disponibles
+                  {(TOTAL_CAJAS - vendidas).toLocaleString("es-CO")} membresías disponibles
                 </p>
               </div>
               <Link
@@ -156,7 +156,7 @@ export default async function Inicio() {
                     style={{ backgroundColor: "rgba(220,252,231,0.6)" }}
                   >
                     <div className="text-4xl mb-2 group-hover:scale-110 transition-transform select-none">
-                      🎁
+                      🎫
                     </div>
                     <p className="font-extrabold text-[#1B4F8A] text-lg tracking-widest">
                       {caja.numero}
@@ -169,7 +169,7 @@ export default async function Inicio() {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-gray-400 py-8 text-sm">Cargando cajas disponibles…</p>
+              <p className="text-center text-gray-400 py-8 text-sm">Cargando membresías disponibles…</p>
             )}
 
             <div className="text-center">
@@ -177,7 +177,7 @@ export default async function Inicio() {
                 href="/tienda"
                 className="inline-flex items-center gap-2 bg-[#1B4F8A] hover:bg-[#0d3b6e] text-white font-bold px-8 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg text-sm md:text-base"
               >
-                🛒 Ver todas las cajas
+                🛒 Ver todas las membresías
               </Link>
             </div>
           </div>
@@ -191,7 +191,7 @@ export default async function Inicio() {
                 ¿Cómo funciona?
               </h2>
               <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-                Participar es muy fácil. En 3 simples pasos puedes estar en la lista de ganadores.
+                Participar es muy fácil. En 3 simples pasos puedes estar en la lista de miembros beneficiados.
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
@@ -220,13 +220,13 @@ export default async function Inicio() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-12">
                 <span className="inline-block bg-[#F5A623]/15 text-[#b87b00] text-sm font-bold px-4 py-1.5 rounded-full mb-4 border border-[#F5A623]/30">
-                  ¡Antes del sorteo principal!
+                  ¡Antes del evento principal!
                 </span>
                 <h2 className="text-3xl md:text-4xl font-extrabold text-[#1B4F8A] mb-4">
                   Próximas selecciones
                 </h2>
                 <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-                  Sorteos anticipados con premios especiales. ¡Tu caja puede ganar antes del evento principal!
+                  Selecciones especiales con beneficios exclusivos. ¡Tu membresía puede ser beneficiada antes del evento principal!
                 </p>
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -238,7 +238,7 @@ export default async function Inicio() {
                     <div className="flex items-start justify-between mb-4">
                       <span className="text-3xl">🎯</span>
                       <span className="bg-[#1B4F8A]/10 text-[#1B4F8A] text-xs font-bold px-2.5 py-1 rounded-full">
-                        {a.cantidadGanadores} ganador{a.cantidadGanadores !== 1 ? "es" : ""}
+                        {a.cantidadGanadores} miembro{a.cantidadGanadores !== 1 ? "s beneficiados" : " beneficiado"}
                       </span>
                     </div>
                     <h3 className="font-extrabold text-[#1B4F8A] text-lg mb-1">{a.nombre}</h3>
@@ -246,7 +246,7 @@ export default async function Inicio() {
                       <p className="text-gray-500 text-sm mb-3">{a.descripcion}</p>
                     )}
                     <div className="bg-[#F5A623]/10 rounded-xl px-4 py-3 mb-4">
-                      <p className="text-xs text-gray-500 mb-0.5">Premio</p>
+                      <p className="text-xs text-gray-500 mb-0.5">Beneficio</p>
                       <p className="font-extrabold text-[#b87b00] text-lg">{a.premioDescripcion}</p>
                     </div>
                     <div className="border-t border-[#1B4F8A]/10 pt-4">
@@ -278,10 +278,10 @@ export default async function Inicio() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-extrabold text-[#1B4F8A] mb-4">
-                Tabla de premios
+                Tabla de beneficios
               </h2>
               <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-                El número ganador lo determina la Lotería de Bogotá. Mientras más cifras coincidan, mayor es tu premio.
+                El número ganador lo determina la Lotería de Bogotá. Mientras más cifras coincidan, mayor es tu beneficio.
               </p>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -331,13 +331,13 @@ export default async function Inicio() {
               <strong className="text-[#F5A623]">
                 {(TOTAL_CAJAS - vendidas).toLocaleString("es-CO")}
               </strong>{" "}
-              cajas disponibles. Regístrate ahora y asegura el tuyo.
+              membresías disponibles. Regístrate ahora y asegura la tuya.
             </p>
             <Link
               href="/registro"
               className="inline-block bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold text-xl px-10 py-4 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
             >
-              Adquiere tu caja — ${precioCaja.toLocaleString("es-CO")} COP
+              Adquiere tu membresía — ${precioCaja.toLocaleString("es-CO")} COP
             </Link>
           </div>
         </section>

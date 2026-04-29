@@ -15,11 +15,11 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 bg-[#F5A623] rounded-full flex items-center justify-center font-bold text-[#1B4F8A] text-sm group-hover:scale-110 transition-transform">
-              CS
+              CK
             </div>
             <div className="hidden sm:block">
               <p className="text-white font-bold text-lg leading-tight">10K</p>
-              <p className="text-[#F5A623] text-xs font-medium">Cajas Sorpresa</p>
+              <p className="text-[#F5A623] text-xs font-medium">Club</p>
             </div>
           </Link>
 
@@ -29,7 +29,7 @@ export default function Header() {
               ¿Cómo funciona?
             </Link>
             <Link href="/#premios" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
-              Premios
+              Beneficios
             </Link>
             <Link href="/ranking" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
               Ranking
@@ -43,26 +43,12 @@ export default function Header() {
                   Mi cuenta
                 </Link>
                 {(session.user as { rol?: string })?.rol === "ADMIN" && (
-                  <>
-                    <Link
-                      href="/admin"
-                      className="text-[#F5A623] hover:text-yellow-300 text-sm font-medium transition-colors"
-                    >
-                      Administrar
-                    </Link>
-                    <Link
-                      href="/admin/grandes-sorteos"
-                      className="text-[#F5A623]/80 hover:text-yellow-300 text-sm font-medium transition-colors"
-                    >
-                      Grandes Sorteos
-                    </Link>
-                    <Link
-                      href="/admin/sorteos-previos"
-                      className="text-[#F5A623]/80 hover:text-yellow-300 text-sm font-medium transition-colors"
-                    >
-                      Sorteos Previos
-                    </Link>
-                  </>
+                  <Link
+                    href="/admin"
+                    className="text-[#F5A623] hover:text-yellow-300 text-sm font-medium transition-colors"
+                  >
+                    Administrar
+                  </Link>
                 )}
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
@@ -112,7 +98,7 @@ export default function Header() {
               ¿Cómo funciona?
             </Link>
             <Link href="/#premios" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
-              Premios
+              Beneficios
             </Link>
             <Link href="/ranking" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
               Ranking
@@ -123,17 +109,9 @@ export default function Header() {
                   Mi cuenta
                 </Link>
                 {(session.user as { rol?: string })?.rol === "ADMIN" && (
-                  <>
-                    <Link href="/admin" className="block text-[#F5A623] hover:text-yellow-300 px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
-                      Administrar
-                    </Link>
-                    <Link href="/admin/grandes-sorteos" className="block text-[#F5A623]/80 hover:text-yellow-300 px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
-                      Grandes Sorteos
-                    </Link>
-                    <Link href="/admin/sorteos-previos" className="block text-[#F5A623]/80 hover:text-yellow-300 px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
-                      Sorteos Previos
-                    </Link>
-                  </>
+                  <Link href="/admin" className="block text-[#F5A623] hover:text-yellow-300 px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+                    Administrar
+                  </Link>
                 )}
                 <button
                   onClick={() => { setMenuAbierto(false); signOut({ callbackUrl: "/" }); }}

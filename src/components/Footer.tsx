@@ -9,15 +9,15 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-9 h-9 bg-[#F5A623] rounded-full flex items-center justify-center font-bold text-[#1B4F8A] text-sm">
-                CS
+                CK
               </div>
               <div>
-                <p className="text-white font-bold">Cajas Sorpresa</p>
-                <p className="text-[#F5A623] text-xs">10,000 números</p>
+                <p className="text-white font-bold">Club 10K</p>
+                <p className="text-[#F5A623] text-xs">10,000 membresías</p>
               </div>
             </div>
             <p className="text-sm leading-relaxed">
-              Elige tu número del 0000 al 9999 y gana increíbles premios.
+              Elige tu número del 0000 al 9999 y obtén increíbles beneficios.
             </p>
           </div>
 
@@ -27,7 +27,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li><Link href="/" className="hover:text-white transition-colors">Inicio</Link></li>
               <li><Link href="/#como-funciona" className="hover:text-white transition-colors">¿Cómo funciona?</Link></li>
-              <li><Link href="/#premios" className="hover:text-white transition-colors">Premios</Link></li>
+              <li><Link href="/#premios" className="hover:text-white transition-colors">Beneficios</Link></li>
               <li><Link href="/registro" className="hover:text-white transition-colors">Registrarse</Link></li>
               <li><Link href="/login" className="hover:text-white transition-colors">Iniciar sesión</Link></li>
             </ul>
@@ -48,7 +48,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-blue-700 mt-8 pt-6 text-center text-xs text-blue-300">
-          &copy; {new Date().getFullYear()} Cajas Sorpresa 10000. Todos los derechos reservados.
+          &copy; {new Date().getFullYear()} Club 10K. Todos los derechos reservados.
         </div>
       </div>
     </footer>

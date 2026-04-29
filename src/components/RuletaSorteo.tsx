@@ -267,7 +267,7 @@ export default function RuletaSorteo({ numeroGanador, activo, onTerminado }: Pro
           marginBottom: "6px",
           textShadow: "0 0 20px rgba(245,166,35,0.65)",
         }}>
-          ✨ Cajas Sorpresa 10K ✨
+          ✨ Club 10K ✨
         </p>
         <p style={{
           color: done ? "#F5A623" : activo ? "#4a90d9" : "#243d5c",

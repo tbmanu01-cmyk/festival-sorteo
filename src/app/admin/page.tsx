@@ -354,16 +354,10 @@ export default function AdminPanel() {
                 ⚙️ Configuración
               </Link>
               <Link
-                href="/admin/anticipadas"
-                className="border border-[#F5A623] text-[#b87b00] hover:bg-[#F5A623]/10 font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
-              >
-                🎯 Anticipadas
-              </Link>
-              <Link
-                href="/admin/sorteo"
+                href="/admin/motor-sorteos"
                 className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-5 py-2.5 rounded-xl transition-colors shadow-md text-sm flex items-center gap-1.5"
               >
-                🎰 Sorteo Principal
+                ⚙️ Motor de Sorteos
               </Link>
             </div>
           </div>

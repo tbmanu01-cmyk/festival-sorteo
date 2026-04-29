@@ -54,7 +54,7 @@ function ModalReserva({ caja, onCerrar, onConfirmar, cargando, resultado }: Moda
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">¡Caja reservada!</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">¡Membresía reservada!</h3>
               <div className="text-6xl font-extrabold text-[#1B4F8A] mb-3">{caja.numero}</div>
               <p className="text-gray-600 text-sm mb-1">{resultado.mensaje}</p>
               {resultado.expira && (
@@ -104,7 +104,7 @@ function ModalReserva({ caja, onCerrar, onConfirmar, cargando, resultado }: Moda
 
             <div className="bg-gray-50 rounded-xl p-4 mb-6">
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-500">Precio por caja</span>
+                <span className="text-gray-500">Precio por membresía</span>
                 <span className="font-bold text-gray-900">$10.000 COP</span>
               </div>
               <div className="flex justify-between text-sm">
@@ -153,14 +153,14 @@ function CeldaCaja({
   const reservada = caja.estado === "RESERVADA";
 
   const tooltip = (() => {
-    if (!reservada || !caja.fechaCompra) return `Caja ${caja.numero} — ${caja.estado}`;
+    if (!reservada || !caja.fechaCompra) return `Membresía ${caja.numero} — ${caja.estado}`;
     const expira = new Date(caja.fechaCompra).getTime() + 15 * 60 * 1000;
     const restMs = Math.max(0, expira - Date.now());
     const min = Math.floor(restMs / 60000);
     const seg = Math.floor((restMs % 60000) / 1000);
     return restMs === 0
-      ? `Caja ${caja.numero} — Reserva vencida`
-      : `Caja ${caja.numero} — Reservada, expira en ${min}m ${String(seg).padStart(2, "0")}s`;
+      ? `Membresía ${caja.numero} — Reserva vencida`
+      : `Membresía ${caja.numero} — Reservada, expira en ${min}m ${String(seg).padStart(2, "0")}s`;
   })();
 
   return (
@@ -180,7 +180,7 @@ function CeldaCaja({
       `}
     >
       <div className="flex-1 flex items-center justify-center">
-        <span className="text-4xl leading-none">🎁</span>
+        <span className="text-4xl leading-none">🎫</span>
       </div>
       <span className="text-xs leading-none font-extrabold">{caja.numero}</span>
       <span className="text-[10px] leading-none font-semibold mt-0.5 opacity-90">
@@ -386,10 +386,10 @@ export default function TiendaCajas() {
         <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] text-white py-8 px-4">
           <div className="max-w-7xl mx-auto">
             <h1 className="text-2xl md:text-3xl font-extrabold mb-1">
-              Tienda de Cajas Sorpresa
+              Membresías disponibles
             </h1>
             <p className="text-blue-200 text-sm">
-              Elige tu número del 0000 al 9999 — $10.000 COP por caja
+              Elige tu número del 0000 al 9999 — $10.000 COP por membresía
             </p>
             {datos && (
               <div className="flex gap-4 mt-4 text-sm">
@@ -397,7 +397,7 @@ export default function TiendaCajas() {
                   <span className="w-3 h-3 rounded-full bg-green-400 inline-block" />
                   <span className="text-blue-100">
                     {datos.total === 100
-                      ? `${disponibles} disponibles en esta página`
+                      ? `${disponibles} membresías disponibles en esta página`
                       : `${datos.total.toLocaleString("es-CO")} resultados`}
                   </span>
                 </span>
@@ -495,7 +495,7 @@ export default function TiendaCajas() {
                 <span>
                   Mostrando {(pagina - 1) * 100 + 1}–
                   {Math.min(pagina * 100, datos.total)} de{" "}
-                  <strong>{datos.total.toLocaleString("es-CO")}</strong> cajas
+                  <strong>{datos.total.toLocaleString("es-CO")}</strong> membresías
                 </span>
                 <span className="flex gap-3">
                   <span className="text-green-600 font-medium">{disponibles} libres</span>
@@ -520,9 +520,9 @@ export default function TiendaCajas() {
           ) : (
             <div className="text-center py-20 text-gray-500">
               <p className="text-5xl mb-4">🔍</p>
-              <p className="font-semibold text-lg">No se encontraron cajas</p>
+              <p className="font-semibold text-lg">No se encontraron membresías</p>
               <p className="text-sm mt-1">
-                {buscar ? `No hay cajas con el número "${buscar}"` : "Intenta cambiar los filtros"}
+                {buscar ? `No hay membresías con el número "${buscar}"` : "Intenta cambiar los filtros"}
               </p>
             </div>
           )}

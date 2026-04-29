@@ -30,7 +30,7 @@ export async function POST(
     const esReservadaMia = caja.estado === "RESERVADA" && caja.userId === userId;
     if (caja.estado !== "DISPONIBLE" && !esReservadaMia) {
       return NextResponse.json(
-        { mensaje: "Esta caja ya está vendida o reservada por otro usuario." },
+        { mensaje: "Esta caja ya está comprada o reservada por otro usuario." },
         { status: 409 }
       );
     }

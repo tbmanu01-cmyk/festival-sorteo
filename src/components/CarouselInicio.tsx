@@ -45,16 +45,19 @@ export default function CarouselInicio({ vendidas, precioCaja, fechaSorteo, pct4
         style={{ background: "linear-gradient(135deg,#1B4F8A 0%,#1a5fa8 55%,#0d3b6e 100%)" }}
       >
         <div className="text-center text-white px-6 w-full max-w-3xl mx-auto">
-          <p className="text-blue-300 text-xs font-bold uppercase tracking-widest mb-3">
-            Disponibilidad en tiempo real
+          <p className="text-white font-extrabold text-3xl md:text-5xl leading-none mb-1">
+            Club 10K
           </p>
-          <p className="text-6xl md:text-8xl font-extrabold leading-none mb-1">
+          <p className="text-[#F5A623] font-bold text-sm md:text-base mb-4">
+            10,000 membresías numeradas
+          </p>
+          <p className="text-5xl md:text-7xl font-extrabold leading-none mb-1">
             {disponibles.toLocaleString("es-CO")}
           </p>
           <p className="text-blue-200 text-base md:text-lg mb-1">
-            cajas disponibles · de 10,000 totales
+            membresías disponibles
           </p>
-          <p className="text-[#F5A623] font-bold text-sm mb-5">{pctVendido}% vendido</p>
+          <p className="text-[#F5A623] font-bold text-sm mb-5">{pctVendido}% comprado</p>
           <div className="w-full max-w-xs mx-auto bg-white/20 rounded-full h-2 mb-7">
             <div
               className="bg-[#F5A623] h-2 rounded-full"
@@ -118,7 +121,7 @@ export default function CarouselInicio({ vendidas, precioCaja, fechaSorteo, pct4
             Invita amigos y gana
           </h2>
           <p className="text-emerald-100 text-lg md:text-xl mb-7">
-            1 cupón gratis por cada 5 referidos que compren su caja
+            1 cupón gratis por cada 5 referidos que adquieran su membresía
           </p>
           <Link
             href="/dashboard"

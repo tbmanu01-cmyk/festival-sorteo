@@ -9,10 +9,10 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Cajas Sorpresa | 10,000 números",
+  title: "Club 10K | 10,000 membresías numeradas",
   description:
-    "Elige tu número del 0000 al 9999 y gana increíbles premios en Cajas Sorpresa 10K.",
-  keywords: "cajas sorpresa, selección de cajas, Colombia, sorteo",
+    "Elige tu número del 0000 al 9999 y obtén increíbles beneficios en Club 10K.",
+  keywords: "club 10k, membresías numeradas, Colombia, selección especial",
 };
 
 export default function RootLayout({
