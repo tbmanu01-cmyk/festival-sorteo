@@ -285,13 +285,14 @@ function FormularioRegistro() {
                   <option value="AHORROS">Cuenta de Ahorros</option>
                   <option value="CORRIENTE">Cuenta Corriente</option>
                 </CampoSelect>
-                <CampoTexto
-                  label="Número de cuenta *"
-                  placeholder="Número de cuenta bancaria"
-                  className="sm:col-span-2"
-                  error={errors.cuentaBancaria?.message}
-                  {...register("cuentaBancaria")}
-                />
+                <div className="sm:col-span-2">
+                  <CampoTexto
+                    label="Número de cuenta *"
+                    placeholder="Número de cuenta bancaria"
+                    error={errors.cuentaBancaria?.message}
+                    {...register("cuentaBancaria")}
+                  />
+                </div>
               </div>
             </section>
 
