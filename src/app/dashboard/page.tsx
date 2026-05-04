@@ -445,20 +445,23 @@ function TarjetaGiftCard({
   };
 
   return (
-    <div className={`rounded-2xl border-2 p-4 transition-all ${disponible ? "border-[#F5A623]/60 bg-[#F5A623]/5" : "border-gray-100 bg-gray-50 opacity-70"}`}>
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <span className="text-2xl">🎁</span>
-          <p className="font-extrabold text-[#102463] text-xl mt-0.5">
+    <div className={`rounded-2xl border-2 overflow-hidden transition-all ${disponible ? "border-[#F5A623]/60" : "border-gray-100 opacity-70"}`}>
+      {/* Imagen de la gift card */}
+      <div className="relative">
+        <img src="/giftcard.svg" alt="Gift Card" style={{ width: "100%", display: "block" }} />
+        <div className="absolute bottom-3 right-4 text-right">
+          <p className="font-extrabold text-white text-lg leading-tight drop-shadow"
+             style={{ textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
             ${gc.valor.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
           </p>
-          <p className="text-xs text-gray-400 font-mono mt-0.5">{gc.codigo}</p>
+          <p className="text-xs text-white/80 font-mono">{gc.codigo}</p>
         </div>
-        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${estadoColor[gc.estado] ?? "bg-gray-100 text-gray-500"}`}>
+        <span className={`absolute top-3 right-3 text-xs font-semibold px-2 py-1 rounded-full ${estadoColor[gc.estado] ?? "bg-gray-100 text-gray-500"}`}>
           {estadoLabel[gc.estado] ?? gc.estado}
         </span>
       </div>
-      {gc.nota && <p className="text-xs text-gray-400 mb-3">{gc.nota}</p>}
+      <div className="p-3 bg-white">
+      {gc.nota && <p className="text-xs text-gray-400 mb-2">{gc.nota}</p>}
       {disponible && (
         <div className="flex gap-2 flex-wrap">
           <button
@@ -481,6 +484,7 @@ function TarjetaGiftCard({
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }
