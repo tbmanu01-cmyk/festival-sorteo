@@ -5,9 +5,10 @@ export const runtime = "edge";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { size: string } }
+  { params }: { params: Promise<{ size: string }> }
 ) {
-  const size = parseInt(params.size) || 192;
+  const { size: sizeParam } = await params;
+  const size = parseInt(sizeParam) || 192;
   const f = size * 0.3;
 
   return new ImageResponse(
