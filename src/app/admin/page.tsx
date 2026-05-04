@@ -87,7 +87,7 @@ function TablaUsuarios() {
                 <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">{u.ciudad}</td>
                 <td className="px-4 py-3 font-bold text-[#1B4F8A]">{u._count.cajas}</td>
                 <td className="px-4 py-3 font-semibold text-green-600">
-                  ${u.saldoPuntos.toLocaleString("es-CO")}
+                  ${u.saldoPuntos.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
                 </td>
                 <td className="px-4 py-3">
                   <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${
@@ -249,7 +249,7 @@ function TablaRetiros() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xl font-extrabold text-[#1B4F8A]">
-                  ${r.monto.toLocaleString("es-CO")}
+                  ${r.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
                 </span>
                 <button
                   onClick={() => accion(r.id, "aprobar")}
@@ -366,7 +366,7 @@ export default function AdminPanel() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard
               titulo="Cajas vendidas"
-              valor={stats.vendidas.toLocaleString("es-CO")}
+              valor={stats.vendidas.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
               subtitulo={`${stats.porcentajeVendido}% del total`}
               color="border-[#1B4F8A]"
               icono="📦"
@@ -374,7 +374,7 @@ export default function AdminPanel() {
             <StatCard
               titulo="Recaudo total"
               valor={`$${(stats.totalRecaudo / 1_000_000).toFixed(1)}M`}
-              subtitulo={`${stats.vendidas} × $${stats.precioCaja.toLocaleString("es-CO")}`}
+              subtitulo={`${stats.vendidas} × $${stats.precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
               color="border-green-500"
               icono="💰"
             />
@@ -399,7 +399,7 @@ export default function AdminPanel() {
             <div className="flex justify-between text-sm mb-2">
               <span className="font-semibold text-gray-700">Progreso de ventas</span>
               <span className="text-gray-500">
-                {stats.vendidas.toLocaleString("es-CO")} / 10,000
+                {stats.vendidas.toLocaleString("es-CO", { maximumFractionDigits: 0 })} / 10,000
               </span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-4">
@@ -409,7 +409,7 @@ export default function AdminPanel() {
               />
             </div>
             <div className="flex justify-between text-xs text-gray-400 mt-1.5">
-              <span className="text-green-600 font-medium">{stats.disponibles.toLocaleString("es-CO")} disponibles</span>
+              <span className="text-green-600 font-medium">{stats.disponibles.toLocaleString("es-CO", { maximumFractionDigits: 0 })} disponibles</span>
               <span className="text-orange-500 font-medium">{stats.reservadas} reservadas</span>
               <span className="text-red-500 font-medium">{stats.vendidas} vendidas</span>
             </div>

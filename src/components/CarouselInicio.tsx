@@ -52,7 +52,7 @@ export default function CarouselInicio({ vendidas, precioCaja, fechaSorteo, pct4
             10,000 membresías numeradas
           </p>
           <p className="text-5xl md:text-7xl font-extrabold leading-none mb-1">
-            {disponibles.toLocaleString("es-CO")}
+            {disponibles.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
           </p>
           <p className="text-blue-200 text-base md:text-lg mb-1">
             membresías disponibles

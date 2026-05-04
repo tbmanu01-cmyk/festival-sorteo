@@ -94,7 +94,7 @@ function TarjetaSorteoPrevio({
             <p className="text-xs text-gray-500 mb-0.5">Premio</p>
             <p className="font-extrabold text-[#b87b00] text-sm leading-tight">{sp.premioDescripcion}</p>
             {sp.premioValor && (
-              <p className="text-xs text-gray-400">${sp.premioValor.toLocaleString("es-CO")}</p>
+              <p className="text-xs text-gray-400">${sp.premioValor.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</p>
             )}
           </div>
           <div className="bg-gray-50 rounded-xl p-3">

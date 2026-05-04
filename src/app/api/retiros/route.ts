@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-const MONTO_MINIMO = 10_000;
+const MONTO_MINIMO = 100_000;
 
 export async function GET() {
   const session = await getServerSession(authOptions);

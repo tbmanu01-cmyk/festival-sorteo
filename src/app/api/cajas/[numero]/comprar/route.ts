@@ -2,11 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-const PRECIO_CAJA = 10_000;
-
-
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ numero: string }> }
 ) {
   try {
@@ -20,13 +17,18 @@ export async function POST(
       return NextResponse.json({ mensaje: "Número inválido." }, { status: 400 });
     }
 
+    const body = await req.json().catch(() => ({})) as { giftCardId?: string };
+
     const { prisma } = await import("@/lib/prisma");
     const userId = (session.user as unknown as { id: string }).id;
+
+    // Precio dinámico desde Config
+    const config = await prisma.config.findUnique({ where: { id: "singleton" } });
+    const precioCaja = config?.precioCaja ?? 10_000;
 
     const caja = await prisma.caja.findUnique({ where: { numero } });
     if (!caja) return NextResponse.json({ mensaje: "Caja no encontrada." }, { status: 404 });
 
-    // Permitir comprar si está DISPONIBLE o RESERVADA por el mismo usuario
     const esReservadaMia = caja.estado === "RESERVADA" && caja.userId === userId;
     if (caja.estado !== "DISPONIBLE" && !esReservadaMia) {
       return NextResponse.json(
@@ -35,7 +37,18 @@ export async function POST(
       );
     }
 
+    // Validar gift card si se provee
+    let giftCard = null;
+    if (body.giftCardId) {
+      giftCard = await prisma.giftCard.findUnique({ where: { id: body.giftCardId } });
+      if (!giftCard || giftCard.propietarioId !== userId || giftCard.estado !== "DISPONIBLE") {
+        return NextResponse.json({ mensaje: "Gift card inválida o ya utilizada." }, { status: 400 });
+      }
+    }
+
     const idCompra = `COMPRA-${userId}-${Date.now()}`;
+    const montoDescuento = giftCard ? Math.min(giftCard.valor, precioCaja) : 0;
+    const montoCobrado = precioCaja - montoDescuento;
 
     const [cajaActualizada] = await prisma.$transaction([
       prisma.caja.update({
@@ -46,11 +59,19 @@ export async function POST(
         data: {
           userId,
           tipo: "COMPRA",
-          monto: -PRECIO_CAJA,
-          descripcion: `Compra de caja #${numero}`,
+          monto: -montoCobrado,
+          descripcion: giftCard
+            ? `Compra de membresía #${numero} (gift card ${giftCard.codigo})`
+            : `Compra de membresía #${numero}`,
           referencia: idCompra,
         },
       }),
+      ...(giftCard
+        ? [prisma.giftCard.update({
+            where: { id: giftCard.id },
+            data: { estado: "USADA", usadaEn: new Date(), nota: `Usada en compra membresía #${numero}` },
+          })]
+        : []),
     ]);
 
     // Email comprobante — fire and forget
@@ -64,13 +85,13 @@ export async function POST(
             numeroCaja: numero,
             idCompra,
             fecha: new Date(),
-            precio: PRECIO_CAJA,
+            precio: montoCobrado,
           }).catch((err) => console.error("Email comprobante error:", err))
         );
       })
       .catch(() => undefined);
 
-    // Referidos: marcar compra y emitir cupones si corresponde — fire and forget
+    // Referidos: marcar compra y emitir gift card si corresponde — fire and forget
     Promise.resolve().then(async () => {
       type RefRow = { id: string; referidorId: string; compro: boolean };
       const [ref] = await prisma.$queryRaw<RefRow[]>`
@@ -78,29 +99,30 @@ export async function POST(
       `;
       if (!ref || ref.compro) return;
 
-      // ¿Es la primera compra del referido?
       const cajasCount = await prisma.caja.count({ where: { userId, estado: "VENDIDA" } });
-      if (cajasCount !== 1) return; // solo en la primera compra
+      if (cajasCount !== 1) return;
 
       await prisma.$executeRaw`UPDATE referidos SET compro = true WHERE id = ${ref.id}`;
 
-      // Contar referidos comprados del referidor
       const [{ total }] = await prisma.$queryRaw<{ total: bigint }[]>`
         SELECT COUNT(*) AS total FROM referidos WHERE "referidorId" = ${ref.referidorId} AND compro = true
       `;
       const totalNum = Number(total);
       if (totalNum > 0 && totalNum % 5 === 0) {
-        const cuponId = crypto.randomUUID();
-        const cuponCodigo = `LIBRE-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-        await prisma.$executeRaw`
-          INSERT INTO cupones (id, "usuarioId", codigo, usado, "fechaCreacion")
-          VALUES (${cuponId}, ${ref.referidorId}, ${cuponCodigo}, false, NOW())
-        `;
+        const gcCodigo = `GC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+        await prisma.giftCard.create({
+          data: {
+            codigo: gcCodigo,
+            valor: precioCaja,
+            propietarioId: ref.referidorId,
+            nota: "Premio por 5 referidos",
+          },
+        });
       }
     }).catch((err) => console.error("Referidos post-compra error:", err));
 
     return NextResponse.json({
-      mensaje: `¡Caja ${numero} comprada exitosamente!`,
+      mensaje: `¡Membresía ${numero} comprada exitosamente!`,
       caja: cajaActualizada,
       referencia: idCompra,
     });

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
@@ -28,14 +28,19 @@ interface RespuestaCajas {
 
 interface ModalProps {
   caja: Caja | null;
+  precio: number;
+  giftCardId: string | null;
+  giftCardValor: number;
   onCerrar: () => void;
   onConfirmar: (numero: string) => Promise<void>;
   cargando: boolean;
   resultado: { ok: boolean; mensaje: string; expira?: string } | null;
 }
 
-function ModalReserva({ caja, onCerrar, onConfirmar, cargando, resultado }: ModalProps) {
+function ModalReserva({ caja, precio, giftCardId, giftCardValor, onCerrar, onConfirmar, cargando, resultado }: ModalProps) {
   if (!caja) return null;
+  const descuento = giftCardId ? Math.min(giftCardValor, precio) : 0;
+  const total = precio - descuento;
 
   return (
     <div
@@ -102,12 +107,28 @@ function ModalReserva({ caja, onCerrar, onConfirmar, cargando, resultado }: Moda
               </span>
             </div>
 
-            <div className="bg-gray-50 rounded-xl p-4 mb-6">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-500">Precio por membresía</span>
-                <span className="font-bold text-gray-900">$10.000 COP</span>
-              </div>
+            <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-1">
               <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Precio por membresía</span>
+                <span className={`font-bold ${descuento > 0 ? "line-through text-gray-400" : "text-gray-900"}`}>
+                  ${precio.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
+                </span>
+              </div>
+              {descuento > 0 && (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-600 font-medium">🎁 Gift card aplicada</span>
+                    <span className="font-bold text-green-600">−${descuento.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</span>
+                  </div>
+                  <div className="flex justify-between text-sm border-t border-gray-200 pt-1 mt-1">
+                    <span className="font-bold text-gray-900">Total a pagar</span>
+                    <span className="font-extrabold text-[#102463]">
+                      {total === 0 ? "¡Gratis!" : `$${total.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP`}
+                    </span>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between text-sm pt-1">
                 <span className="text-gray-500">Reserva válida por</span>
                 <span className="font-bold text-orange-600">15 minutos</span>
               </div>
@@ -140,32 +161,16 @@ function ModalReserva({ caja, onCerrar, onConfirmar, cargando, resultado }: Moda
   );
 }
 
-// ── Ícono membresía (reverso tarjeta + estrella) ──────────────────────────
-
-function IconoMembresia({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Cuerpo de la tarjeta */}
-      <rect x="0.75" y="0.75" width="46.5" height="30.5" rx="4.5" fill="currentColor" fillOpacity="0.13" stroke="currentColor" strokeWidth="1.5"/>
-      {/* Franja magnética */}
-      <rect x="0.75" y="6" width="46.5" height="8" fill="currentColor" fillOpacity="0.50"/>
-      {/* Tira de firma */}
-      <rect x="4" y="19" width="26" height="3" rx="1.5" fill="currentColor" fillOpacity="0.22"/>
-      <rect x="4" y="24" width="18" height="2" rx="1" fill="currentColor" fillOpacity="0.15"/>
-      {/* Estrella de 4 puntas (esquina inferior derecha) */}
-      <path d="M41 19 L42.4 22.6 L46 24 L42.4 25.4 L41 29 L39.6 25.4 L36 24 L39.6 22.6 Z" fill="currentColor" fillOpacity="0.85"/>
-    </svg>
-  );
-}
-
 // ── Celda de caja ─────────────────────────────────────────────────────────
 
 function CeldaCaja({
   caja,
   onClick,
+  precio,
 }: {
   caja: Caja;
   onClick: (caja: Caja) => void;
+  precio: number;
 }) {
   const disponible = caja.estado === "DISPONIBLE";
   const reservada = caja.estado === "RESERVADA";
@@ -187,8 +192,8 @@ function CeldaCaja({
       disabled={!disponible}
       title={tooltip}
       className={`
-        aspect-square flex flex-col items-center justify-between rounded-2xl font-bold p-3
-        transition-all duration-150 border relative
+        aspect-square flex flex-col items-center justify-center gap-1 rounded-[20px] border relative
+        transition-all duration-150
         ${disponible
           ? "bg-green-50 border-green-300 text-green-800 hover:bg-green-100 hover:border-green-500 hover:scale-105 hover:shadow-lg cursor-pointer active:scale-95"
           : reservada
@@ -197,13 +202,14 @@ function CeldaCaja({
         }
       `}
     >
-      <IconoMembresia className="w-full max-w-[3.5rem] mx-auto" />
-      <div className="text-center leading-none">
-        <span className="text-sm font-extrabold block tracking-wide">{caja.numero}</span>
-        <span className="text-[10px] font-semibold opacity-80 block mt-0.5">
-          {caja.estado === "DISPONIBLE" ? "Libre" : caja.estado === "RESERVADA" ? "Reservado" : "Vendido"}
-        </span>
-      </div>
+      <img src="/membresia.svg" alt="" style={{ width: "80%", maxWidth: 120, display: "block", margin: "0 auto 4px" }} />
+      <span style={{ fontSize: 32, fontWeight: 900, letterSpacing: "0.12em", lineHeight: 1 }}>{caja.numero}</span>
+      <span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1, opacity: 0.9 }}>
+        {caja.estado === "DISPONIBLE" ? "Disponible" : caja.estado === "RESERVADA" ? "Reservado" : "Vendido"}
+      </span>
+      {caja.estado === "DISPONIBLE" && (
+        <span style={{ fontSize: 13, lineHeight: 1, opacity: 0.7 }}>${precio.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>
+      )}
       {reservada && (
         <span className="absolute top-2 right-2 w-2 h-2 bg-orange-400 rounded-full" />
       )}
@@ -281,8 +287,12 @@ function Paginacion({
 export default function TiendaCajas() {
   const { data: session } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [fechaSorteo, setFechaSorteo] = useState<string | null>(null);
+  const [precioCaja, setPrecioCaja] = useState(10_000);
+  const [giftCardId, setGiftCardId] = useState<string | null>(null);
+  const [giftCardValor, setGiftCardValor] = useState(0);
   const [datos, setDatos] = useState<RespuestaCajas | null>(null);
   const [cargando, setCargando] = useState(true);
   const [pagina, setPagina] = useState(1);
@@ -300,15 +310,29 @@ export default function TiendaCajas() {
 
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Cargar fecha del sorteo al montar
+  // Cargar config al montar
   useEffect(() => {
     fetch("/api/config")
       .then((r) => r.json())
-      .then((c: { fechaSorteo?: string | null }) => {
+      .then((c: { fechaSorteo?: string | null; precioCaja?: number }) => {
         if (c.fechaSorteo) setFechaSorteo(new Date(c.fechaSorteo).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }));
+        if (c.precioCaja) setPrecioCaja(c.precioCaja);
       })
       .catch(() => undefined);
   }, []);
+
+  // Leer gift card del query param y validarla
+  useEffect(() => {
+    const gcId = searchParams.get("giftCard");
+    if (!gcId || !session) return;
+    fetch("/api/gift-cards")
+      .then((r) => r.json())
+      .then((data: { giftCards: { id: string; valor: number; estado: string }[] }) => {
+        const gc = data.giftCards.find((g) => g.id === gcId && g.estado === "DISPONIBLE");
+        if (gc) { setGiftCardId(gc.id); setGiftCardValor(gc.valor); }
+      })
+      .catch(() => undefined);
+  }, [searchParams, session]);
 
   const fetchCajas = useCallback(
     async (silencioso = false) => {
@@ -407,7 +431,7 @@ export default function TiendaCajas() {
               Membresías disponibles
             </h1>
             <p className="text-blue-200 text-sm">
-              Elige tu número del 0000 al 9999 — $10.000 COP por membresía
+              Elige tu número del 0000 al 9999 — ${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP por membresía
             </p>
             {datos && (
               <div className="flex gap-4 mt-4 text-sm">
@@ -416,13 +440,21 @@ export default function TiendaCajas() {
                   <span className="text-blue-100">
                     {datos.total === 100
                       ? `${disponibles} membresías disponibles en esta página`
-                      : `${datos.total.toLocaleString("es-CO")} resultados`}
+                      : `${datos.total.toLocaleString("es-CO", { maximumFractionDigits: 0 })} resultados`}
                   </span>
                 </span>
               </div>
             )}
           </div>
         </div>
+
+        {/* Banner gift card activa */}
+        {giftCardId && (
+          <div className="bg-green-600 text-white px-4 py-3 text-sm font-semibold text-center flex items-center justify-center gap-2">
+            🎁 Gift card activa — ${giftCardValor.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP de descuento en tu próxima membresía
+            <button onClick={() => { setGiftCardId(null); setGiftCardValor(0); }} className="ml-2 opacity-70 hover:opacity-100 text-lg leading-none">×</button>
+          </div>
+        )}
 
         <div className="max-w-7xl mx-auto px-4 py-6">
           {/* Controles */}
@@ -501,7 +533,7 @@ export default function TiendaCajas() {
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
                 {datos.cajas.map((caja) => (
-                  <CeldaCaja key={caja.numero} caja={caja} onClick={abrirModal} />
+                  <CeldaCaja key={caja.numero} caja={caja} onClick={abrirModal} precio={precioCaja} />
                 ))}
               </div>
 
@@ -510,7 +542,7 @@ export default function TiendaCajas() {
                 <span>
                   Mostrando {(pagina - 1) * 100 + 1}–
                   {Math.min(pagina * 100, datos.total)} de{" "}
-                  <strong>{datos.total.toLocaleString("es-CO")}</strong> membresías
+                  <strong>{datos.total.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> membresías
                 </span>
                 <span className="flex gap-3">
                   <span className="text-green-600 font-medium">{disponibles} libres</span>
@@ -549,6 +581,9 @@ export default function TiendaCajas() {
       {/* Modal */}
       <ModalReserva
         caja={cajaSeleccionada}
+        precio={precioCaja}
+        giftCardId={giftCardId}
+        giftCardValor={giftCardValor}
         onCerrar={cerrarModal}
         onConfirmar={confirmarReserva}
         cargando={reservandoCaja}

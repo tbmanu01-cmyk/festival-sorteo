@@ -189,7 +189,7 @@ export default async function Inicio() {
                 {/* Stat pills */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 32 }}>
                   <div style={pill}>
-                    <span style={{ fontWeight: 800, color: "#ffbd1f" }}>{disponibles.toLocaleString("es-CO")}</span>{" "}
+                    <span style={{ fontWeight: 800, color: "#ffbd1f" }}>{disponibles.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>{" "}
                     <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>disponibles</span>
                   </div>
                   <div style={pill}>
@@ -197,7 +197,7 @@ export default async function Inicio() {
                     <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>vendido</span>
                   </div>
                   <div style={pill}>
-                    <span style={{ fontWeight: 800, color: "white" }}>${precioCaja.toLocaleString("es-CO")}</span>{" "}
+                    <span style={{ fontWeight: 800, color: "white" }}>${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>{" "}
                     <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>por membresía</span>
                   </div>
                 </div>
@@ -239,7 +239,7 @@ export default async function Inicio() {
                       className="block hover:scale-105 transition-transform"
                       style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 20, padding: "28px 16px", textAlign: "center", backdropFilter: "blur(8px)", textDecoration: "none" }}
                     >
-                      <div style={{ fontSize: 38, marginBottom: 10 }}>🎫</div>
+                      <img src="/membresia.svg" alt="" style={{ width: 80, marginBottom: 10, display: "block", margin: "0 auto 10px" }} />
                       <p style={{ fontWeight: 900, color: "white", fontSize: 24, letterSpacing: "0.14em", margin: "0 0 4px" }}>
                         {caja.numero}
                       </p>
@@ -268,7 +268,7 @@ export default async function Inicio() {
                   Membresías disponibles
                 </h2>
                 <p style={{ color: "#6b7693", fontSize: 13, marginTop: 4, marginBottom: 0 }}>
-                  {disponibles.toLocaleString("es-CO")} membresías listas para ser tuyas
+                  {disponibles.toLocaleString("es-CO", { maximumFractionDigits: 0 })} membresías listas para ser tuyas
                 </p>
               </div>
               <Link href="/tienda" style={{ color: "#102463", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
@@ -285,10 +285,10 @@ export default async function Inicio() {
                     className="block hover:scale-105 transition-transform"
                     style={{ background: "rgba(209,250,229,0.55)", borderRadius: 18, border: "1px solid rgba(16,185,129,0.20)", padding: "20px 12px", textAlign: "center", boxShadow: "0 2px 8px rgba(16,36,99,0.04)", textDecoration: "none" }}
                   >
-                    <div style={{ fontSize: 34, marginBottom: 8 }}>🎫</div>
-                    <p style={{ fontWeight: 900, color: "#102463", fontSize: 20, letterSpacing: "0.12em", margin: 0 }}>{caja.numero}</p>
-                    <p style={{ color: "#059669", fontSize: 11, fontWeight: 600, marginTop: 4, marginBottom: 0 }}>Disponible</p>
-                    <p style={{ color: "#6b7693", fontSize: 11, marginTop: 2, marginBottom: 0 }}>${precioCaja.toLocaleString("es-CO")}</p>
+                    <img src="/membresia.svg" alt="" style={{ width: 72, display: "block", margin: "0 auto 10px" }} />
+                    <p style={{ fontWeight: 900, color: "#102463", fontSize: 32, letterSpacing: "0.12em", margin: 0 }}>{caja.numero}</p>
+                    <p style={{ color: "#059669", fontSize: 14, fontWeight: 600, marginTop: 6, marginBottom: 0 }}>Disponible</p>
+                    <p style={{ color: "#6b7693", fontSize: 13, marginTop: 3, marginBottom: 0 }}>${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</p>
                   </Link>
                 ))}
               </div>
@@ -409,7 +409,7 @@ export default async function Inicio() {
               <span style={eyebrow}>Tabla de beneficios</span>
               <h2 style={sectionTitle}>Mientras más coincidas, más ganas</h2>
               <p style={sectionSub}>
-                El número ganador lo determina la Lotería de Bogotá. Participa desde ${precioCaja.toLocaleString("es-CO")}.
+                El número ganador lo determina la Lotería de Bogotá. Participa desde ${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}.
               </p>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -448,14 +448,14 @@ export default async function Inicio() {
                 </h2>
                 <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 18, margin: "0 0 32px", maxWidth: 460, marginLeft: "auto", marginRight: "auto" }}>
                   Solo quedan{" "}
-                  <strong style={{ color: "#ffbd1f" }}>{disponibles.toLocaleString("es-CO")}</strong>{" "}
+                  <strong style={{ color: "#ffbd1f" }}>{disponibles.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong>{" "}
                   membresías disponibles. Regístrate ahora y asegura la tuya.
                 </p>
                 <Link
                   href="/registro"
                   style={{ background: "#ffbd1f", color: "#102463", fontWeight: 800, fontSize: 17, padding: "16px 40px", borderRadius: 999, boxShadow: "0 8px 24px -4px rgba(255,165,0,0.50)", textDecoration: "none", display: "inline-block" }}
                 >
-                  Adquiere tu membresía — ${precioCaja.toLocaleString("es-CO")} COP
+                  Adquiere tu membresía — ${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
                 </Link>
               </div>
             </div>

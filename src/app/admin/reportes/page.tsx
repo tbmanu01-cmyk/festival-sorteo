@@ -150,7 +150,7 @@ function ReporteVentas() {
     </tr>`).join("");
     abrirPDF(
       "Reporte de Ventas",
-      `Total vendidas: ${datos.total} cajas · Recaudo: $${(datos.total * 10000).toLocaleString("es-CO")} COP`,
+      `Total vendidas: ${datos.total} cajas · Recaudo: $${(datos.total * 10000).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP`,
       `<table><thead><tr><th>#</th><th>Caja</th><th>Comprador</th><th>Correo</th><th>Celular</th><th>Fecha</th></tr></thead><tbody>${filas}</tbody></table>`
     );
   }
@@ -164,7 +164,7 @@ function ReporteVentas() {
         <div>
           <p className="text-sm text-gray-500">
             Total: <strong>{datos.total}</strong> cajas vendidas ·{" "}
-            Recaudo: <strong className="text-green-600">${(datos.total * 10_000).toLocaleString("es-CO")} COP</strong>
+            Recaudo: <strong className="text-green-600">${(datos.total * 10_000).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</strong>
           </p>
         </div>
         <div className="flex gap-2">
@@ -283,7 +283,7 @@ function ReporteSorteo() {
         p.numeroCaja ?? "—",
         `${p.user.nombre} ${p.user.apellido}`,
         p.user.correo, p.user.celular,
-        `$${p.monto.toLocaleString("es-CO")}`,
+        `$${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`,
         p.pagado ? "Sí" : "No",
       ])
     );
@@ -299,13 +299,13 @@ function ReporteSorteo() {
         <tr><td style="padding:7px 16px;">Número(s) ganador(es)</td><td style="padding:7px 16px;font-size:20px;font-weight:900;color:#1B4F8A;font-family:monospace;">${nums.join(" · ") || "—"}</td></tr>
         <tr><td style="padding:7px 16px;">Fecha</td><td style="padding:7px 16px;">${new Date(s.fecha).toLocaleString("es-CO")}</td></tr>
         <tr><td style="padding:7px 16px;">Total vendidas</td><td style="padding:7px 16px;">${s.totalVendidas}</td></tr>
-        <tr><td style="padding:7px 16px;">Total recaudo</td><td style="padding:7px 16px;color:green;font-weight:700;">$${s.totalRecaudo.toLocaleString("es-CO")}</td></tr>
-        <tr><td style="padding:7px 16px;">Fondo de premios</td><td style="padding:7px 16px;">$${s.fondoPremios.toLocaleString("es-CO")}</td></tr>
-        <tr><td style="padding:7px 16px;">Ganancia operación</td><td style="padding:7px 16px;font-weight:700;">$${s.ganancia.toLocaleString("es-CO")}</td></tr>
+        <tr><td style="padding:7px 16px;">Total recaudo</td><td style="padding:7px 16px;color:green;font-weight:700;">$${s.totalRecaudo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td></tr>
+        <tr><td style="padding:7px 16px;">Fondo de premios</td><td style="padding:7px 16px;">$${s.fondoPremios.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td></tr>
+        <tr><td style="padding:7px 16px;">Ganancia operación</td><td style="padding:7px 16px;font-weight:700;">$${s.ganancia.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td></tr>
       </table>
       <h2 style="color:#1B4F8A;">Ganadores</h2>
       <table><thead><tr><th>Categoría</th><th>N° Caja</th><th>Nombre</th><th>Correo</th><th>Premio</th></tr></thead>
-      <tbody>${s.premios.map((p) => `<tr><td>${NOMBRE_CAT[p.categoria] ?? p.categoria}</td><td style="font-family:monospace;font-weight:700;">${p.numeroCaja ?? "—"}</td><td>${p.user.nombre} ${p.user.apellido}</td><td>${p.user.correo}</td><td>$${p.monto.toLocaleString("es-CO")}</td></tr>`).join("")}</tbody></table>`;
+      <tbody>${s.premios.map((p) => `<tr><td>${NOMBRE_CAT[p.categoria] ?? p.categoria}</td><td style="font-family:monospace;font-weight:700;">${p.numeroCaja ?? "—"}</td><td>${p.user.nombre} ${p.user.apellido}</td><td>${p.user.correo}</td><td>$${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td></tr>`).join("")}</tbody></table>`;
     abrirPDF(
       "Reporte de Sorteo",
       `Números ganadores: ${nums.join(", ")} · Fecha: ${new Date(s.fecha).toLocaleDateString("es-CO")}`,
@@ -392,7 +392,7 @@ function ReporteSorteo() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600 text-xs font-semibold whitespace-nowrap">
-                      ${st.totalRecaudo.toLocaleString("es-CO")}
+                      ${st.totalRecaudo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
@@ -442,9 +442,9 @@ function ReporteSorteo() {
                 valor: (s.numerosGanadores ?? (s.numeroGanador ? [s.numeroGanador] : [])).join(" · ") || "—",
                 color: "text-[#1B4F8A]", mono: true,
               },
-              { label: "Total recaudo",      valor: `$${s.totalRecaudo.toLocaleString("es-CO")}`,  color: "text-green-600"  },
-              { label: "Fondo premios",       valor: `$${s.fondoPremios.toLocaleString("es-CO")}`,  color: "text-[#F5A623]"  },
-              { label: "Ganancia operación",  valor: `$${s.ganancia.toLocaleString("es-CO")}`,      color: "text-purple-600" },
+              { label: "Total recaudo",      valor: `$${s.totalRecaudo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`,  color: "text-green-600"  },
+              { label: "Fondo premios",       valor: `$${s.fondoPremios.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`,  color: "text-[#F5A623]"  },
+              { label: "Ganancia operación",  valor: `$${s.ganancia.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`,      color: "text-purple-600" },
               { label: "Cajas vendidas",      valor: String(s.totalVendidas),                        color: "text-gray-700"   },
               { label: "Total ganadores",     valor: String(s.premios.length),                       color: "text-gray-700"   },
             ].map((c) => (
@@ -502,7 +502,7 @@ function ReporteSorteo() {
                       <td className="px-4 py-3 font-medium">{p.user.nombre} {p.user.apellido}</td>
                       <td className="px-4 py-3 text-gray-500 text-xs">{p.user.correo}</td>
                       <td className="px-4 py-3 text-gray-500 text-xs">{p.user.celular}</td>
-                      <td className="px-4 py-3 font-bold text-[#F5A623]">${p.monto.toLocaleString("es-CO")}</td>
+                      <td className="px-4 py-3 font-bold text-[#F5A623]">${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td>
                       <td className="px-4 py-3">
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${p.pagado ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
                           {p.pagado ? "Pagado" : "Pendiente"}
@@ -540,7 +540,7 @@ function ReporteUsuarios() {
       datos.usuarios.map((u, i) => [
         i + 1, u.nombre, u.apellido, u.documento, u.correo, u.celular, u.ciudad, u.departamento,
         u.banco ?? "", u.tipoCuenta ?? "", u.cuentaBancaria ?? "",
-        `$${u.saldoPuntos.toLocaleString("es-CO")}`,
+        `$${u.saldoPuntos.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`,
         u._count.cajas, u.activo ? "Sí" : "No",
         new Date(u.fechaRegistro).toLocaleDateString("es-CO"),
       ])
@@ -556,7 +556,7 @@ function ReporteUsuarios() {
       <td>${u.celular}</td>
       <td>${u.ciudad}</td>
       <td>${u.banco ? `${u.banco} ${u.tipoCuenta ?? ""} ${u.cuentaBancaria ?? ""}`.trim() : "—"}</td>
-      <td>$${u.saldoPuntos.toLocaleString("es-CO")}</td>
+      <td>$${u.saldoPuntos.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td>
       <td>${u._count.cajas}</td>
     </tr>`).join("");
     abrirPDF(
@@ -608,7 +608,7 @@ function ReporteUsuarios() {
                       <span>{u.banco}<br /><span className="text-gray-300">{u.tipoCuenta} {u.cuentaBancaria}</span></span>
                     ) : <span className="text-gray-300">Sin cuenta</span>}
                   </td>
-                  <td className="px-4 py-3 font-bold text-green-600 text-xs">${u.saldoPuntos.toLocaleString("es-CO")}</td>
+                  <td className="px-4 py-3 font-bold text-green-600 text-xs">${u.saldoPuntos.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td>
                   <td className="px-4 py-3 text-center">
                     <span className="bg-[#1B4F8A]/10 text-[#1B4F8A] text-xs font-bold px-2 py-0.5 rounded-full">{u._count.cajas}</span>
                   </td>

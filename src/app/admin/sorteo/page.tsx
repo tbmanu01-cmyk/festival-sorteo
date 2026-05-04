@@ -93,7 +93,7 @@ function GrupoGanadores({ categoria, premios }: { categoria: Categoria; premios:
           <div>
             <p className="font-bold">{CATEGORIA_LABELS[categoria]}</p>
             <p className="text-sm opacity-80">
-              {premios.length} ganador{premios.length !== 1 ? "es" : ""} · ${premios[0].monto.toLocaleString("es-CO")} c/u
+              {premios.length} ganador{premios.length !== 1 ? "es" : ""} · ${premios[0].monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })} c/u
             </p>
           </div>
         </div>
@@ -114,7 +114,7 @@ function GrupoGanadores({ categoria, premios }: { categoria: Categoria; premios:
                     {p.numeroCaja}
                   </p>
                 )}
-                <p className="text-xs opacity-70 font-semibold">${p.monto.toLocaleString("es-CO")}</p>
+                <p className="text-xs opacity-70 font-semibold">${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</p>
               </div>
             </div>
           ))}
@@ -511,7 +511,7 @@ export default function AdminSorteo() {
               {/* Resumen financiero */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: "Cajas vendidas", valor: sorteoExistente.totalVendidas.toLocaleString("es-CO"), icono: "📦" },
+                  { label: "Cajas vendidas", valor: sorteoExistente.totalVendidas.toLocaleString("es-CO", { maximumFractionDigits: 0 }), icono: "📦" },
                   { label: "Recaudo total",  valor: `$${(sorteoExistente.totalRecaudo / 1_000_000).toFixed(2)}M`, icono: "💰" },
                   { label: "Fondo premios",  valor: `$${(sorteoExistente.fondoPremios / 1_000_000).toFixed(2)}M`, icono: "🏆" },
                   { label: "Ganancia",       valor: `$${(sorteoExistente.ganancia / 1_000_000).toFixed(2)}M`,    icono: "🎪" },
@@ -540,7 +540,7 @@ export default function AdminSorteo() {
                         <p className="text-gray-600 text-xs">{item.label}</p>
                         {item.val > 0 && (
                           <p className="text-green-600 text-xs font-semibold mt-0.5">
-                            ${item.monto.toLocaleString("es-CO")} c/u
+                            ${item.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })} c/u
                           </p>
                         )}
                       </div>

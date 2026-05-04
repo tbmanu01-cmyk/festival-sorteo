@@ -450,7 +450,7 @@ export default function AdminGrandesSorteos() {
                           </td>
                           <td className="px-5 py-4 hidden lg:table-cell">
                             <span className="font-semibold text-gray-700">
-                              ${gs.valorCaja.toLocaleString("es-CO")}
+                              ${gs.valorCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
                             </span>
                           </td>
                           <td className="px-5 py-4">
@@ -459,7 +459,7 @@ export default function AdminGrandesSorteos() {
                           </td>
                           <td className="px-5 py-4 hidden md:table-cell">
                             <span className="font-semibold text-gray-700 text-xs">
-                              ${(gs.valorCaja * gs.participantes).toLocaleString("es-CO")}
+                              ${(gs.valorCaja * gs.participantes).toLocaleString("es-CO", { maximumFractionDigits: 0 })}
                             </span>
                           </td>
                           <td className="px-5 py-4">
@@ -551,11 +551,11 @@ export default function AdminGrandesSorteos() {
               <div className="grid grid-cols-2 gap-3 mb-5">
                 {[
                   { label: "Premio", valor: detalle.premioDescripcion },
-                  { label: "Valor por caja", valor: `$${detalle.valorCaja.toLocaleString("es-CO")}` },
+                  { label: "Valor por caja", valor: `$${detalle.valorCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}` },
                   { label: "Fecha inicio", valor: new Date(detalle.fechaInicio).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }) },
                   { label: "Fecha sorteo", valor: new Date(detalle.fechaSorteo).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }) },
                   { label: "Participantes", valor: `${detalle.participantes} cajas vendidas` },
-                  { label: "Recaudo estimado", valor: `$${(detalle.valorCaja * detalle.participantes).toLocaleString("es-CO")}` },
+                  { label: "Recaudo estimado", valor: `$${(detalle.valorCaja * detalle.participantes).toLocaleString("es-CO", { maximumFractionDigits: 0 })}` },
                 ].map((item) => (
                   <div key={item.label} className="bg-gray-50 rounded-xl p-3">
                     <p className="text-xs text-gray-500 mb-0.5">{item.label}</p>

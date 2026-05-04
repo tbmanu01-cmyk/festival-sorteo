@@ -92,7 +92,7 @@ export default function PaginaProbabilidades() {
           }} />
           <div className="relative max-w-5xl mx-auto">
             <span className="inline-flex items-center gap-2 border border-[#F5A623]/40 bg-[#F5A623]/10 rounded-full px-5 py-2 text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-6">
-              Documento para inversionistas
+              Documento para miembros
             </span>
             <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-4">
               Probabilidades del<br />

@@ -339,7 +339,7 @@ function GrupoGanadores({ categoria, premios }: { categoria: Categoria; premios:
           <div>
             <p className="font-bold">{CATEGORIA_LABELS[categoria]}</p>
             <p className="text-sm opacity-80">
-              {premios.length} ganador{premios.length !== 1 ? "es" : ""} · ${premios[0].monto.toLocaleString("es-CO")} c/u
+              {premios.length} ganador{premios.length !== 1 ? "es" : ""} · ${premios[0].monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })} c/u
             </p>
           </div>
         </div>
@@ -353,7 +353,7 @@ function GrupoGanadores({ categoria, premios }: { categoria: Categoria; premios:
                 <p className="font-medium">{p.user.nombre} {p.user.apellido}</p>
                 <p className="text-xs opacity-60">{p.user.correo}</p>
               </div>
-              <span className="font-bold">${p.monto.toLocaleString("es-CO")}</span>
+              <span className="font-bold">${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>
             </div>
           ))}
         </div>
@@ -578,7 +578,7 @@ function TabPrincipal() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: "Cajas vendidas", valor: sorteoExistente.totalVendidas.toLocaleString("es-CO"), icono: "📦" },
+              { label: "Cajas vendidas", valor: sorteoExistente.totalVendidas.toLocaleString("es-CO", { maximumFractionDigits: 0 }), icono: "📦" },
               { label: "Recaudo total", valor: `$${(sorteoExistente.totalRecaudo / 1_000_000).toFixed(2)}M`, icono: "💰" },
               { label: "Fondo premios", valor: `$${(sorteoExistente.fondoPremios / 1_000_000).toFixed(2)}M`, icono: "🏆" },
               { label: "Ganancia operación", valor: `$${(sorteoExistente.ganancia / 1_000_000).toFixed(2)}M`, icono: "🎪" },
@@ -606,7 +606,7 @@ function TabPrincipal() {
                     <p className="text-gray-600 text-xs">{item.label}</p>
                     {item.val > 0 && (
                       <p className="text-green-600 text-xs font-semibold mt-0.5">
-                        ${item.monto.toLocaleString("es-CO")} c/u
+                        ${item.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })} c/u
                       </p>
                     )}
                   </div>
@@ -719,7 +719,7 @@ function TarjetaAnticipada({
           <div className="bg-[#F5A623]/10 rounded-xl p-3">
             <p className="text-xs text-gray-500 mb-0.5">Premio</p>
             <p className="font-extrabold text-[#b87b00] text-sm leading-tight">{a.premioDescripcion}</p>
-            {a.premioValor && <p className="text-xs text-gray-400">${a.premioValor.toLocaleString("es-CO")}</p>}
+            {a.premioValor && <p className="text-xs text-gray-400">${a.premioValor.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</p>}
           </div>
           <div className="bg-gray-50 rounded-xl p-3">
             <p className="text-xs text-gray-500 mb-0.5">Ganadores</p>
@@ -1392,11 +1392,11 @@ function TabGrandes({ onVerPrevios }: { onVerPrevios: (id: string) => void }) {
               <div className="grid grid-cols-2 gap-3 mb-5">
                 {[
                   { label: "Premio", valor: detalle.premioDescripcion },
-                  { label: "Valor por caja", valor: `$${detalle.valorCaja.toLocaleString("es-CO")}` },
+                  { label: "Valor por caja", valor: `$${detalle.valorCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}` },
                   { label: "Fecha inicio", valor: new Date(detalle.fechaInicio).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }) },
                   { label: "Fecha sorteo", valor: new Date(detalle.fechaSorteo).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }) },
                   { label: "Participantes", valor: `${detalle.participantes} cajas vendidas` },
-                  { label: "Recaudo estimado", valor: `$${(detalle.valorCaja * detalle.participantes).toLocaleString("es-CO")}` },
+                  { label: "Recaudo estimado", valor: `$${(detalle.valorCaja * detalle.participantes).toLocaleString("es-CO", { maximumFractionDigits: 0 })}` },
                 ].map((item) => (
                   <div key={item.label} className="bg-gray-50 rounded-xl p-3">
                     <p className="text-xs text-gray-500 mb-0.5">{item.label}</p>
@@ -1504,7 +1504,7 @@ function TarjetaSorteoPrevio({
           <div className="bg-[#F5A623]/10 rounded-xl p-3">
             <p className="text-xs text-gray-500 mb-0.5">Premio</p>
             <p className="font-extrabold text-[#b87b00] text-sm leading-tight">{sp.premioDescripcion}</p>
-            {sp.premioValor && <p className="text-xs text-gray-400">${sp.premioValor.toLocaleString("es-CO")}</p>}
+            {sp.premioValor && <p className="text-xs text-gray-400">${sp.premioValor.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</p>}
           </div>
           <div className="bg-gray-50 rounded-xl p-3">
             <p className="text-xs text-gray-500 mb-0.5">Ganadores</p>

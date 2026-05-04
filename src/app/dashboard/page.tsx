@@ -93,16 +93,27 @@ function useCountdown(expira: string | null) {
 
 // ── Tarjeta de reserva activa ─────────────────────────────────────────────
 
+interface GiftCardDisp { id: string; codigo: string; valor: number; }
+
 function TarjetaReserva({
   caja,
+  precio,
+  giftCardsDisponibles,
   onComprar,
   comprando,
 }: {
   caja: CajaReservada;
-  onComprar: (numero: string) => Promise<void>;
+  precio: number;
+  giftCardsDisponibles: GiftCardDisp[];
+  onComprar: (numero: string, giftCardId?: string) => Promise<void>;
   comprando: boolean;
 }) {
   const { min, seg, expirada, pct } = useCountdown(caja.expira);
+  const [gcSeleccionada, setGcSeleccionada] = useState<string>("");
+
+  const gc = giftCardsDisponibles.find((g) => g.id === gcSeleccionada) ?? null;
+  const descuento = gc ? Math.min(gc.valor, precio) : 0;
+  const total = precio - descuento;
 
   return (
     <div
@@ -131,9 +142,7 @@ function TarjetaReserva({
           ) : (
             <span
               className={`inline-block text-xs font-semibold px-2 py-1 rounded-full ${
-                min < 3
-                  ? "bg-red-100 text-red-700"
-                  : "bg-orange-100 text-orange-700"
+                min < 3 ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"
               }`}
             >
               Reservada
@@ -147,35 +156,71 @@ function TarjetaReserva({
           <div className="mb-3">
             <div className="flex justify-between text-xs text-gray-500 mb-1">
               <span>Tiempo restante</span>
-              <span
-                className={`font-bold tabular-nums ${
-                  min < 3 ? "text-red-600" : "text-orange-600"
-                }`}
-              >
+              <span className={`font-bold tabular-nums ${min < 3 ? "text-red-600" : "text-orange-600"}`}>
                 {String(min).padStart(2, "0")}:{String(seg).padStart(2, "0")}
               </span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-2">
               <div
-                className={`h-2 rounded-full transition-all duration-1000 ${
-                  min < 3 ? "bg-red-400" : "bg-orange-400"
-                }`}
+                className={`h-2 rounded-full transition-all duration-1000 ${min < 3 ? "bg-red-400" : "bg-orange-400"}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-sm mb-4">
-            <span className="text-gray-500">Precio</span>
-            <span className="font-bold text-gray-900">$10.000 COP</span>
+          {/* Precio + gift card */}
+          <div className="bg-gray-50 rounded-xl p-3 mb-3 space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-500">Precio</span>
+              <span className={`font-bold ${descuento > 0 ? "line-through text-gray-400" : "text-gray-900"}`}>
+                ${precio.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
+              </span>
+            </div>
+            {descuento > 0 && (
+              <>
+                <div className="flex justify-between text-green-600">
+                  <span>🎁 Gift card</span>
+                  <span className="font-bold">−${descuento.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>
+                </div>
+                <div className="flex justify-between border-t border-gray-200 pt-1">
+                  <span className="font-bold text-gray-900">Total</span>
+                  <span className="font-extrabold text-[#1B4F8A]">
+                    {total === 0 ? "¡Gratis!" : `$${total.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP`}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
+          {/* Selector de gift card */}
+          {giftCardsDisponibles.length > 0 && (
+            <div className="mb-3">
+              <label className="text-xs font-semibold text-gray-500 block mb-1">Aplicar gift card</label>
+              <select
+                value={gcSeleccionada}
+                onChange={(e) => setGcSeleccionada(e.target.value)}
+                className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30"
+              >
+                <option value="">Sin gift card</option>
+                {giftCardsDisponibles.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.codigo} — ${g.valor.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <button
-            onClick={() => onComprar(caja.numero)}
+            onClick={() => onComprar(caja.numero, gcSeleccionada || undefined)}
             disabled={comprando}
             className="w-full bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-bold py-3 rounded-xl transition-colors shadow-md text-sm"
           >
-            {comprando ? "Procesando pago..." : "✅ Completar compra — $10.000"}
+            {comprando
+              ? "Procesando..."
+              : total === 0
+              ? "✅ Completar compra — ¡Gratis!"
+              : `✅ Completar compra — $${total.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
           </button>
         </>
       )}
@@ -185,10 +230,7 @@ function TarjetaReserva({
           <p className="text-gray-500 text-sm mb-3">
             La reserva venció. El número quedó disponible nuevamente.
           </p>
-          <Link
-            href="/tienda"
-            className="inline-block bg-[#1B4F8A] hover:bg-[#1a5fa8] text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors"
-          >
+          <Link href="/tienda" className="inline-block bg-[#1B4F8A] hover:bg-[#1a5fa8] text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors">
             Elegir otro número
           </Link>
         </div>
@@ -259,7 +301,7 @@ function ModalRetiro({
   const [error, setError] = useState<string | null>(null);
 
   const montoNum = parseFloat(monto) || 0;
-  const montoValido = montoNum >= 10_000 && montoNum <= saldo;
+  const montoValido = montoNum >= 100_000 && montoNum <= saldo;
   const tieneCuenta = !!banco && !!cuentaBancaria;
 
   async function solicitar() {
@@ -319,21 +361,21 @@ function ModalRetiro({
                 </span>
                 <input
                   type="number"
-                  min={10000}
+                  min={100000}
                   max={saldo}
                   step={1000}
                   value={monto}
                   onChange={(e) => setMonto(e.target.value)}
-                  placeholder="10000"
+                  placeholder="100000"
                   className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
                 />
               </div>
               <p className="text-xs text-gray-400 mt-1.5">
                 Saldo disponible:{" "}
                 <span className="font-semibold text-green-600">
-                  ${saldo.toLocaleString("es-CO")}
+                  ${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
                 </span>
-                {" · "}Mínimo: $10.000
+                {" · "}Mínimo: $100.000
               </p>
               {monto && montoNum > saldo && (
                 <p className="text-xs text-red-500 mt-1">
@@ -370,37 +412,176 @@ function ModalRetiro({
   );
 }
 
+// ── Gift Card — tarjeta individual con acciones ───────────────────────────
+
+interface GiftCardItem {
+  id: string;
+  codigo: string;
+  valor: number;
+  estado: string;
+  creadaEn: string;
+  nota: string | null;
+}
+
+function TarjetaGiftCard({
+  gc,
+  onAccion,
+}: {
+  gc: GiftCardItem;
+  onAccion: (id: string, accion: "retirar" | "regalar" | "usar") => void;
+}) {
+  const disponible = gc.estado === "DISPONIBLE";
+  const estadoLabel: Record<string, string> = {
+    DISPONIBLE: "Disponible",
+    USADA: "Usada en membresía",
+    RETIRADA: "Convertida a saldo",
+    REGALADA: "Regalada",
+  };
+  const estadoColor: Record<string, string> = {
+    DISPONIBLE: "bg-green-100 text-green-700",
+    USADA: "bg-blue-100 text-blue-700",
+    RETIRADA: "bg-gray-100 text-gray-500",
+    REGALADA: "bg-purple-100 text-purple-700",
+  };
+
+  return (
+    <div className={`rounded-2xl border-2 p-4 transition-all ${disponible ? "border-[#F5A623]/60 bg-[#F5A623]/5" : "border-gray-100 bg-gray-50 opacity-70"}`}>
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <span className="text-2xl">🎁</span>
+          <p className="font-extrabold text-[#102463] text-xl mt-0.5">
+            ${gc.valor.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
+          </p>
+          <p className="text-xs text-gray-400 font-mono mt-0.5">{gc.codigo}</p>
+        </div>
+        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${estadoColor[gc.estado] ?? "bg-gray-100 text-gray-500"}`}>
+          {estadoLabel[gc.estado] ?? gc.estado}
+        </span>
+      </div>
+      {gc.nota && <p className="text-xs text-gray-400 mb-3">{gc.nota}</p>}
+      {disponible && (
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => onAccion(gc.id, "usar")}
+            className="flex-1 min-w-[90px] bg-[#102463] hover:bg-[#173592] text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors"
+          >
+            Usar membresía
+          </button>
+          <button
+            onClick={() => onAccion(gc.id, "retirar")}
+            className="flex-1 min-w-[90px] bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors"
+          >
+            Añadir a saldo
+          </button>
+          <button
+            onClick={() => onAccion(gc.id, "regalar")}
+            className="flex-1 min-w-[90px] border-2 border-[#102463] text-[#102463] hover:bg-[#102463]/5 text-xs font-bold py-2 px-3 rounded-xl transition-colors"
+          >
+            Regalar
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Modal regalar gift card ───────────────────────────────────────────────
+
+function ModalRegalar({
+  gcId,
+  onClose,
+  onSuccess,
+}: {
+  gcId: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [correo, setCorreo] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function enviar() {
+    setEnviando(true);
+    setError(null);
+    const res = await fetch(`/api/gift-cards/${gcId}/regalar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ correo }),
+    });
+    const json = await res.json() as { mensaje: string };
+    setEnviando(false);
+    if (res.ok) onSuccess();
+    else setError(json.mensaje);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gray-900">Regalar gift card</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          Ingresa el correo del usuario que recibirá la gift card.
+        </p>
+        <input
+          type="email"
+          value={correo}
+          onChange={(e) => setCorreo(e.target.value)}
+          placeholder="correo@ejemplo.com"
+          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 mb-4"
+        />
+        {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm">Cancelar</button>
+          <button
+            onClick={enviar}
+            disabled={!correo || enviando}
+            className="flex-1 py-2.5 rounded-xl bg-[#102463] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold text-sm"
+          >
+            {enviando ? "Enviando..." : "Regalar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Sección de referidos (autónoma, fetch propio) ─────────────────────────
 
 interface DatosReferidosAPI {
   codigoRef: string | null;
   comprados: number;
   progreso: number;
-  cuponesDisponibles: number;
 }
 
 function SeccionReferidos() {
+  const router = useRouter();
   const [datos, setDatos] = useState<DatosReferidosAPI | null>(null);
+  const [giftCards, setGiftCards] = useState<GiftCardItem[]>([]);
   const [cargando, setCargando] = useState(true);
   const [copiado, setCopiado] = useState(false);
   const [mostrarQR, setMostrarQR] = useState(false);
+  const [modalRegalar, setModalRegalar] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ ok: boolean; texto: string } | null>(null);
 
-  useEffect(() => {
-    fetch("/api/referidos")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((json) => {
-        if (json) {
-          setDatos({
-            codigoRef: json.codigoRef ?? null,
-            comprados: json.comprados ?? 0,
-            progreso: json.progreso ?? 0,
-            cuponesDisponibles: json.cuponesDisponibles ?? 0,
-          });
-        }
-        setCargando(false);
-      })
-      .catch(() => setCargando(false));
-  }, []);
+  const cargarTodo = () => {
+    Promise.all([
+      fetch("/api/referidos").then((r) => r.ok ? r.json() : null),
+      fetch("/api/gift-cards").then((r) => r.ok ? r.json() : null),
+    ]).then(([ref, gcs]) => {
+      if (ref) setDatos({ codigoRef: ref.codigoRef ?? null, comprados: ref.comprados ?? 0, progreso: ref.progreso ?? 0 });
+      if (gcs?.giftCards) setGiftCards(gcs.giftCards);
+      setCargando(false);
+    }).catch(() => setCargando(false));
+  };
+
+  useEffect(() => { cargarTodo(); }, []);
+
+  const mostrarToast = (ok: boolean, texto: string) => {
+    setToast({ ok, texto });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const base = typeof window !== "undefined" ? window.location.origin : "";
   const linkRef = datos?.codigoRef ? `${base}/registro?ref=${datos.codigoRef}` : null;
@@ -423,164 +604,171 @@ function SeccionReferidos() {
     a.click();
   }
 
-  // Progreso dentro del ciclo actual (0-4). Si comprados % 5 === 0 y comprados > 0 → ciclo completo
+  async function manejarAccion(id: string, accion: "retirar" | "regalar" | "usar") {
+    if (accion === "regalar") { setModalRegalar(id); return; }
+    if (accion === "usar") { router.push("/tienda?giftCard=" + id); return; }
+    // retirar → añadir a saldo
+    const res = await fetch(`/api/gift-cards/${id}/retirar`, { method: "POST" });
+    const json = await res.json() as { mensaje: string };
+    mostrarToast(res.ok, json.mensaje);
+    if (res.ok) cargarTodo();
+  }
+
   const comprados = datos?.comprados ?? 0;
-  const enCiclo = comprados % 5; // 0-4
+  const enCiclo = comprados % 5;
   const barPct = (enCiclo / 5) * 100;
   const faltan = enCiclo === 0 ? 5 : 5 - enCiclo;
+  const gcDisponibles = giftCards.filter((g) => g.estado === "DISPONIBLE");
 
   return (
-    <section className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-
-      {/* Cabecera */}
-      <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] px-6 py-5">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-white font-extrabold text-lg leading-tight">
-              Invita amigos y gana membresías gratis
-            </h2>
-            <p className="text-blue-200 text-sm mt-0.5">
-              Por cada 5 amigos que adquieran su primera membresía, recibes 1 cupón gratis
-            </p>
-          </div>
-          <Link
-            href="/ranking"
-            className="flex-shrink-0 text-[#F5A623] text-xs font-bold hover:underline"
-          >
-            Ver ranking →
-          </Link>
+    <>
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-lg text-sm font-semibold ${toast.ok ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}>
+          {toast.texto}
         </div>
-      </div>
+      )}
 
-      <div className="p-5 space-y-5">
+      {/* Modal regalar */}
+      {modalRegalar && (
+        <ModalRegalar
+          gcId={modalRegalar}
+          onClose={() => setModalRegalar(null)}
+          onSuccess={() => { setModalRegalar(null); mostrarToast(true, "Gift card enviada correctamente."); cargarTodo(); }}
+        />
+      )}
 
-        {/* Cargando */}
-        {cargando && (
-          <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-4">
-            <div className="w-4 h-4 rounded-full border-2 border-[#1B4F8A] border-t-transparent animate-spin" />
-            <span className="text-sm text-gray-400">Cargando tu código de referido...</span>
+      <section className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+
+        {/* Cabecera */}
+        <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] px-6 py-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-white font-extrabold text-lg leading-tight">
+                Invita amigos y gana gift cards
+              </h2>
+              <p className="text-blue-200 text-sm mt-0.5">
+                Por cada 5 amigos que adquieran su primera membresía, recibes una gift card con el valor de la membresía
+              </p>
+            </div>
+            <Link href="/ranking" className="flex-shrink-0 text-[#F5A623] text-xs font-bold hover:underline">
+              Ver ranking →
+            </Link>
           </div>
-        )}
+        </div>
 
-        {/* Código + acciones */}
-        {!cargando && datos?.codigoRef && (
-          <div className="bg-[#1B4F8A]/5 border border-[#1B4F8A]/15 rounded-xl p-4">
-            <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">
-              Tu código de referido
-            </p>
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-3xl font-extrabold tracking-[0.2em] text-[#1B4F8A] font-mono">
-                {datos.codigoRef}
-              </span>
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={copiarLink}
-                  className={`text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm ${
-                    copiado
-                      ? "bg-green-500 text-white"
-                      : "bg-[#1B4F8A] hover:bg-[#1a5fa8] text-white"
-                  }`}
-                >
-                  {copiado ? "✓ ¡Link copiado!" : "Copiar link"}
-                </button>
-                <button
-                  onClick={() => setMostrarQR((v) => !v)}
-                  className="text-sm font-bold px-4 py-2 rounded-xl border-2 border-[#1B4F8A] text-[#1B4F8A] hover:bg-[#1B4F8A]/5 transition-colors"
-                >
-                  {mostrarQR ? "Ocultar QR" : "Ver QR"}
-                </button>
+        <div className="p-5 space-y-5">
+
+          {cargando && (
+            <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-4">
+              <div className="w-4 h-4 rounded-full border-2 border-[#1B4F8A] border-t-transparent animate-spin" />
+              <span className="text-sm text-gray-400">Cargando...</span>
+            </div>
+          )}
+
+          {/* Código + acciones */}
+          {!cargando && datos?.codigoRef && (
+            <div className="bg-[#1B4F8A]/5 border border-[#1B4F8A]/15 rounded-xl p-4">
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">
+                Tu código de referido
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-3xl font-extrabold tracking-[0.2em] text-[#1B4F8A] font-mono">
+                  {datos.codigoRef}
+                </span>
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={copiarLink}
+                    className={`text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm ${copiado ? "bg-green-500 text-white" : "bg-[#1B4F8A] hover:bg-[#1a5fa8] text-white"}`}
+                  >
+                    {copiado ? "✓ ¡Link copiado!" : "Copiar link"}
+                  </button>
+                  <button
+                    onClick={() => setMostrarQR((v) => !v)}
+                    className="text-sm font-bold px-4 py-2 rounded-xl border-2 border-[#1B4F8A] text-[#1B4F8A] hover:bg-[#1B4F8A]/5 transition-colors"
+                  >
+                    {mostrarQR ? "Ocultar QR" : "Ver QR"}
+                  </button>
+                </div>
+              </div>
+              {linkRef && <p className="text-xs text-gray-400 mt-2 truncate font-mono">{linkRef}</p>}
+            </div>
+          )}
+
+          {/* QR */}
+          {mostrarQR && linkRef && (
+            <div className="flex flex-col items-center gap-3 bg-gray-50 rounded-xl p-5">
+              <p className="text-xs text-gray-500 font-semibold">Comparte este QR para que tus amigos se registren directamente</p>
+              <div id="qr-ref-canvas" className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
+                <QRCodeCanvas value={linkRef} size={180} bgColor="#ffffff" fgColor="#1B4F8A" level="M" />
+              </div>
+              <button onClick={descargarQR} className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] text-sm font-bold px-6 py-2.5 rounded-xl transition-colors shadow-md">
+                Descargar QR
+              </button>
+            </div>
+          )}
+
+          {/* Progreso */}
+          {!cargando && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-bold text-gray-700">{enCiclo} de 5 amigos han comprado</span>
+                {comprados > 0 && <span className="text-xs text-gray-400">{comprados} en total</span>}
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                <div
+                  className="h-3 rounded-full bg-gradient-to-r from-[#1B4F8A] to-[#F5A623] transition-all duration-700"
+                  style={{ width: enCiclo === 0 && comprados > 0 ? "100%" : `${barPct}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                {comprados === 0
+                  ? "Por cada 5 amigos que compren su primera membresía, recibes una gift card"
+                  : enCiclo === 0
+                  ? "¡Completaste 5 referidos! Sigue invitando para ganar otra gift card."
+                  : `Te ${faltan === 1 ? "falta 1 amigo" : `faltan ${faltan} amigos`} para ganar tu ${Math.floor(comprados / 5) + 1 === 1 ? "primera" : "próxima"} gift card`}
+              </p>
+            </div>
+          )}
+
+          {/* Gift cards disponibles */}
+          {!cargando && gcDisponibles.length > 0 && (
+            <div>
+              <p className="text-sm font-bold text-gray-700 mb-3">
+                Gift cards disponibles ({gcDisponibles.length})
+              </p>
+              <div className="space-y-3">
+                {gcDisponibles.map((gc) => (
+                  <TarjetaGiftCard key={gc.id} gc={gc} onAccion={manejarAccion} />
+                ))}
               </div>
             </div>
-            {linkRef && (
-              <p className="text-xs text-gray-400 mt-2 truncate font-mono">{linkRef}</p>
-            )}
-          </div>
-        )}
+          )}
 
-        {/* Sin código */}
-        {!cargando && !datos?.codigoRef && (
-          <div className="bg-gray-50 rounded-xl px-4 py-4 text-sm text-gray-400 text-center">
-            No se pudo cargar tu código. Recarga la página.
-          </div>
-        )}
-
-        {/* QR descargable */}
-        {mostrarQR && linkRef && (
-          <div className="flex flex-col items-center gap-3 bg-gray-50 rounded-xl p-5">
-            <p className="text-xs text-gray-500 font-semibold">
-              Comparte este QR para que tus amigos se registren directamente
-            </p>
-            <div id="qr-ref-canvas" className="p-3 bg-white rounded-xl shadow-sm border border-gray-100">
-              <QRCodeCanvas
-                value={linkRef}
-                size={180}
-                bgColor="#ffffff"
-                fgColor="#1B4F8A"
-                level="M"
-              />
+          {/* Sin gift cards */}
+          {!cargando && gcDisponibles.length === 0 && (
+            <div className="border border-dashed border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-400 text-center">
+              Aún no tienes gift cards — ¡invita amigos para ganarlas!
             </div>
-            <button
-              onClick={descargarQR}
-              className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] text-sm font-bold px-6 py-2.5 rounded-xl transition-colors shadow-md"
-            >
-              Descargar QR
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* Contador de progreso */}
-        {!cargando && (
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-bold text-gray-700">
-                {enCiclo} de 5 amigos han comprado
-              </span>
-              {comprados > 0 && (
-                <span className="text-xs text-gray-400">{comprados} en total</span>
-              )}
-            </div>
-            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-              <div
-                className="h-3 rounded-full bg-gradient-to-r from-[#1B4F8A] to-[#F5A623] transition-all duration-700"
-                style={{ width: enCiclo === 0 && comprados > 0 ? "100%" : `${barPct}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-400 mt-2">
-              {comprados === 0
-                ? "Por cada 5 amigos que adquieran su primera membresía, recibes 1 cupón gratis"
-                : enCiclo === 0
-                ? "¡Completaste 5 referidos! Sigue invitando para ganar otro cupón."
-                : `Te ${faltan === 1 ? "falta 1 amigo" : `faltan ${faltan} amigos`} para ganar tu ${
-                    Math.floor(comprados / 5) + 1 === 1 ? "primer" : "próximo"
-                  } cupón gratis`}
-            </p>
-          </div>
-        )}
+          {/* Historial usadas/regaladas */}
+          {!cargando && giftCards.filter((g) => g.estado !== "DISPONIBLE").length > 0 && (
+            <details className="text-xs text-gray-400">
+              <summary className="cursor-pointer hover:text-gray-600 font-medium">
+                Ver historial ({giftCards.filter((g) => g.estado !== "DISPONIBLE").length} usadas)
+              </summary>
+              <div className="mt-3 space-y-2">
+                {giftCards.filter((g) => g.estado !== "DISPONIBLE").map((gc) => (
+                  <TarjetaGiftCard key={gc.id} gc={gc} onAccion={manejarAccion} />
+                ))}
+              </div>
+            </details>
+          )}
 
-        {/* Cupones disponibles */}
-        {!cargando && (datos?.cuponesDisponibles ?? 0) > 0 && (
-          <div className="bg-[#F5A623]/10 border border-[#F5A623]/40 rounded-xl px-4 py-4 flex items-center gap-4">
-            <span className="text-3xl flex-shrink-0">🎁</span>
-            <div>
-              <p className="font-extrabold text-[#b87b00]">
-                Tienes {datos!.cuponesDisponibles} cupón{datos!.cuponesDisponibles > 1 ? "es" : ""} para {datos!.cuponesDisponibles > 1 ? "membresías gratis" : "membresía gratis"}
-              </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Úsalos al adquirir tu próxima membresía en la tienda
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Sin cupones — explicación */}
-        {!cargando && (datos?.cuponesDisponibles ?? 0) === 0 && (
-          <div className="border border-dashed border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-400 text-center">
-            Aún no tienes cupones — ¡invita amigos para ganarlos!
-          </div>
-        )}
-
-      </div>
-    </section>
+        </div>
+      </section>
+    </>
   );
 }
 
@@ -592,6 +780,8 @@ export default function Dashboard() {
 
   const [datos, setDatos] = useState<MisCajas | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [precioCaja, setPrecioCaja] = useState(10_000);
+  const [giftCardsDisponibles, setGiftCardsDisponibles] = useState<GiftCardDisp[]>([]);
   const [comprando, setComprando] = useState<string | null>(null);
   const [mensajeCompra, setMensajeCompra] = useState<{
     ok: boolean;
@@ -604,9 +794,23 @@ export default function Dashboard() {
   }, [status, router]);
 
   const cargarDatos = useCallback(async () => {
-    const res = await fetch("/api/mis-cajas");
-    if (res.ok) setDatos(await res.json());
+    const [resCajas, resGcs] = await Promise.all([
+      fetch("/api/mis-cajas"),
+      fetch("/api/gift-cards"),
+    ]);
+    if (resCajas.ok) setDatos(await resCajas.json());
+    if (resGcs.ok) {
+      const gcsData = await resGcs.json() as { giftCards: (GiftCardDisp & { estado: string })[] };
+      setGiftCardsDisponibles(gcsData.giftCards.filter((g) => g.estado === "DISPONIBLE"));
+    }
     setCargando(false);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((c: { precioCaja?: number }) => { if (c.precioCaja) setPrecioCaja(c.precioCaja); })
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -619,10 +823,14 @@ export default function Dashboard() {
     return () => clearInterval(t);
   }, [status, cargarDatos]);
 
-  async function completarCompra(numero: string) {
+  async function completarCompra(numero: string, giftCardId?: string) {
     setComprando(numero);
     setMensajeCompra(null);
-    const res = await fetch(`/api/cajas/${numero}/comprar`, { method: "POST" });
+    const res = await fetch(`/api/cajas/${numero}/comprar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(giftCardId ? { giftCardId } : {}),
+    });
     const json = await res.json() as { mensaje: string };
     setComprando(null);
     setMensajeCompra({ ok: res.ok, texto: json.mensaje });
@@ -679,10 +887,10 @@ export default function Dashboard() {
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
               <span className="text-2xl">💰</span>
               <p className="text-xl font-extrabold mt-1 text-green-600">
-                ${saldo.toLocaleString("es-CO")}
+                ${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
               </p>
               <p className="text-gray-500 text-xs mt-0.5">Saldo disponible</p>
-              {saldo >= 10_000 && (
+              {saldo >= 100_000 && (
                 <button
                   onClick={() => setModalRetiro(true)}
                   className="mt-2 text-xs font-semibold text-[#1B4F8A] hover:underline"
@@ -735,6 +943,8 @@ export default function Dashboard() {
                   <TarjetaReserva
                     key={caja.numero}
                     caja={caja}
+                    precio={precioCaja}
+                    giftCardsDisponibles={giftCardsDisponibles}
                     onComprar={completarCompra}
                     comprando={comprando === caja.numero}
                   />
@@ -817,7 +1027,7 @@ export default function Dashboard() {
                       <p className="font-extrabold text-[#1B4F8A] text-sm truncate">{a.nombre}</p>
                       <p className="text-[#F5A623] font-extrabold text-lg">{a.premioDescripcion}</p>
                       {a.premioValor && (
-                        <p className="text-gray-500 text-xs">${a.premioValor.toLocaleString("es-CO")} COP</p>
+                        <p className="text-gray-500 text-xs">${a.premioValor.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</p>
                       )}
                       {a.numeroCaja && (
                         <p className="text-gray-500 text-xs mt-0.5">
@@ -858,7 +1068,7 @@ export default function Dashboard() {
                           : "1 cifra"}
                       </p>
                       <p className="text-[#F5A623] font-extrabold text-lg">
-                        ${p.monto.toLocaleString("es-CO")}
+                        ${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
                       </p>
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                         p.pagado ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
@@ -877,7 +1087,7 @@ export default function Dashboard() {
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-bold text-gray-900">Mis solicitudes de retiro</h2>
-                {saldo >= 10_000 && (
+                {saldo >= 100_000 && (
                   <button
                     onClick={() => setModalRetiro(true)}
                     className="text-[#1B4F8A] text-sm font-semibold hover:underline"
@@ -893,7 +1103,7 @@ export default function Dashboard() {
                     <div key={r.id} className="p-4 flex items-center gap-4">
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-gray-900">
-                          ${r.monto.toLocaleString("es-CO")} COP
+                          ${r.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
                         </p>
                         <p className="text-gray-400 text-xs mt-0.5 truncate">{r.cuentaDestino}</p>
                         <p className="text-gray-300 text-xs mt-0.5">

@@ -140,7 +140,7 @@ export default function PaginaConfiguracion() {
               </div>
               <p className="text-xs text-gray-400 mt-1">
                 Recaudo estimado (10.000 cajas):{" "}
-                <strong>${(precioCaja * 10000).toLocaleString("es-CO")} COP</strong>
+                <strong>${(precioCaja * 10000).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</strong>
               </p>
             </div>
 
@@ -282,11 +282,11 @@ export default function PaginaConfiguracion() {
 
               {/* Ejemplo con precios reales */}
               <div className="mt-4 bg-gray-50 rounded-xl p-4 text-xs text-gray-600 space-y-1">
-                <p className="font-semibold text-gray-700 mb-2">Ejemplo con 10.000 cajas vendidas a ${precioCaja.toLocaleString("es-CO")}:</p>
-                <p>🎯 Premio 4 cifras (÷{n4ok(n4)}): <strong>${Math.round(precioCaja * 10000 * dec(pct4) / Math.max(n4, 1)).toLocaleString("es-CO")}</strong> c/u</p>
-                <p>🥈 Premio 3 cifras: <strong>hasta ${Math.round(precioCaja * 10000 * dec(pct3) / 9).toLocaleString("es-CO")}</strong> c/u</p>
-                <p>🥉 Premio 2 cifras: <strong>hasta ${Math.round(precioCaja * 10000 * dec(pct2) / 90).toLocaleString("es-CO")}</strong> c/u</p>
-                <p>🎁 Premio 1 cifra: <strong>hasta ${Math.round(precioCaja * 10000 * dec(pct1) / 900).toLocaleString("es-CO")}</strong> c/u</p>
+                <p className="font-semibold text-gray-700 mb-2">Ejemplo con 10.000 cajas vendidas a ${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}:</p>
+                <p>🎯 Premio 4 cifras (÷{n4ok(n4)}): <strong>${Math.round(precioCaja * 10000 * dec(pct4) / Math.max(n4, 1)).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
+                <p>🥈 Premio 3 cifras: <strong>hasta ${Math.round(precioCaja * 10000 * dec(pct3) / 9).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
+                <p>🥉 Premio 2 cifras: <strong>hasta ${Math.round(precioCaja * 10000 * dec(pct2) / 90).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
+                <p>🎁 Premio 1 cifra: <strong>hasta ${Math.round(precioCaja * 10000 * dec(pct1) / 900).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
               </div>
             </div>
 

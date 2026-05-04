@@ -90,7 +90,7 @@ function TarjetaAnticipada({
             <p className="text-xs text-gray-500 mb-0.5">Premio</p>
             <p className="font-extrabold text-[#b87b00] text-sm leading-tight">{a.premioDescripcion}</p>
             {a.premioValor && (
-              <p className="text-xs text-gray-400">${a.premioValor.toLocaleString("es-CO")}</p>
+              <p className="text-xs text-gray-400">${a.premioValor.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</p>
             )}
           </div>
           <div className="bg-gray-50 rounded-xl p-3">

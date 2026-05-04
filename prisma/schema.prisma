@@ -44,6 +44,13 @@ enum EstadoRetiro {
   PAGADO
 }
 
+enum EstadoGiftCard {
+  DISPONIBLE
+  USADA
+  RETIRADA
+  REGALADA
+}
+
 enum TipoTransaccion {
   COMPRA
   PREMIO
@@ -80,6 +87,7 @@ model User {
   referidosHechos    Referido[] @relation("Referidor")
   referidoRegistrado Referido?  @relation("Referido")
   cupones            Cupon[]
+  giftCards          GiftCard[]
 
   @@map("users")
 }
@@ -108,6 +116,21 @@ model Cupon {
   usuario       User      @relation(fields: [usuarioId], references: [id])
 
   @@map("cupones")
+}
+
+model GiftCard {
+  id            String         @id @default(cuid())
+  codigo        String         @unique
+  valor         Float
+  estado        EstadoGiftCard @default(DISPONIBLE)
+  propietarioId String
+  creadaEn      DateTime       @default(now())
+  usadaEn       DateTime?
+  nota          String?
+
+  propietario   User           @relation(fields: [propietarioId], references: [id])
+
+  @@map("gift_cards")
 }
 
 model Caja {

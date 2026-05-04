@@ -25,7 +25,7 @@
 }
 
 body {
-  font-family: var(--font-geist-sans), Arial, sans-serif;
+  font-family: var(--font-nunito), "Nunito", Arial, sans-serif;
 }
 
 /* Hero — radial gold glows via pseudo-elements */
