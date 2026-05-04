@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
@@ -285,6 +285,14 @@ function Paginacion({
 // ── Página principal ───────────────────────────────────────────────────────
 
 export default function TiendaCajas() {
+  return (
+    <Suspense fallback={null}>
+      <TiendaCajasInner />
+    </Suspense>
+  );
+}
+
+function TiendaCajasInner() {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
