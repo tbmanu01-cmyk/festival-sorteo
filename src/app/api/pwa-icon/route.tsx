@@ -3,12 +3,8 @@ import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ size: string }> }
-) {
-  const { size: sizeParam } = await params;
-  const size = parseInt(sizeParam) || 192;
+export async function GET(req: NextRequest) {
+  const size = parseInt(req.nextUrl.searchParams.get("size") ?? "192") || 192;
   const f = size * 0.3;
 
   return new ImageResponse(

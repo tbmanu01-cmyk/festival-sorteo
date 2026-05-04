@@ -140,6 +140,24 @@ function ModalReserva({ caja, onCerrar, onConfirmar, cargando, resultado }: Moda
   );
 }
 
+// ── Ícono membresía (reverso tarjeta + estrella) ──────────────────────────
+
+function IconoMembresia({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      {/* Cuerpo de la tarjeta */}
+      <rect x="0.75" y="0.75" width="46.5" height="30.5" rx="4.5" fill="currentColor" fillOpacity="0.13" stroke="currentColor" strokeWidth="1.5"/>
+      {/* Franja magnética */}
+      <rect x="0.75" y="6" width="46.5" height="8" fill="currentColor" fillOpacity="0.50"/>
+      {/* Tira de firma */}
+      <rect x="4" y="19" width="26" height="3" rx="1.5" fill="currentColor" fillOpacity="0.22"/>
+      <rect x="4" y="24" width="18" height="2" rx="1" fill="currentColor" fillOpacity="0.15"/>
+      {/* Estrella de 4 puntas (esquina inferior derecha) */}
+      <path d="M41 19 L42.4 22.6 L46 24 L42.4 25.4 L41 29 L39.6 25.4 L36 24 L39.6 22.6 Z" fill="currentColor" fillOpacity="0.85"/>
+    </svg>
+  );
+}
+
 // ── Celda de caja ─────────────────────────────────────────────────────────
 
 function CeldaCaja({
@@ -169,25 +187,25 @@ function CeldaCaja({
       disabled={!disponible}
       title={tooltip}
       className={`
-        aspect-square flex flex-col items-center rounded-xl font-bold py-1.5
+        aspect-square flex flex-col items-center justify-between rounded-2xl font-bold p-3
         transition-all duration-150 border relative
         ${disponible
-          ? "bg-green-50 border-green-300 text-green-800 hover:bg-green-100 hover:border-green-500 hover:scale-110 hover:shadow-md cursor-pointer active:scale-95"
+          ? "bg-green-50 border-green-300 text-green-800 hover:bg-green-100 hover:border-green-500 hover:scale-105 hover:shadow-lg cursor-pointer active:scale-95"
           : reservada
           ? "bg-orange-50 border-orange-300 text-orange-700 cursor-not-allowed opacity-80"
           : "bg-red-50 border-red-300 text-red-700 cursor-not-allowed opacity-80"
         }
       `}
     >
-      <div className="flex-1 flex items-center justify-center">
-        <span className="text-4xl leading-none">🎫</span>
+      <IconoMembresia className="w-full max-w-[3.5rem] mx-auto" />
+      <div className="text-center leading-none">
+        <span className="text-sm font-extrabold block tracking-wide">{caja.numero}</span>
+        <span className="text-[10px] font-semibold opacity-80 block mt-0.5">
+          {caja.estado === "DISPONIBLE" ? "Libre" : caja.estado === "RESERVADA" ? "Reservado" : "Vendido"}
+        </span>
       </div>
-      <span className="text-xs leading-none font-extrabold">{caja.numero}</span>
-      <span className="text-[10px] leading-none font-semibold mt-0.5 opacity-90">
-        {caja.estado === "DISPONIBLE" ? "Libre" : caja.estado === "RESERVADA" ? "Reservado" : "Vendido"}
-      </span>
       {reservada && (
-        <span className="absolute top-1 right-1 w-2 h-2 bg-orange-400 rounded-full" />
+        <span className="absolute top-2 right-2 w-2 h-2 bg-orange-400 rounded-full" />
       )}
     </button>
   );
@@ -474,17 +492,14 @@ export default function TiendaCajas() {
 
           {/* Grid de cajas */}
           {cargando ? (
-            <div className="grid grid-cols-8 gap-1.5 mb-6">
-              {Array.from({ length: 100 }).map((_, i) => (
-                <div key={i} className="aspect-square rounded-xl shimmer" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
+              {Array.from({ length: 40 }).map((_, i) => (
+                <div key={i} className="aspect-square rounded-2xl shimmer" />
               ))}
             </div>
           ) : datos && datos.cajas.length > 0 ? (
             <>
-              <div
-                className="grid gap-1.5 mb-6"
-                style={{ gridTemplateColumns: "repeat(8, minmax(0, 1fr))" }}
-              >
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
                 {datos.cajas.map((caja) => (
                   <CeldaCaja key={caja.numero} caja={caja} onClick={abrirModal} />
                 ))}
