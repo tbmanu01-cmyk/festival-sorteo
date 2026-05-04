@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verificarAdmin } from "@/lib/admin";
+import { obtenerIP, registrarAuditoria } from "@/lib/auditoria";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!await verificarAdmin()) {
+  const session = await verificarAdmin();
+  if (!session) {
     return NextResponse.json({ mensaje: "Acceso denegado." }, { status: 403 });
   }
 
+  const ip = obtenerIP(req);
+  const adminId = (session.user as unknown as { id: string }).id;
   const { id } = await params;
   const { accion } = await req.json() as { accion: "aprobar" | "rechazar" };
 
@@ -24,7 +28,6 @@ export async function PATCH(
     return NextResponse.json({ mensaje: "Este retiro ya fue procesado." }, { status: 409 });
   }
 
-  // Obtener datos del usuario para el email
   const usuario = await prisma.user.findUnique({
     where: { id: retiro.userId },
     select: { nombre: true, correo: true },
@@ -43,6 +46,14 @@ export async function PATCH(
         },
       }),
     ]);
+
+    await registrarAuditoria({
+      userId: adminId,
+      accion: "RETIRO_APROBADO",
+      detalle: `Retiro ${id} de $${retiro.monto.toLocaleString("es-CO")} aprobado para usuario ${retiro.userId}`,
+      ip,
+    });
+
     if (usuario) {
       import("@/lib/email").then(({ enviarRetiroAprobado }) =>
         enviarRetiroAprobado({
@@ -54,7 +65,6 @@ export async function PATCH(
       );
     }
   } else {
-    // Rechazar: devolver saldo al usuario
     await prisma.$transaction([
       prisma.retiro.update({ where: { id }, data: { estado: "RECHAZADO" } }),
       prisma.user.update({
@@ -62,6 +72,14 @@ export async function PATCH(
         data: { saldoPuntos: { increment: retiro.monto } },
       }),
     ]);
+
+    await registrarAuditoria({
+      userId: adminId,
+      accion: "RETIRO_RECHAZADO",
+      detalle: `Retiro ${id} de $${retiro.monto.toLocaleString("es-CO")} rechazado, saldo devuelto a ${retiro.userId}`,
+      ip,
+    });
+
     if (usuario) {
       import("@/lib/email").then(({ enviarRetiroRechazado }) =>
         enviarRetiroRechazado({
@@ -73,5 +91,7 @@ export async function PATCH(
     }
   }
 
-  return NextResponse.json({ mensaje: accion === "aprobar" ? "Retiro aprobado." : "Retiro rechazado y saldo devuelto." });
+  return NextResponse.json({
+    mensaje: accion === "aprobar" ? "Retiro aprobado." : "Retiro rechazado y saldo devuelto.",
+  });
 }

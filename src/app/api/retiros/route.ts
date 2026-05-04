@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { obtenerIP, registrarAuditoria } from "@/lib/auditoria";
 
 const MONTO_MINIMO = 100_000;
 
@@ -23,6 +24,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const ip = obtenerIP(req);
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ mensaje: "No autenticado." }, { status: 401 });
@@ -80,6 +82,13 @@ export async function POST(req: NextRequest) {
       },
     }),
   ]);
+
+  await registrarAuditoria({
+    userId,
+    accion: "RETIRO_SOLICITADO",
+    detalle: `Monto: $${monto.toLocaleString("es-CO")} COP`,
+    ip,
+  });
 
   return NextResponse.json({
     mensaje: "Solicitud enviada. El administrador la procesará pronto.",

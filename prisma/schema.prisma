@@ -81,6 +81,9 @@ model User {
   codigoRef          String?       @unique
   resetToken         String?       @unique
   resetTokenExpiry   DateTime?
+  resetSolicitadoEn  DateTime?
+  loginIntentos      Int           @default(0)
+  bloqueadoHasta     DateTime?
 
   cajas           Caja[]
   transacciones   Transaccion[]
@@ -90,6 +93,7 @@ model User {
   referidoRegistrado Referido?  @relation("Referido")
   cupones            Cupon[]
   giftCards          GiftCard[]
+  auditLogs          AuditLog[]
 
   @@map("users")
 }
@@ -290,4 +294,19 @@ model SorteoPrevioGran {
   granSorteo        GranSorteo   @relation(fields: [granSorteoId], references: [id])
 
   @@map("sorteos_previos_gran")
+}
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  userId   String?
+  accion   String
+  detalle  String?
+  ip       String?
+  fecha    DateTime @default(now())
+
+  user     User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([fecha])
+  @@map("audit_logs")
 }

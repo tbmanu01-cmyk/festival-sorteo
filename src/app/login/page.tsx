@@ -59,7 +59,7 @@ function FormularioLogin() {
     setCargando(false);
 
     if (result?.error) {
-      setError("Correo o contraseña incorrectos. Verifica tus datos.");
+      setError("Correo o contraseña incorrectos. Tras 5 intentos fallidos la cuenta se bloquea 15 minutos.");
     } else {
       router.push("/dashboard");
       router.refresh();
