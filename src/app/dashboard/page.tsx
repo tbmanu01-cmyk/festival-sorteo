@@ -412,7 +412,7 @@ function ModalRetiro({
   );
 }
 
-// ── Gift Card — tarjeta individual con acciones ───────────────────────────
+// ── Gift Card — selector con carrusel ────────────────────────────────────
 
 interface GiftCardItem {
   id: string;
@@ -423,68 +423,91 @@ interface GiftCardItem {
   nota: string | null;
 }
 
-function TarjetaGiftCard({
-  gc,
+function SelectorGiftCards({
+  cards,
   onAccion,
 }: {
-  gc: GiftCardItem;
+  cards: GiftCardItem[];
   onAccion: (id: string, accion: "retirar" | "regalar" | "usar") => void;
 }) {
-  const disponible = gc.estado === "DISPONIBLE";
-  const estadoLabel: Record<string, string> = {
-    DISPONIBLE: "Disponible",
-    USADA: "Usada en membresía",
-    RETIRADA: "Convertida a saldo",
-    REGALADA: "Regalada",
-  };
-  const estadoColor: Record<string, string> = {
-    DISPONIBLE: "bg-green-100 text-green-700",
-    USADA: "bg-blue-100 text-blue-700",
-    RETIRADA: "bg-gray-100 text-gray-500",
-    REGALADA: "bg-purple-100 text-purple-700",
-  };
+  const [idx, setIdx] = useState(0);
+  const gc = cards[idx];
+  if (!gc) return null;
 
   return (
-    <div className={`rounded-2xl border-2 overflow-hidden transition-all ${disponible ? "border-[#F5A623]/60" : "border-gray-100 opacity-70"}`}>
-      {/* Imagen de la gift card */}
-      <div className="relative">
-        <img src="/giftcard.svg" alt="Gift Card" style={{ width: "100%", display: "block" }} />
-        <div className="absolute bottom-3 right-4 text-right">
-          <p className="font-extrabold text-white text-lg leading-tight drop-shadow"
-             style={{ textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
-            ${gc.valor.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
-          </p>
-          <p className="text-xs text-white/80 font-mono">{gc.codigo}</p>
-        </div>
-        <span className={`absolute top-3 right-3 text-xs font-semibold px-2 py-1 rounded-full ${estadoColor[gc.estado] ?? "bg-gray-100 text-gray-500"}`}>
-          {estadoLabel[gc.estado] ?? gc.estado}
-        </span>
+    <div>
+      {/* Cabecera con contador y navegación */}
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-bold text-gray-700">
+          Gift cards disponibles
+          <span className="ml-1.5 bg-[#F5A623] text-[#102463] text-xs font-extrabold px-2 py-0.5 rounded-full">
+            {cards.length}
+          </span>
+        </p>
+        {cards.length > 1 && (
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <button
+              onClick={() => setIdx((i) => (i - 1 + cards.length) % cards.length)}
+              className="w-6 h-6 rounded-full border border-gray-200 hover:bg-gray-100 flex items-center justify-center font-bold transition-colors"
+            >‹</button>
+            <span className="tabular-nums">{idx + 1} / {cards.length}</span>
+            <button
+              onClick={() => setIdx((i) => (i + 1) % cards.length)}
+              className="w-6 h-6 rounded-full border border-gray-200 hover:bg-gray-100 flex items-center justify-center font-bold transition-colors"
+            >›</button>
+          </div>
+        )}
       </div>
-      <div className="p-3 bg-white">
-      {gc.nota && <p className="text-xs text-gray-400 mb-2">{gc.nota}</p>}
-      {disponible && (
-        <div className="flex gap-2 flex-wrap">
+
+      {/* Tarjeta */}
+      <div className="flex gap-3 items-start">
+        {/* Imagen compacta */}
+        <div className="relative flex-shrink-0" style={{ width: 140 }}>
+          <img src="/giftcard.svg" alt="Gift Card" className="rounded-xl w-full block shadow-sm" />
+          <div className="absolute inset-0 flex flex-col items-end justify-end p-2 pointer-events-none">
+            <p className="text-white font-extrabold text-xs leading-tight drop-shadow text-right"
+               style={{ textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}>
+              ${gc.valor.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+            </p>
+            <p className="text-white/70 font-mono text-[9px] leading-tight">{gc.codigo}</p>
+          </div>
+        </div>
+
+        {/* Acciones */}
+        <div className="flex-1 flex flex-col gap-2">
           <button
             onClick={() => onAccion(gc.id, "usar")}
-            className="flex-1 min-w-[90px] bg-[#102463] hover:bg-[#173592] text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors"
+            className="w-full bg-[#102463] hover:bg-[#173592] text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors text-left"
           >
-            Usar membresía
+            🎟️ Usar en membresía
           </button>
           <button
             onClick={() => onAccion(gc.id, "retirar")}
-            className="flex-1 min-w-[90px] bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors"
+            className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors text-left"
           >
-            Añadir a saldo
+            💰 Añadir a saldo
           </button>
           <button
             onClick={() => onAccion(gc.id, "regalar")}
-            className="flex-1 min-w-[90px] border-2 border-[#102463] text-[#102463] hover:bg-[#102463]/5 text-xs font-bold py-2 px-3 rounded-xl transition-colors"
+            className="w-full border-2 border-[#102463] text-[#102463] hover:bg-[#102463]/5 text-xs font-bold py-2 px-3 rounded-xl transition-colors text-left"
           >
-            Regalar
+            🎁 Regalar a alguien
           </button>
         </div>
-      )}
       </div>
+
+      {/* Dots si hay varias */}
+      {cards.length > 1 && (
+        <div className="flex justify-center gap-1 mt-3">
+          {cards.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIdx(i)}
+              className={`w-1.5 h-1.5 rounded-full transition-all ${i === idx ? "bg-[#F5A623] w-3" : "bg-gray-300"}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -737,16 +760,7 @@ function SeccionReferidos() {
 
           {/* Gift cards disponibles */}
           {!cargando && gcDisponibles.length > 0 && (
-            <div>
-              <p className="text-sm font-bold text-gray-700 mb-3">
-                Gift cards disponibles ({gcDisponibles.length})
-              </p>
-              <div className="space-y-3">
-                {gcDisponibles.map((gc) => (
-                  <TarjetaGiftCard key={gc.id} gc={gc} onAccion={manejarAccion} />
-                ))}
-              </div>
-            </div>
+            <SelectorGiftCards cards={gcDisponibles} onAccion={manejarAccion} />
           )}
 
           {/* Sin gift cards */}
@@ -762,9 +776,21 @@ function SeccionReferidos() {
               <summary className="cursor-pointer hover:text-gray-600 font-medium">
                 Ver historial ({giftCards.filter((g) => g.estado !== "DISPONIBLE").length} usadas)
               </summary>
-              <div className="mt-3 space-y-2">
+              <div className="mt-3 space-y-1.5">
                 {giftCards.filter((g) => g.estado !== "DISPONIBLE").map((gc) => (
-                  <TarjetaGiftCard key={gc.id} gc={gc} onAccion={manejarAccion} />
+                  <div key={gc.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+                    <span className="font-mono text-[10px] text-gray-400">{gc.codigo}</span>
+                    <span className="text-[10px] font-semibold">
+                      ${gc.valor.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                    </span>
+                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                      gc.estado === "USADA" ? "bg-blue-100 text-blue-600" :
+                      gc.estado === "REGALADA" ? "bg-purple-100 text-purple-600" :
+                      "bg-gray-100 text-gray-500"
+                    }`}>
+                      {gc.estado.toLowerCase()}
+                    </span>
+                  </div>
                 ))}
               </div>
             </details>
