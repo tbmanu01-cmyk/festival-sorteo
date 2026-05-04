@@ -354,6 +354,12 @@ export default function AdminPanel() {
                 ⚙️ Configuración
               </Link>
               <Link
+                href="/admin/red-multinivel"
+                className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
+              >
+                🌐 Red Multinivel
+              </Link>
+              <Link
                 href="/admin/motor-sorteos"
                 className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-5 py-2.5 rounded-xl transition-colors shadow-md text-sm flex items-center gap-1.5"
               >
