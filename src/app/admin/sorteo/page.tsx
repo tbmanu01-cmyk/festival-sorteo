@@ -9,12 +9,14 @@ import RuletaSorteo from "@/components/RuletaSorteo";
 import Link from "next/link";
 
 type Categoria = "CUATRO_CIFRAS" | "TRES_CIFRAS" | "DOS_CIFRAS" | "UNA_CIFRA";
+type OverlayFase = "girando" | "revelando" | "final";
 
 interface Premio {
   id: string;
   categoria: Categoria;
   monto: number;
   pagado: boolean;
+  numeroCaja: string | null;
   user: { nombre: string; apellido: string; correo: string };
 }
 
@@ -22,6 +24,7 @@ interface SorteoData {
   id: string;
   fecha: string;
   numeroGanador: string;
+  numerosGanadores: string[] | null;
   estado: string;
   totalVendidas: number;
   totalRecaudo: number;
@@ -31,6 +34,7 @@ interface SorteoData {
 }
 
 interface Resumen {
+  numerosGanadores: string[];
   numeroGanador: string;
   totalVendidas: number;
   totalRecaudo: number;
@@ -59,7 +63,7 @@ const CATEGORIA_ICONOS: Record<Categoria, string> = {
   UNA_CIFRA:     "🎁",
 };
 
-// ── Grupo de ganadores ─────────────────────────────────────────────────────
+// ── Grupo de ganadores colapsable ──────────────────────────────────────────
 
 function GrupoGanadores({ categoria, premios }: { categoria: Categoria; premios: Premio[] }) {
   const [expandido, setExpandido] = useState(categoria === "CUATRO_CIFRAS");
@@ -89,23 +93,29 @@ function GrupoGanadores({ categoria, premios }: { categoria: Categoria; premios:
           <div>
             <p className="font-bold">{CATEGORIA_LABELS[categoria]}</p>
             <p className="text-sm opacity-80">
-              {premios.length} ganador{premios.length !== 1 ? "es" : ""} ·{" "}
-              ${premios[0].monto.toLocaleString("es-CO")} c/u
+              {premios.length} ganador{premios.length !== 1 ? "es" : ""} · ${premios[0].monto.toLocaleString("es-CO")} c/u
             </p>
           </div>
         </div>
         <span className="text-lg">{expandido ? "▲" : "▼"}</span>
       </button>
-
       {expandido && (
         <div className="border-t border-current/20 divide-y divide-current/10">
           {premios.map((p) => (
-            <div key={p.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
-              <div>
-                <p className="font-medium">{p.user.nombre} {p.user.apellido}</p>
-                <p className="text-xs opacity-60">{p.user.correo}</p>
+            <div key={p.id} className="flex items-center justify-between px-4 py-2.5 text-sm gap-3">
+              <div className="min-w-0">
+                <p className="font-medium truncate">{p.user.nombre} {p.user.apellido}</p>
+                <p className="text-xs opacity-60 truncate">{p.user.correo}</p>
               </div>
-              <span className="font-bold">${p.monto.toLocaleString("es-CO")}</span>
+              <div className="text-right shrink-0">
+                {p.numeroCaja && (
+                  <p className="font-extrabold text-base leading-tight"
+                    style={{ fontFamily: "'Courier New', monospace", letterSpacing: "0.12em" }}>
+                    {p.numeroCaja}
+                  </p>
+                )}
+                <p className="text-xs opacity-70 font-semibold">${p.monto.toLocaleString("es-CO")}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -128,14 +138,17 @@ export default function AdminSorteo() {
   const [reiniciando,     setReiniciando]     = useState(false);
   const [error,           setError]           = useState("");
   const [cargandoSorteo,  setCargandoSorteo]  = useState(true);
+  const [n4Config,        setN4Config]        = useState(4); // ganadores4Cifras de config
 
-  // Estado de la animación
-  const [overlayActivo,   setOverlayActivo]   = useState(false);
-  const [numAnimacion,    setNumAnimacion]     = useState("0000");
-  const [animTerminada,   setAnimTerminada]    = useState(false);
-  const [modoDemo,        setModoDemo]        = useState(false);
-  const [pendienteJSON,   setPendienteJSON]   = useState<{ sorteo: SorteoData; resumen: Resumen } | null>(null);
+  // Estado del overlay multi-ronda
+  const [overlayActivo,     setOverlayActivo]     = useState(false);
+  const [numerosAnimacion,  setNumerosAnimacion]  = useState<string[]>([]);
+  const [roundIndex,        setRoundIndex]        = useState(0);
+  const [overlayFase,       setOverlayFase]       = useState<OverlayFase>("girando");
+  const [modoDemo,          setModoDemo]          = useState(false);
+  const [pendienteJSON,     setPendienteJSON]     = useState<{ sorteo: SorteoData; resumen: Resumen } | null>(null);
 
+  // Autenticación
   useEffect(() => {
     if (status === "unauthenticated") { router.push("/login"); return; }
     if (status === "authenticated" && (session.user as { rol?: string }).rol !== "ADMIN") {
@@ -143,13 +156,18 @@ export default function AdminSorteo() {
     }
   }, [session, status, router]);
 
+  // Cargar sorteo existente y config
   useEffect(() => {
     fetch("/api/admin/sorteo")
       .then((r) => r.json())
       .then((d) => { setSorteoExistente(d.sorteo); setCargandoSorteo(false); });
+
+    fetch("/api/admin/config")
+      .then((r) => r.ok ? r.json() : null)
+      .then((c) => { if (c?.ganadores4Cifras) setN4Config(c.ganadores4Cifras); });
   }, []);
 
-  // ── Ejecutar sorteo real ──────────────────────────────────────────────
+  // ── Ejecutar sorteo real ─────────────────────────────────────────────────
 
   async function ejecutarSorteo() {
     if (modo === "manual" && !/^\d{4}$/.test(numeroManual)) {
@@ -169,55 +187,73 @@ export default function AdminSorteo() {
       let json: Record<string, unknown>;
       try {
         json = await res.json();
-      } catch (parseErr) {
-        console.error("[Sorteo] Respuesta no es JSON válido:", parseErr);
-        throw new Error("El servidor no respondió correctamente. Revisa la consola del servidor.");
+      } catch {
+        throw new Error("El servidor no respondió correctamente.");
       }
 
       if (!res.ok) {
-        console.error("[Sorteo] Error HTTP", res.status, json);
-        setError((json.mensaje as string) ?? "Error desconocido al ejecutar el sorteo.");
+        setError((json.mensaje as string) ?? "Error desconocido.");
         if (json.sorteo) setSorteoExistente(json.sorteo as SorteoData);
         return;
       }
 
-      // Guardar resultado y mostrar animación
+      const nums = (json.numerosGanadores as string[]) ?? [(json.sorteo as SorteoData).numeroGanador];
       setPendienteJSON({ sorteo: json.sorteo as SorteoData, resumen: json.resumen as Resumen });
-      setNumAnimacion((json.sorteo as SorteoData).numeroGanador);
-      setModoDemo(false);
-      setAnimTerminada(false);
-      setOverlayActivo(true);
+      iniciarOverlay(nums, false);
     } catch (err) {
-      console.error("[Sorteo] Error al ejecutar:", err);
-      setError(err instanceof Error ? err.message : "Error de conexión. Intenta nuevamente.");
+      setError(err instanceof Error ? err.message : "Error de conexión.");
     } finally {
       setEjecutando(false);
     }
   }
 
-  // ── Demo sin sorteo real ──────────────────────────────────────────────
+  // ── Demo ─────────────────────────────────────────────────────────────────
 
   function verDemo() {
-    const num = String(Math.floor(Math.random() * 10000)).padStart(4, "0");
-    setNumAnimacion(num);
-    setModoDemo(true);
-    setAnimTerminada(false);
+    const nums = Array.from({ length: n4Config }, () =>
+      String(Math.floor(Math.random() * 10000)).padStart(4, "0")
+    );
+    iniciarOverlay(nums, true);
+  }
+
+  // ── Helpers del overlay ──────────────────────────────────────────────────
+
+  function iniciarOverlay(nums: string[], esDemo: boolean) {
+    setNumerosAnimacion(nums);
+    setRoundIndex(0);
+    setOverlayFase("girando");
+    setModoDemo(esDemo);
     setOverlayActivo(true);
   }
 
-  // ── Cerrar overlay ────────────────────────────────────────────────────
+  function handleAnimTerminada() {
+    setOverlayFase("revelando");
+  }
+
+  function avanzarRound() {
+    if (roundIndex < numerosAnimacion.length - 1) {
+      setRoundIndex((i) => i + 1);
+      setOverlayFase("girando");
+    } else {
+      setOverlayFase("final");
+    }
+  }
 
   function cerrarOverlay() {
     setOverlayActivo(false);
-    setAnimTerminada(false);
+    setOverlayFase("girando");
+    setRoundIndex(0);
     if (!modoDemo && pendienteJSON) {
-      setSorteoExistente(pendienteJSON.sorteo);
+      setSorteoExistente({
+        ...pendienteJSON.sorteo,
+        numerosGanadores: pendienteJSON.resumen.numerosGanadores,
+      });
       setResumen(pendienteJSON.resumen);
       setPendienteJSON(null);
     }
   }
 
-  // ── Reiniciar sorteo (pruebas) ────────────────────────────────────────
+  // ── Reiniciar sorteo ─────────────────────────────────────────────────────
 
   async function reiniciarSorteo() {
     if (!confirm("¿Seguro que quieres eliminar el sorteo actual? Esta acción no se puede deshacer.")) return;
@@ -245,6 +281,19 @@ export default function AdminSorteo() {
       }))
     : [];
 
+  // Números ganadores del sorteo existente (soporte sorteos viejos con un solo número)
+  const numerosGanadoresExistente: string[] =
+    sorteoExistente?.numerosGanadores
+      ? (sorteoExistente.numerosGanadores as string[])
+      : sorteoExistente?.numeroGanador
+      ? [sorteoExistente.numeroGanador]
+      : [];
+
+  // Número actual en animación
+  const numActual = numerosAnimacion[roundIndex] ?? "0000";
+  const esUltimoRound = roundIndex === numerosAnimacion.length - 1;
+  const totalRounds = numerosAnimacion.length;
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -258,12 +307,14 @@ export default function AdminSorteo() {
             </Link>
             <div>
               <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Motor de Sorteo</h1>
-              <p className="text-gray-500 text-sm">Ejecuta y gestiona el sorteo de cajas sorpresa</p>
+              <p className="text-gray-500 text-sm">
+                {n4Config} sorteo{n4Config !== 1 ? "s" : ""} de 4 cifras · ejecuta y gestiona el sorteo principal
+              </p>
             </div>
           </div>
 
           {!sorteoExistente ? (
-            /* ── Formulario del sorteo ────────────────────────────────── */
+            /* ── Formulario del sorteo ──────────────────────────────── */
             <div className="grid lg:grid-cols-2 gap-6">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-5">Configurar sorteo</h2>
@@ -273,6 +324,27 @@ export default function AdminSorteo() {
                     <p className="text-red-700 text-sm">{error}</p>
                   </div>
                 )}
+
+                {/* Info de rondas */}
+                <div className="bg-[#1B4F8A]/5 border border-[#1B4F8A]/15 rounded-xl p-4 mb-5">
+                  <p className="text-xs font-bold text-[#1B4F8A] uppercase tracking-wider mb-2">
+                    🎯 {n4Config} sorteo{n4Config !== 1 ? "s" : ""} configurados
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from({ length: n4Config }, (_, i) => (
+                      <span key={i} className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        i === n4Config - 1
+                          ? "bg-[#F5A623]/20 text-[#b87b00]"
+                          : "bg-[#1B4F8A]/10 text-[#1B4F8A]"
+                      }`}>
+                        Sorteo {i + 1}{i === n4Config - 1 ? " ⭐" : ""}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    El último sorteo determina también los ganadores de 3, 2 y 1 cifra.
+                  </p>
+                </div>
 
                 {/* Modo */}
                 <div className="mb-5">
@@ -294,8 +366,8 @@ export default function AdminSorteo() {
                   </div>
                   <p className="text-xs text-gray-400 mt-2">
                     {modo === "auto"
-                      ? "Se elige al azar entre los números de cajas vendidas"
-                      : "Ingresa el número ganador manualmente (validado 0000-9999)"}
+                      ? "Todos los sorteos se eligen al azar entre cajas vendidas."
+                      : `Los primeros ${Math.max(n4Config - 1, 0)} sorteos son automáticos. El último (principal) usa el número ingresado.`}
                   </p>
                 </div>
 
@@ -303,7 +375,7 @@ export default function AdminSorteo() {
                 {modo === "manual" && (
                   <div className="mb-5">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Número ganador
+                      Número del sorteo principal (último)
                     </label>
                     <input
                       type="text"
@@ -316,16 +388,14 @@ export default function AdminSorteo() {
                   </div>
                 )}
 
-                {/* Botón ejecutar */}
                 <button
                   onClick={ejecutarSorteo}
                   disabled={ejecutando || (modo === "manual" && numeroManual.length !== 4)}
                   className="w-full bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-extrabold py-4 rounded-xl text-lg transition-all shadow-md hover:shadow-lg mb-3"
                 >
-                  {ejecutando ? "⏳ Procesando..." : "🎯 Ejecutar sorteo"}
+                  {ejecutando ? "⏳ Procesando..." : `🎯 Ejecutar ${n4Config} sorteo${n4Config !== 1 ? "s" : ""}`}
                 </button>
 
-                {/* Botón demo */}
                 <button
                   onClick={verDemo}
                   disabled={ejecutando}
@@ -344,34 +414,29 @@ export default function AdminSorteo() {
                 <h2 className="text-lg font-bold text-gray-900 mb-5">Distribución de premios</h2>
                 <div className="space-y-3">
                   {[
-                    { label: "🏆 4 cifras exactas", pct: "35%",        desc: "1 ganador máximo" },
-                    { label: "🥈 3 últimas cifras", pct: "15%",        desc: "Hasta 9 ganadores" },
-                    { label: "🥉 2 últimas cifras", pct: "10%",        desc: "Hasta 90 ganadores" },
-                    { label: "🎁 1 última cifra",   pct: "Devolución", desc: "Hasta 900 ganadores" },
-                    { label: "🎪 Operación",        pct: "40%",        desc: "Gastos del evento" },
+                    { label: `🏆 4 cifras × ${n4Config}`,  desc: `${n4Config} sorteo${n4Config !== 1 ? "s" : ""} independientes` },
+                    { label: "🥈 3 últimas cifras",         desc: "Último sorteo — hasta 9 ganadores" },
+                    { label: "🥉 2 últimas cifras",         desc: "Último sorteo — hasta 90 ganadores" },
+                    { label: "🎁 1 última cifra",           desc: "Último sorteo — hasta 900 ganadores" },
+                    { label: "🎪 Operación",                desc: "Gastos del evento" },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
                       <div>
                         <p className="text-sm font-medium text-gray-800">{item.label}</p>
                         <p className="text-xs text-gray-400">{item.desc}</p>
                       </div>
-                      <span className="font-extrabold text-[#1B4F8A]">{item.pct}</span>
                     </div>
                   ))}
                 </div>
 
-                {/* Preview estático de la animación */}
+                {/* Preview de la animación */}
                 <div className="mt-6 rounded-xl overflow-hidden border border-gray-100">
-                  <div
-                    className="py-4 px-3 text-center"
-                    style={{ background: "linear-gradient(145deg,#04070e,#0b1929,#04070e)" }}
-                  >
-                    <p className="text-xs font-bold tracking-widest uppercase mb-3"
-                      style={{ color: "#F5A623", letterSpacing: "3px" }}>
+                  <div className="py-4 px-3 text-center" style={{ background: "linear-gradient(145deg,#04070e,#0b1929,#04070e)" }}>
+                    <p className="text-xs font-bold tracking-widest uppercase mb-3" style={{ color: "#F5A623", letterSpacing: "3px" }}>
                       ✨ Vista previa ✨
                     </p>
-                    <div className="flex gap-2 justify-center">
-                      {["?","?","?","?"].map((d, i) => (
+                    <div className="flex gap-2 justify-center mb-2">
+                      {["?", "?", "?", "?"].map((d, i) => (
                         <div key={i} style={{
                           width: "44px", height: "56px", borderRadius: "10px",
                           background: "linear-gradient(180deg,#0b1929,#050d18)",
@@ -383,7 +448,10 @@ export default function AdminSorteo() {
                         }}>{d}</div>
                       ))}
                     </div>
-                    <p className="text-xs mt-3" style={{ color: "#243d5c" }}>
+                    <p className="text-xs mb-3" style={{ color: "#4a90d9" }}>
+                      {n4Config} sorteo{n4Config !== 1 ? "s" : ""} · uno tras otro
+                    </p>
+                    <p className="text-xs" style={{ color: "#243d5c" }}>
                       Presiona "Ver demo" para previsualizar
                     </p>
                   </div>
@@ -392,18 +460,46 @@ export default function AdminSorteo() {
             </div>
 
           ) : (
-            /* ── Resultados del sorteo ────────────────────────────────── */
+            /* ── Resultados del sorteo ──────────────────────────────── */
             <div className="space-y-6">
-              {/* Número ganador */}
-              <div className="bg-gradient-to-br from-[#1B4F8A] to-[#0d3b6e] rounded-2xl p-8 text-white text-center">
-                <p className="text-blue-200 text-sm font-medium mb-2 uppercase tracking-widest">
-                  Número ganador
+
+              {/* Números ganadores de 4 cifras */}
+              <div className="bg-gradient-to-br from-[#1B4F8A] to-[#0d3b6e] rounded-2xl p-8 text-white">
+                <p className="text-blue-200 text-sm font-medium mb-4 uppercase tracking-widest text-center">
+                  {numerosGanadoresExistente.length > 1
+                    ? `${numerosGanadoresExistente.length} números ganadores de 4 cifras`
+                    : "Número ganador"}
                 </p>
-                <div className="text-8xl md:text-9xl font-extrabold tracking-widest text-[#F5A623] my-4"
-                  style={{ fontFamily: "'Courier New', monospace" }}>
-                  {sorteoExistente.numeroGanador}
+
+                {/* Grid de números */}
+                <div className={`grid gap-4 mb-4 ${
+                  numerosGanadoresExistente.length <= 2 ? "grid-cols-1 sm:grid-cols-2" :
+                  numerosGanadoresExistente.length <= 4 ? "grid-cols-2" :
+                  "grid-cols-3"
+                }`}>
+                  {numerosGanadoresExistente.map((num, i) => (
+                    <div key={i} className="text-center">
+                      <p className="text-blue-300 text-xs font-bold uppercase tracking-widest mb-1">
+                        {numerosGanadoresExistente.length > 1
+                          ? (i === numerosGanadoresExistente.length - 1 ? "⭐ Sorteo principal" : `Sorteo ${i + 1}`)
+                          : "Número ganador"}
+                      </p>
+                      <div
+                        className="font-extrabold text-[#F5A623]"
+                        style={{
+                          fontFamily: "'Courier New', monospace",
+                          fontSize: numerosGanadoresExistente.length > 2 ? "clamp(36px,8vw,60px)" : "clamp(48px,10vw,80px)",
+                          letterSpacing: "0.2em",
+                          textShadow: "0 0 40px rgba(245,166,35,0.7)",
+                        }}
+                      >
+                        {num}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <p className="text-blue-200 text-sm">
+
+                <p className="text-blue-200 text-sm text-center">
                   Sorteo ejecutado el{" "}
                   {new Date(sorteoExistente.fecha).toLocaleString("es-CO", {
                     dateStyle: "long",
@@ -418,7 +514,7 @@ export default function AdminSorteo() {
                   { label: "Cajas vendidas", valor: sorteoExistente.totalVendidas.toLocaleString("es-CO"), icono: "📦" },
                   { label: "Recaudo total",  valor: `$${(sorteoExistente.totalRecaudo / 1_000_000).toFixed(2)}M`, icono: "💰" },
                   { label: "Fondo premios",  valor: `$${(sorteoExistente.fondoPremios / 1_000_000).toFixed(2)}M`, icono: "🏆" },
-                  { label: "Ganancia operación", valor: `$${(sorteoExistente.ganancia / 1_000_000).toFixed(2)}M`, icono: "🎪" },
+                  { label: "Ganancia",       valor: `$${(sorteoExistente.ganancia / 1_000_000).toFixed(2)}M`,    icono: "🎪" },
                 ].map((item) => (
                   <div key={item.label} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
                     <span className="text-2xl">{item.icono}</span>
@@ -428,7 +524,7 @@ export default function AdminSorteo() {
                 ))}
               </div>
 
-              {/* Resumen si recién se ejecutó */}
+              {/* Resumen recién ejecutado */}
               {resumen && (
                 <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
                   <h3 className="font-bold text-green-800 mb-3">✅ Sorteo ejecutado exitosamente</h3>
@@ -453,7 +549,7 @@ export default function AdminSorteo() {
                 </div>
               )}
 
-              {/* Lista de ganadores por categoría */}
+              {/* Ganadores por categoría */}
               <div>
                 <h2 className="text-lg font-bold text-gray-900 mb-4">
                   Ganadores por categoría
@@ -488,97 +584,234 @@ export default function AdminSorteo() {
       </main>
       <Footer />
 
-      {/* ── Overlay de animación ─────────────────────────────────────── */}
+      {/* ── Overlay multi-ronda ─────────────────────────────────────────── */}
       {overlayActivo && (
         <div style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 50,
-          background: "rgba(0, 0, 0, 0.97)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
+          position: "fixed", inset: 0, zIndex: 50,
+          background: "rgba(0,0,0,0.97)",
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
           padding: "16px",
         }}>
           <div style={{ maxWidth: "520px", width: "100%" }}>
 
-            {/* Badge modo demo */}
-            {modoDemo && (
-              <div style={{
-                textAlign: "center",
-                marginBottom: "12px",
-              }}>
-                <span style={{
-                  background: "rgba(27,79,138,0.4)",
-                  border: "1px solid rgba(27,79,138,0.6)",
-                  color: "#7eb3e8",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  letterSpacing: "2px",
-                  textTransform: "uppercase",
-                  padding: "4px 14px",
-                  borderRadius: "20px",
-                }}>
+            {/* Badge de ronda */}
+            <div style={{ textAlign: "center", marginBottom: "14px" }}>
+              {modoDemo ? (
+                <span style={badgeStyle("#1B4F8A", "rgba(27,79,138,0.4)")}>
                   Modo demo — sin sorteo real
                 </span>
-              </div>
+              ) : (
+                <span style={badgeStyle("#F5A623", "rgba(245,166,35,0.15)")}>
+                  🎯 Sorteo {roundIndex + 1} de {totalRounds}
+                  {roundIndex === totalRounds - 1 ? " — Principal ⭐" : ""}
+                </span>
+              )}
+            </div>
+
+            {/* ── FASE: girando ────────────────────────────────────────── */}
+            {overlayFase === "girando" && (
+              <>
+                <RuletaSorteo
+                  numeroGanador={numActual}
+                  activo={true}
+                  onTerminado={handleAnimTerminada}
+                />
+                <div style={{ marginTop: "16px", textAlign: "center" }}>
+                  <button onClick={cerrarOverlay} style={btnSaltarStyle}>
+                    Saltar animación
+                  </button>
+                </div>
+              </>
             )}
 
-            {/* Componente de animación */}
-            <RuletaSorteo
-              numeroGanador={numAnimacion}
-              activo={overlayActivo}
-              onTerminado={() => setAnimTerminada(true)}
-            />
+            {/* ── FASE: revelando ──────────────────────────────────────── */}
+            {overlayFase === "revelando" && (
+              <div style={{
+                background: "linear-gradient(145deg,#04070e,#0b1929,#04070e)",
+                borderRadius: "24px",
+                padding: "40px 24px",
+                textAlign: "center",
+                border: "1px solid rgba(245,166,35,0.3)",
+              }}>
+                {/* Luces decorativas */}
+                <div style={{ position: "relative" }}>
+                  <p style={{
+                    color: "#4a90d9", fontSize: "13px", fontWeight: 600,
+                    letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px",
+                  }}>
+                    {roundIndex === totalRounds - 1 ? "Sorteo principal" : `Sorteo ${roundIndex + 1}`}
+                  </p>
+                  <p style={{
+                    color: "#F5A623", fontSize: "11px", fontWeight: 700,
+                    letterSpacing: "3px", textTransform: "uppercase", marginBottom: "20px",
+                    textShadow: "0 0 20px rgba(245,166,35,0.6)",
+                  }}>
+                    ✨ Número ganador ✨
+                  </p>
 
-            {/* Botón de acción tras terminar la animación */}
-            {animTerminada && (
-              <div style={{ marginTop: "20px", textAlign: "center" }}>
-                <button
-                  onClick={cerrarOverlay}
-                  style={{
-                    background: "#F5A623",
-                    color: "#1B4F8A",
-                    border: "none",
-                    borderRadius: "14px",
-                    padding: "14px 36px",
-                    fontSize: "16px",
+                  <div style={{
+                    fontSize: "clamp(64px,16vw,100px)",
                     fontWeight: 900,
-                    cursor: "pointer",
+                    color: "#F5A623",
+                    fontFamily: "'Courier New', Courier, monospace",
+                    letterSpacing: "0.22em",
+                    textShadow: "0 0 60px rgba(245,166,35,0.9), 0 0 120px rgba(245,166,35,0.4)",
+                    lineHeight: 1,
+                    marginBottom: "24px",
+                    animation: "revealNumber 0.5s cubic-bezier(0.175,0.885,0.32,1.275)",
+                  }}>
+                    {numActual}
+                  </div>
+
+                  {/* Números anteriores */}
+                  {roundIndex > 0 && (
+                    <div style={{ marginBottom: "24px" }}>
+                      <p style={{ color: "#4a90d9", fontSize: "11px", fontWeight: 600, letterSpacing: "2px", marginBottom: "8px" }}>
+                        SORTEOS ANTERIORES
+                      </p>
+                      <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "8px" }}>
+                        {numerosAnimacion.slice(0, roundIndex).map((n, i) => (
+                          <span key={i} style={{
+                            fontFamily: "'Courier New', monospace",
+                            color: "#d4e4f4", fontWeight: 700, fontSize: "18px",
+                            background: "rgba(27,79,138,0.25)",
+                            border: "1px solid rgba(27,79,138,0.4)",
+                            borderRadius: "8px", padding: "4px 10px",
+                          }}>
+                            {n}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={avanzarRound}
+                    style={{
+                      background: "#F5A623", color: "#1B4F8A",
+                      border: "none", borderRadius: "14px",
+                      padding: "14px 36px", fontSize: "16px",
+                      fontWeight: 900, cursor: "pointer",
+                      boxShadow: "0 4px 24px rgba(245,166,35,0.55)",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    {esUltimoRound
+                      ? (modoDemo ? "Ver resumen →" : "Ver resultados finales →")
+                      : `Sorteo ${roundIndex + 2} →`}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── FASE: final ──────────────────────────────────────────── */}
+            {overlayFase === "final" && (
+              <div style={{ textAlign: "center" }}>
+                {/* Header */}
+                <p style={{
+                  color: "#F5A623", fontWeight: 900, fontSize: "13px",
+                  letterSpacing: "3px", textTransform: "uppercase",
+                  textShadow: "0 0 20px rgba(245,166,35,0.6)",
+                  marginBottom: "20px",
+                }}>
+                  ✨ Todos los números ganadores ✨
+                </p>
+
+                {/* Grid de números */}
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: numerosAnimacion.length <= 2 ? "1fr 1fr" :
+                                       numerosAnimacion.length <= 4 ? "1fr 1fr" : "1fr 1fr 1fr",
+                  gap: "12px",
+                  marginBottom: "24px",
+                }}>
+                  {numerosAnimacion.map((num, i) => {
+                    const esPrincipal = i === numerosAnimacion.length - 1;
+                    return (
+                      <div key={i} style={{
+                        background: esPrincipal
+                          ? "linear-gradient(145deg,rgba(245,166,35,0.15),rgba(245,166,35,0.05))"
+                          : "rgba(27,79,138,0.2)",
+                        border: `1px solid ${esPrincipal ? "rgba(245,166,35,0.5)" : "rgba(27,79,138,0.4)"}`,
+                        borderRadius: "16px",
+                        padding: "16px 12px",
+                      }}>
+                        <p style={{
+                          color: esPrincipal ? "#F5A623" : "#4a90d9",
+                          fontSize: "10px", fontWeight: 700,
+                          letterSpacing: "2px", textTransform: "uppercase",
+                          marginBottom: "6px",
+                        }}>
+                          {esPrincipal ? "⭐ Principal" : `Sorteo ${i + 1}`}
+                        </p>
+                        <p style={{
+                          fontFamily: "'Courier New', monospace",
+                          fontSize: numerosAnimacion.length > 4 ? "28px" : "36px",
+                          fontWeight: 900,
+                          color: esPrincipal ? "#F5A623" : "#d4e4f4",
+                          textShadow: esPrincipal ? "0 0 30px rgba(245,166,35,0.7)" : "none",
+                          letterSpacing: "0.15em",
+                          lineHeight: 1,
+                        }}>
+                          {num}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {!modoDemo && (
+                  <p style={{ color: "#4a90d9", fontSize: "12px", marginBottom: "20px" }}>
+                    Los premios han sido acreditados. El último número determina las categorías 3, 2 y 1 cifra.
+                  </p>
+                )}
+
+                <button
+                  onClick={cerrarOverlay}
+                  style={{
+                    background: "#F5A623", color: "#1B4F8A",
+                    border: "none", borderRadius: "14px",
+                    padding: "14px 36px", fontSize: "16px",
+                    fontWeight: 900, cursor: "pointer",
                     boxShadow: "0 4px 24px rgba(245,166,35,0.55)",
-                    letterSpacing: "0.5px",
-                    transition: "transform 0.15s, box-shadow 0.15s",
                   }}
-                  onMouseOver={e => (e.currentTarget.style.transform = "scale(1.04)")}
-                  onMouseOut={e  => (e.currentTarget.style.transform = "scale(1)")}
                 >
-                  {modoDemo ? "✕  Cerrar demo" : "Ver resultados →"}
+                  {modoDemo ? "✕ Cerrar demo" : "Ver resultados completos →"}
                 </button>
               </div>
             )}
 
-            {/* Botón de saltar (siempre visible) */}
-            {!animTerminada && (
-              <div style={{ marginTop: "16px", textAlign: "center" }}>
-                <button
-                  onClick={cerrarOverlay}
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    color: "rgba(255,255,255,0.25)",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                    padding: "8px 16px",
-                  }}
-                >
-                  Saltar animación
-                </button>
-              </div>
-            )}
           </div>
+
+          {/* Keyframes reutilizados del RuletaSorteo */}
+          <style>{`
+            @keyframes revealNumber {
+              from { transform: scale(0.3) translateY(20px); opacity: 0; }
+              to   { transform: scale(1)   translateY(0);    opacity: 1; }
+            }
+          `}</style>
         </div>
       )}
     </div>
   );
 }
+
+// ── Helpers de estilos del overlay ─────────────────────────────────────────
+
+function badgeStyle(color: string, bg: string): React.CSSProperties {
+  return {
+    background: bg,
+    border: `1px solid ${color}60`,
+    color,
+    fontSize: "11px", fontWeight: 700,
+    letterSpacing: "2px", textTransform: "uppercase" as const,
+    padding: "4px 14px", borderRadius: "20px",
+  };
+}
+
+const btnSaltarStyle: React.CSSProperties = {
+  background: "transparent", border: "none",
+  color: "rgba(255,255,255,0.25)",
+  fontSize: "12px", cursor: "pointer", padding: "8px 16px",
+};

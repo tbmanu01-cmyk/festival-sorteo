@@ -1,0 +1,26 @@
+{
+  "name": "Club 10K",
+  "short_name": "Club 10K",
+  "description": "10,000 membresías numeradas. Coincide con la Lotería de Bogotá y gana.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#102463",
+  "theme_color": "#102463",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "entertainment"],
+  "icons": [
+    {
+      "src": "/pwa-icon/192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon/512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

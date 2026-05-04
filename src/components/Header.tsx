@@ -9,12 +9,12 @@ export default function Header() {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   return (
-    <header className="bg-[#1B4F8A] shadow-lg sticky top-0 z-50">
+    <header className="bg-[#102463] shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-[#F5A623] rounded-full flex items-center justify-center font-bold text-[#1B4F8A] text-sm group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 bg-[#ffbd1f] rounded-full flex items-center justify-center font-bold text-[#102463] text-sm group-hover:scale-110 transition-transform">
               CK
             </div>
             <div className="hidden sm:block">
@@ -25,14 +25,17 @@ export default function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/#como-funciona" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
-              ¿Cómo funciona?
+            <Link href="/" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
+              Inicio
             </Link>
-            <Link href="/#premios" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
-              Beneficios
+            <Link href="/tienda" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
+              Tienda
             </Link>
             <Link href="/ranking" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
               Ranking
+            </Link>
+            <Link href="/probabilidades" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
+              Probabilidades
             </Link>
             {session ? (
               <>
@@ -67,7 +70,7 @@ export default function Header() {
                 </Link>
                 <Link
                   href="/registro"
-                  className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold text-sm px-5 py-2 rounded-lg transition-colors shadow-md"
+                  className="bg-[#ffbd1f] hover:bg-yellow-300 text-[#102463] font-bold text-sm px-5 py-2 rounded-full transition-colors shadow-md"
                 >
                   Registrarse
                 </Link>
@@ -94,14 +97,17 @@ export default function Header() {
         {/* Mobile menu */}
         {menuAbierto && (
           <div className="md:hidden border-t border-blue-700 py-3 space-y-2">
-            <Link href="/#como-funciona" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
-              ¿Cómo funciona?
+            <Link href="/" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+              Inicio
             </Link>
-            <Link href="/#premios" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
-              Beneficios
+            <Link href="/tienda" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+              Tienda
             </Link>
             <Link href="/ranking" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
               Ranking
+            </Link>
+            <Link href="/probabilidades" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+              Probabilidades
             </Link>
             {session ? (
               <>
@@ -125,7 +131,7 @@ export default function Header() {
                 <Link href="/login" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
                   Iniciar sesión
                 </Link>
-                <Link href="/registro" className="block bg-[#F5A623] text-[#1B4F8A] font-bold text-sm px-4 py-2 rounded-lg mx-2" onClick={() => setMenuAbierto(false)}>
+                <Link href="/registro" className="block bg-[#ffbd1f] text-[#102463] font-bold text-sm px-4 py-2 rounded-full mx-2" onClick={() => setMenuAbierto(false)}>
                   Registrarse
                 </Link>
               </>

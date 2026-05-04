@@ -143,31 +143,33 @@ model Transaccion {
 }
 
 model Sorteo {
-  id            String       @id @default(cuid())
-  fecha         DateTime
-  numeroGanador String?
-  estado        EstadoSorteo @default(PENDIENTE)
-  totalVendidas Int          @default(0)
-  totalRecaudo  Float        @default(0)
-  ganancia      Float        @default(0)
-  fondoPremios  Float        @default(0)
-  configuracion Json?
+  id               String       @id @default(cuid())
+  fecha            DateTime
+  numeroGanador    String?
+  numerosGanadores Json?
+  estado           EstadoSorteo @default(PENDIENTE)
+  totalVendidas    Int          @default(0)
+  totalRecaudo     Float        @default(0)
+  ganancia         Float        @default(0)
+  fondoPremios     Float        @default(0)
+  configuracion    Json?
 
-  premios       Premio[]
+  premios          Premio[]
 
   @@map("sorteos")
 }
 
 model Premio {
-  id        String          @id @default(cuid())
-  sorteoId  String
-  userId    String
-  categoria CategoriaPremio
-  monto     Float
-  pagado    Boolean         @default(false)
+  id         String          @id @default(cuid())
+  sorteoId   String
+  userId     String
+  categoria  CategoriaPremio
+  monto      Float
+  pagado     Boolean         @default(false)
+  numeroCaja String?
 
-  sorteo    Sorteo          @relation(fields: [sorteoId], references: [id])
-  user      User            @relation(fields: [userId], references: [id])
+  sorteo     Sorteo          @relation(fields: [sorteoId], references: [id])
+  user       User            @relation(fields: [userId], references: [id])
 
   @@map("premios")
 }
@@ -186,14 +188,16 @@ model Retiro {
 }
 
 model Config {
-  id             String    @id @default("singleton")
-  precioCaja     Float     @default(10000)
-  margenGanancia Float     @default(0.40)
-  pct4Cifras     Float     @default(0.35)
-  pct3Cifras     Float     @default(0.15)
-  pct2Cifras     Float     @default(0.10)
-  fechaSorteo    DateTime?
-  updatedAt      DateTime  @updatedAt
+  id               String    @id @default("singleton")
+  precioCaja       Float     @default(10000)
+  margenGanancia   Float     @default(0.30)
+  pct4Cifras       Float     @default(0.20)
+  pct3Cifras       Float     @default(0.10)
+  pct2Cifras       Float     @default(0.15)
+  pct1Cifra        Float     @default(0.25)
+  ganadores4Cifras Int       @default(4)
+  fechaSorteo      DateTime?
+  updatedAt        DateTime  @updatedAt
 
   @@map("config")
 }

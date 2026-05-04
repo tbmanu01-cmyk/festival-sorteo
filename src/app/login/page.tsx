@@ -73,7 +73,7 @@ function FormularioLogin() {
           type="email"
           placeholder="correo@ejemplo.com"
           autoComplete="email"
-          className={`w-full px-4 py-3 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B4F8A] transition ${
+          className={`w-full px-4 py-3 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#102463] transition ${
             errors.correo ? "border-red-400 bg-red-50" : "border-gray-300"
           }`}
           {...register("correo")}
@@ -86,7 +86,7 @@ function FormularioLogin() {
       <div>
         <div className="flex justify-between items-center mb-1">
           <label className="block text-sm font-medium text-gray-700">Contraseña</label>
-          <Link href="/recuperar-password" className="text-xs text-[#1B4F8A] hover:underline">
+          <Link href="/recuperar-password" className="text-xs text-[#102463] hover:underline">
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
@@ -94,7 +94,7 @@ function FormularioLogin() {
           type="password"
           placeholder="Tu contraseña"
           autoComplete="current-password"
-          className={`w-full px-4 py-3 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B4F8A] transition ${
+          className={`w-full px-4 py-3 border rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#102463] transition ${
             errors.password ? "border-red-400 bg-red-50" : "border-gray-300"
           }`}
           {...register("password")}
@@ -107,7 +107,10 @@ function FormularioLogin() {
       <button
         type="submit"
         disabled={cargando}
-        className="w-full bg-[#1B4F8A] hover:bg-[#1a5fa8] disabled:bg-gray-400 text-white font-bold py-3.5 rounded-xl text-lg transition-colors shadow-lg"
+        className="w-full disabled:bg-gray-400 text-white font-bold py-3.5 rounded-full text-lg transition-all shadow-lg"
+        style={{ background: "#102463" }}
+        onMouseEnter={e => (e.currentTarget.style.background = "#173592")}
+        onMouseLeave={e => (e.currentTarget.style.background = "#102463")}
       >
         {cargando ? "Ingresando..." : "Ingresar"}
       </button>
@@ -123,7 +126,7 @@ function FormularioLogin() {
 
       <p className="text-center text-gray-600 text-sm">
         ¿No tienes cuenta?{" "}
-        <Link href="/registro" className="text-[#1B4F8A] font-semibold hover:underline">
+        <Link href="/registro" className="text-[#102463] font-semibold hover:underline">
           Regístrate gratis
         </Link>
       </p>
@@ -133,22 +136,22 @@ function FormularioLogin() {
 
 export default function PaginaLogin() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1B4F8A] to-[#0d3b6e] flex flex-col items-center justify-center px-4 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 c10-hero-wrap" style={{ background: "linear-gradient(135deg, #102463 0%, #173592 55%, #0a1845 100%)" }}>
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-2 mb-8">
-        <div className="w-12 h-12 bg-[#F5A623] rounded-full flex items-center justify-center font-bold text-[#1B4F8A] text-lg">
-          FS
+      <Link href="/" className="flex items-center gap-2 mb-8" style={{ position: "relative", zIndex: 1 }}>
+        <div style={{ width: 48, height: 48, background: "#ffbd1f", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#102463", fontSize: 13 }}>
+          10K
         </div>
         <div>
-          <p className="text-white font-bold text-xl">10K</p>
-          <p className="text-[#F5A623] text-sm">Club</p>
+          <p className="text-white font-bold text-xl">Club 10K</p>
+          <p style={{ color: "#ffbd1f", fontSize: 13 }}>10,000 membresías</p>
         </div>
       </Link>
 
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] px-8 py-6">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" style={{ position: "relative", zIndex: 1 }}>
+        <div style={{ background: "linear-gradient(135deg, #102463, #173592)", padding: "24px 32px" }}>
           <h1 className="text-2xl font-extrabold text-white">Iniciar sesión</h1>
-          <p className="text-blue-200 text-sm mt-1">Accede a tu cuenta para gestionar tus cajas</p>
+          <p style={{ color: "rgba(255,255,255,0.70)", fontSize: 14, marginTop: 4 }}>Accede a tu cuenta para gestionar tus membresías</p>
         </div>
 
         <Suspense fallback={<div className="px-8 py-6 text-center text-gray-500">Cargando...</div>}>
@@ -156,7 +159,7 @@ export default function PaginaLogin() {
         </Suspense>
       </div>
 
-      <p className="text-blue-200 text-xs mt-6 text-center">
+      <p className="text-xs mt-6 text-center" style={{ color: "rgba(255,255,255,0.55)", position: "relative", zIndex: 1 }}>
         Al ingresar aceptas nuestros{" "}
         <Link href="/terminos" className="underline hover:text-white">
           términos y condiciones

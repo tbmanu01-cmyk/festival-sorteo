@@ -1,34 +1,18 @@
 @AGENTS.md
-# Festival Sorteo 10000 — Estado del Proyecto
+# Cajas Sorpresa 10K — Estado del Proyecto
 
 ## Stack
 - Next.js 14 + TypeScript + Tailwind CSS
 - Prisma ORM + PostgreSQL (Railway)
 - NextAuth para autenticación
-- Nodemailer para correos
+- Nodemailer para correos (Gmail SMTP)
 
-## Lo que está construido y funcionando
-- Página de inicio con hero, cómo funciona y tabla de premios
-- Registro y login de usuarios (NextAuth + JWT)
-- Dashboard del usuario con reservas activas y cajas compradas
-- Tienda con 10.000 cajas (0000-9999), búsqueda y filtros
-- Reservas en tiempo real con countdown de 15 minutos
-- Compra simulada (sin pasarela real aún)
-- Billetera virtual con saldo en puntos
-- Panel administrativo completo (/admin)
-- Motor de sorteo automático y manual (/admin/sorteo)
-- Distribución de premios por categoría sin acumulación
-
-## Lo que falta por construir
-- Reportes PDF y Excel (/admin/reportes) — EN PROGRESO
-- Configuración editable (/admin/configuracion)
-- Notificaciones por correo al comprar y al ganar
-- Integración Wompi (pagos reales) — pendiente cuenta
-- Deploy en Railway/Vercel
+## URL en producción
+https://festival-sorteo.vercel.app
 
 ## Credenciales de prueba
 - Admin: admin@festival.com / Admin123!
-- Usuario: manuel@prueba.com / (la que creaste)
+- Usuario: manuel@prueba.com
 
 ## Reglas importantes
 - Todo el código en español
@@ -37,56 +21,93 @@
 - No romper lo que ya funciona
 - Imports dinámicos para Prisma y bcryptjs (evita bug Turbopack)
 
-## Estado actual: COMPLETADO Y EN PRODUCCIÓN
-## URL: https://festival-sorteo.vercel.app
-## Pendiente: Integración Wompi (pagos reales)
+---
 
-## ACTUALIZACIÓN - 25 de abril 2026
+## MÓDULOS COMPLETADOS (verificado 3 mayo 2026)
 
-### Deploy en producción
-URL: https://festival-sorteo.vercel.app
-Estado: ✅ Funcionando correctamente
-Problema resuelto: eliminado y reimportado proyecto en Vercel 
-por error de colaboración en repo privado
+### Público / Usuario
+- ✅ Página de inicio: hero, cómo funciona, tabla de premios, próximas selecciones anticipadas
+- ✅ Registro y login (NextAuth + JWT)
+- ✅ Dashboard: reservas activas, cajas compradas, saldo, código de referido + QR descargable, mensaje motivacional si está cerca de 10 cajas
+- ✅ Tienda de 10.000 cajas (0000-9999) con búsqueda, filtros y iconos 🎁
+- ✅ Reservas con countdown de 15 minutos
+- ✅ Compra simulada (billetera virtual en puntos)
+- ✅ Ranking público /ranking: top 20 compradores, medallas top 3, badge 10+ cajas
 
-### Módulos completados hoy (Parte 1-5)
-- ✅ Cambio global de lenguaje: "Festival Sorteo" → "Cajas Sorpresa 10K"
-- ✅ Logo actualizado: "10K" en blanco + "Cajas Sorpresa" en dorado
-- ✅ Iconos 🎁 grandes en tienda de cajas (80% del espacio)
-- ✅ Sistema completo de selecciones anticipadas:
-  * Tabla SorteoAnticipado en BD
-  * Panel /admin/anticipadas para crear eventos
-  * Premios editables (texto libre)
-  * Ejecución con selección aleatoria de ganadores
-  * Notificación por email
-  * Próximas selecciones en página de inicio
-- ✅ Sistema de referidos y fidelización:
-  * Código de referido único por usuario
-  * Link y QR descargable en dashboard
-  * Cupones para cajas gratis (1 por cada 5 referidos que compren)
-  * Tabla Referido y Cupon en BD
-- ✅ Ranking público /ranking con top 20 compradores
-  * Medallas para top 3
-  * Badge especial para compradores de 10+ cajas
-- ✅ Sorteo exclusivo para 10+ cajas (configurable en anticipadas)
-- ✅ Mensaje motivacional en dashboard si está cerca de 10 cajas
+### Sistema de referidos y fidelización
+- ✅ Código de referido único por usuario
+- ✅ Cupones automáticos: 1 caja gratis por cada 5 referidos que compren
+- ✅ Modelos Referido y Cupon en BD
 
-### Pendientes
-- **Parte 3 (URGENTE):** Animación ruleta/bombo para sorteo en vivo
-  * 4 compartimientos (1 por cifra)
-  * Números cayendo de arriba hacia abajo
-  * Se detienen de izquierda a derecha con suspenso
-  * Efecto dorado + confetti al final
-  * Grabable para redes sociales
-- Logo personalizado (cuando esté diseñado)
-- Integración Wompi producción (cuenta en trámite con socio)
+### Notificaciones por correo (Nodemailer)
+- ✅ Comprobante de compra al confirmar pago
+- ✅ Notificación de premio al ganar el sorteo principal
+- ✅ Notificación de premio en selección anticipada
+- ✅ Retiro aprobado (con monto y cuenta destino)
+- ✅ Retiro rechazado (saldo devuelto)
 
-### Lecciones de hoy
-- Vercel bloquea deploys en repos privados si detecta commits 
-  de usuarios que no son owner del proyecto en plan Hobby
-- Solución: eliminar proyecto y reimportarlo limpio
-- Deploy automático funciona perfecto después de esto
-- Consumo: ~2 USD en esta sesión, quedan ~$8 USD
+### Panel Admin
+- ✅ Dashboard admin /admin con estadísticas generales
+- ✅ Gestión de usuarios /admin/usuarios (activar/desactivar, ver saldo y cajas)
+- ✅ Gestión de retiros /admin/retiros (aprobar / rechazar con email automático)
+- ✅ Cajas vendidas /admin/cajas-vendidas
+- ✅ Configuración /admin/configuracion: precio por caja, distribución de premios (%), fecha del sorteo
 
-### Próxima sesión
-Continuar con Parte 3: animación del sorteo tipo bombo/ruleta
+### Motor de Sorteos unificado (/admin/motor-sorteos)
+Panel con 4 tabs que centraliza todos los tipos de sorteo:
+- ✅ **Tab Principal**: sorteo principal automático o manual + animación ruleta
+- ✅ **Tab Anticipadas**: selecciones anticipadas (tipo rifa previa)
+- ✅ **Tab Grandes**: Grandes Sorteos con premio mayor propio
+- ✅ **Tab Previos**: Sorteos previos vinculados a un Gran Sorteo
+
+### Grandes Sorteos (/admin/grandes-sorteos)
+- ✅ CRUD completo (crear, editar, pausar, eliminar)
+- ✅ Estados: PENDIENTE → ACTIVO → FINALIZADO
+- ✅ Ejecución con animación ruleta y reveal del ganador
+- ✅ Vista de detalle con modal
+
+### Sorteos Previos (/admin/sorteos-previos)
+- ✅ Vinculados a un Gran Sorteo específico
+- ✅ Requisitos configurables: solo vendidas, min 10 cajas, solo este Gran Sorteo
+- ✅ Múltiples ganadores por sorteo
+- ✅ Animación ruleta con lista de ganadores al finalizar
+
+### Selecciones Anticipadas (/admin/anticipadas)
+- ✅ Tabla SorteoAnticipado en BD
+- ✅ Premio en texto libre, cantidad de ganadores configurable
+- ✅ Filtro: solo vendidas, exclusivo 10+ cajas
+- ✅ Ejecución con selección aleatoria + email al ganador
+- ✅ Próximas selecciones visibles en página de inicio
+
+### Animación Ruleta (/components/RuletaSorteo.tsx)
+- ✅ 4 slots (Millares, Centenas, Decenas, Unidades)
+- ✅ Números girandose y frenando progresivamente de izquierda a derecha
+- ✅ Shake + glow dorado al aterrizar cada dígito
+- ✅ Confetti + reveal del número completo al terminar
+- ✅ Integrada en: sorteo principal, Grandes Sorteos, Sorteos Previos, Motor unificado
+- ✅ Botón "Ver demo" sin ejecutar sorteo real
+
+### Reportes (/admin/reportes)
+- ✅ Tab Ventas: tabla de todas las cajas vendidas con comprador, celular, ciudad, fecha
+- ✅ Tab Sorteo: resumen financiero + tabla de ganadores por categoría
+- ✅ Tab Usuarios: lista completa con datos bancarios, saldo, cajas y estado
+- ✅ Exportar CSV (compatible Excel) en los 3 reportes
+- ✅ Exportar PDF (ventana imprimible) en los 3 reportes
+
+### Modelos en BD (Prisma)
+User, Caja, Sorteo, Premio, Retiro, Transaccion, Config,
+SorteoAnticipado, Referido, Cupon, GranSorteo, SorteoPrevioGran
+
+---
+
+## PENDIENTE
+
+- **Integración Wompi** (pagos reales) — cuenta del socio en trámite
+- **"Grabable para redes sociales"** — captura de video del overlay de animación (no implementado)
+- Logo personalizado final (cuando esté diseñado)
+
+---
+
+## Lecciones importantes
+- Vercel bloquea deploys en repos privados si detecta commits de usuarios que no son owner en plan Hobby → solución: eliminar y reimportar el proyecto
+- Imports dinámicos para Prisma y bcryptjs son obligatorios para evitar bug con Turbopack

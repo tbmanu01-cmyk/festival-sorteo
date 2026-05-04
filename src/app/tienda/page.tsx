@@ -55,7 +55,7 @@ function ModalReserva({ caja, onCerrar, onConfirmar, cargando, resultado }: Moda
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">¡Membresía reservada!</h3>
-              <div className="text-6xl font-extrabold text-[#1B4F8A] mb-3">{caja.numero}</div>
+              <div className="text-6xl font-extrabold text-[#102463] mb-3">{caja.numero}</div>
               <p className="text-gray-600 text-sm mb-1">{resultado.mensaje}</p>
               {resultado.expira && (
                 <p className="text-orange-600 text-xs font-medium mb-5">
@@ -68,7 +68,7 @@ function ModalReserva({ caja, onCerrar, onConfirmar, cargando, resultado }: Moda
               )}
               <Link
                 href="/dashboard"
-                className="block w-full bg-[#1B4F8A] hover:bg-[#1a5fa8] text-white font-bold py-3 rounded-xl transition-colors"
+                className="block w-full bg-[#102463] hover:bg-[#173592] text-white font-bold py-3 rounded-full transition-all"
               >
                 Ir a mi cuenta
               </Link>
@@ -94,7 +94,7 @@ function ModalReserva({ caja, onCerrar, onConfirmar, cargando, resultado }: Moda
           <>
             <div className="text-center mb-6">
               <p className="text-gray-500 text-sm mb-1">Número seleccionado</p>
-              <div className="text-7xl font-extrabold text-[#1B4F8A] my-3 tracking-widest">
+              <div className="text-7xl font-extrabold text-[#102463] my-3 tracking-widest">
                 {caja.numero}
               </div>
               <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
@@ -123,7 +123,7 @@ function ModalReserva({ caja, onCerrar, onConfirmar, cargando, resultado }: Moda
               <button
                 onClick={() => onConfirmar(caja.numero)}
                 disabled={cargando}
-                className="flex-1 bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-300 text-[#1B4F8A] font-bold py-3 rounded-xl transition-colors shadow-md"
+                className="flex-1 bg-[#ffbd1f] hover:bg-yellow-300 disabled:bg-gray-300 text-[#102463] font-bold py-3 rounded-full transition-all shadow-md"
               >
                 {cargando ? "Reservando..." : "Reservar"}
               </button>
@@ -230,9 +230,9 @@ function Paginacion({
         <button
           key={p}
           onClick={() => onChange(p)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
+          className={`px-3 py-1.5 rounded-full text-sm font-bold transition-all ${
             p === pagina
-              ? "bg-[#1B4F8A] text-white"
+              ? "bg-[#102463] text-white shadow-sm"
               : "hover:bg-gray-100 text-gray-700"
           }`}
         >
@@ -378,12 +378,12 @@ export default function TiendaCajas() {
       <main className="flex-1 bg-gray-50">
         {/* Fecha del sorteo */}
         {fechaSorteo && (
-          <div className="bg-[#F5A623] text-[#1B4F8A] py-2 px-4 text-center text-sm font-bold">
+          <div className="bg-[#ffbd1f] text-[#102463] py-2 px-4 text-center text-sm font-bold">
             🗓️ Fecha del resultado: {fechaSorteo}
           </div>
         )}
         {/* Encabezado */}
-        <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] text-white py-8 px-4">
+        <div style={{ background: "linear-gradient(135deg, #102463 0%, #173592 100%)" }} className="text-white py-8 px-4">
           <div className="max-w-7xl mx-auto">
             <h1 className="text-2xl md:text-3xl font-extrabold mb-1">
               Membresías disponibles
@@ -418,11 +418,11 @@ export default function TiendaCajas() {
                   onChange={(e) => setBuscarInput(e.target.value.replace(/\D/g, "").slice(0, 4))}
                   placeholder="Buscar número (ej: 1234)"
                   maxLength={4}
-                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A] transition"
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#102463] transition"
                 />
                 <button
                   type="submit"
-                  className="bg-[#1B4F8A] hover:bg-[#1a5fa8] text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
+                  className="bg-[#102463] hover:bg-[#173592] text-white font-semibold px-5 py-2.5 rounded-full text-sm transition-all"
                 >
                   Buscar
                 </button>
@@ -443,9 +443,9 @@ export default function TiendaCajas() {
                   <button
                     key={f}
                     onClick={() => handleFiltro(f)}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-semibold capitalize transition-colors ${
+                    className={`px-4 py-2 rounded-full text-sm font-semibold capitalize transition-all ${
                       filtro === f
-                        ? "bg-[#1B4F8A] text-white shadow-sm"
+                        ? "bg-[#102463] text-white shadow-md"
                         : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >

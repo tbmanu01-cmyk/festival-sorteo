@@ -1,8 +1,10 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import CarouselInicio from "@/components/CarouselInicio";
 import CountdownAnticipada from "@/components/CountdownAnticipada";
+import CountdownHero from "@/components/CountdownHero";
+import PwaInstallBanner from "@/components/PwaInstallBanner";
 
 const TOTAL_CAJAS = 10000;
 
@@ -27,7 +29,6 @@ async function obtenerDatos() {
       prisma.caja.count({ where: { estado: "VENDIDA" } }),
     ]);
 
-    // 12 cajas disponibles verdaderamente aleatorias para la vista previa
     const cajasPreview = await prisma.$queryRaw<CajaPreview[]>`
       SELECT numero FROM cajas WHERE estado = 'DISPONIBLE' ORDER BY RANDOM() LIMIT 12
     `;
@@ -48,7 +49,6 @@ async function obtenerDatos() {
       pct4: config?.pct4Cifras ?? 0.35,
       pct3: config?.pct3Cifras ?? 0.15,
       pct2: config?.pct2Cifras ?? 0.10,
-      margen: config?.margenGanancia ?? 0.40,
       vendidas,
       cajasPreview,
       anticipadas,
@@ -60,7 +60,6 @@ async function obtenerDatos() {
       pct4: 0.35,
       pct3: 0.15,
       pct2: 0.10,
-      margen: 0.40,
       vendidas: 0,
       cajasPreview: [],
       anticipadas: [],
@@ -101,81 +100,208 @@ const pasos = [
   },
 ];
 
-const premios = [
-  { categoria: "4 cifras exactas", premio: "35% del recaudo", color: "from-yellow-400 to-yellow-600", icono: "🏆", descripcion: "El número completo coincide con el resultado" },
-  { categoria: "3 últimas cifras", premio: "15% del recaudo", color: "from-gray-300 to-gray-500",   icono: "🥈", descripcion: "Las 3 últimas cifras coinciden" },
-  { categoria: "2 últimas cifras", premio: "10% del recaudo", color: "from-amber-600 to-amber-800", icono: "🥉", descripcion: "Las 2 últimas cifras coinciden" },
-  { categoria: "1 última cifra",   premio: "Devolución del valor", color: "from-blue-400 to-blue-600", icono: "🎁", descripcion: "La última cifra coincide con el resultado" },
+const benefitTops = [
+  { bg: "linear-gradient(135deg, #ffbd1f, #f0a500)" },
+  { bg: "linear-gradient(135deg, #c5cbe0, #98a2bf)" },
+  { bg: "linear-gradient(135deg, #d28a4a, #b86c2c)" },
+  { bg: "linear-gradient(135deg, #2f5fdf, #102463)" },
 ];
+
+/* ── Helpers de estilo reutilizables ───────────────────── */
+const eyebrow: CSSProperties = {
+  display: "inline-block",
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: "#102463",
+  background: "rgba(16,36,99,0.08)",
+  borderRadius: 999,
+  padding: "4px 14px",
+  marginBottom: 16,
+};
+
+const sectionTitle: CSSProperties = {
+  fontSize: "clamp(28px,3.2vw,36px)",
+  fontWeight: 800,
+  color: "#102463",
+  letterSpacing: "-0.02em",
+  margin: "0 0 12px",
+};
+
+const sectionSub: CSSProperties = {
+  color: "#6b7693",
+  fontSize: 17,
+  maxWidth: 520,
+  margin: "0 auto",
+};
+
+const pill: CSSProperties = {
+  background: "rgba(255,255,255,0.10)",
+  border: "1px solid rgba(255,255,255,0.18)",
+  borderRadius: 999,
+  padding: "8px 18px",
+  backdropFilter: "blur(8px)",
+};
 
 export default async function Inicio() {
   const { precioCaja, fechaSorteo, pct4, pct3, pct2, vendidas, cajasPreview, anticipadas } = await obtenerDatos();
+
+  const disponibles = TOTAL_CAJAS - vendidas;
+  const pctVendido = ((vendidas / TOTAL_CAJAS) * 100).toFixed(1);
+
+  const premios = [
+    { categoria: "4 cifras exactas", premio: `${Math.round(pct4 * 100)}% del recaudo`, icono: "🏆", descripcion: "El número completo coincide con el resultado" },
+    { categoria: "3 últimas cifras", premio: `${Math.round(pct3 * 100)}% del recaudo`, icono: "🥈", descripcion: "Las 3 últimas cifras coinciden" },
+    { categoria: "2 últimas cifras", premio: `${Math.round(pct2 * 100)}% del recaudo`, icono: "🥉", descripcion: "Las 2 últimas cifras coinciden" },
+    { categoria: "1 última cifra",   premio: "Devolución del valor",                  icono: "🎁", descripcion: "La última cifra coincide con el resultado" },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
       <main className="flex-1">
-        {/* ── Carousel ──────────────────────────────────── */}
-        <CarouselInicio
-          vendidas={vendidas}
-          precioCaja={precioCaja}
-          fechaSorteo={fechaSorteo}
-          pct4={pct4}
-        />
 
-        {/* ── Vista previa tienda ───────────────────────── */}
-        <section className="py-10 bg-gray-50 border-b border-gray-100">
+        {/* ═══════════════════════════════════════════════════
+            HERO
+        ═══════════════════════════════════════════════════ */}
+        <section
+          className="c10-hero-wrap text-white"
+          style={{ background: "linear-gradient(135deg, #102463 0%, #173592 55%, #1e44b8 100%)", padding: "72px 0 64px" }}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style={{ position: "relative", zIndex: 1 }}>
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+
+              {/* Left: copy */}
+              <div>
+                <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#ffbd1f", background: "rgba(255,189,31,0.12)", border: "1px solid rgba(255,189,31,0.30)", borderRadius: 999, padding: "4px 14px", marginBottom: 20 }}>
+                  Club de membresías 10K
+                </span>
+                <h1 style={{ fontSize: "clamp(38px,4.6vw,58px)", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
+                  Tu número,{" "}
+                  <span style={{ color: "#ffbd1f" }}>tu oportunidad</span>
+                </h1>
+                <p style={{ fontSize: 18, color: "rgba(255,255,255,0.85)", margin: "0 0 28px", maxWidth: 480, lineHeight: 1.65 }}>
+                  10,000 membresías numeradas. Coincide con la Lotería de Bogotá en 4, 3, 2 o 1 cifra y gana parte del recaudo.
+                </p>
+
+                {/* Stat pills */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 32 }}>
+                  <div style={pill}>
+                    <span style={{ fontWeight: 800, color: "#ffbd1f" }}>{disponibles.toLocaleString("es-CO")}</span>{" "}
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>disponibles</span>
+                  </div>
+                  <div style={pill}>
+                    <span style={{ fontWeight: 800, color: "#ffbd1f" }}>{pctVendido}%</span>{" "}
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>vendido</span>
+                  </div>
+                  <div style={pill}>
+                    <span style={{ fontWeight: 800, color: "white" }}>${precioCaja.toLocaleString("es-CO")}</span>{" "}
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>por membresía</span>
+                  </div>
+                </div>
+
+                {/* Countdown */}
+                {fechaSorteo && (
+                  <div style={{ marginBottom: 36 }}>
+                    <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.60)", marginBottom: 10 }}>
+                      Próximo resultado principal
+                    </p>
+                    <CountdownHero fecha={fechaSorteo} />
+                  </div>
+                )}
+
+                {/* CTAs */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+                  <Link
+                    href="/tienda"
+                    style={{ background: "#ffbd1f", color: "#102463", fontWeight: 800, fontSize: 16, padding: "14px 32px", borderRadius: 999, boxShadow: "0 8px 20px -4px rgba(255,165,0,0.45)", textDecoration: "none", display: "inline-block" }}
+                  >
+                    Ver membresías →
+                  </Link>
+                  <a
+                    href="#como-funciona"
+                    style={{ background: "rgba(255,255,255,0.10)", color: "white", fontWeight: 600, fontSize: 16, padding: "14px 32px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.25)", textDecoration: "none", display: "inline-block" }}
+                  >
+                    ¿Cómo funciona?
+                  </a>
+                </div>
+              </div>
+
+              {/* Right: ticket preview (desktop only) */}
+              {cajasPreview.length >= 4 && (
+                <div className="hidden lg:grid grid-cols-2 gap-3">
+                  {cajasPreview.slice(0, 4).map((caja) => (
+                    <Link
+                      key={caja.numero}
+                      href="/tienda"
+                      className="block hover:scale-105 transition-transform"
+                      style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 20, padding: "28px 16px", textAlign: "center", backdropFilter: "blur(8px)", textDecoration: "none" }}
+                    >
+                      <div style={{ fontSize: 38, marginBottom: 10 }}>🎫</div>
+                      <p style={{ fontWeight: 900, color: "white", fontSize: 24, letterSpacing: "0.14em", margin: "0 0 4px" }}>
+                        {caja.numero}
+                      </p>
+                      <p style={{ color: "#86efac", fontSize: 12, fontWeight: 600, margin: 0 }}>Disponible</p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════
+            PWA INSTALL BANNER (mobile inline / desktop sticky)
+        ═══════════════════════════════════════════════════ */}
+        <PwaInstallBanner />
+
+        {/* ═══════════════════════════════════════════════════
+            MEMBRESÍAS DISPONIBLES
+        ═══════════════════════════════════════════════════ */}
+        <section style={{ background: "var(--c10-ink-50)", padding: "56px 0", borderBottom: "1px solid var(--c10-ink-200)" }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Cabecera */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl md:text-2xl font-extrabold text-[#1B4F8A]">
+                <h2 style={{ fontSize: 22, fontWeight: 800, color: "#102463", letterSpacing: "-0.02em", margin: 0 }}>
                   Membresías disponibles
                 </h2>
-                <p className="text-gray-400 text-sm mt-0.5">
-                  {(TOTAL_CAJAS - vendidas).toLocaleString("es-CO")} membresías disponibles
+                <p style={{ color: "#6b7693", fontSize: 13, marginTop: 4, marginBottom: 0 }}>
+                  {disponibles.toLocaleString("es-CO")} membresías listas para ser tuyas
                 </p>
               </div>
-              <Link
-                href="/tienda"
-                className="text-[#1B4F8A] text-sm font-bold hover:underline whitespace-nowrap"
-              >
+              <Link href="/tienda" style={{ color: "#102463", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
                 Ver todas →
               </Link>
             </div>
 
-            {/* Grid de cajas */}
             {cajasPreview.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-7">
                 {cajasPreview.map((caja) => (
                   <Link
                     key={caja.numero}
                     href="/tienda"
-                    className="rounded-2xl border border-green-100 p-4 text-center hover:shadow-md hover:border-[#1B4F8A]/30 transition-all group"
-                    style={{ backgroundColor: "rgba(220,252,231,0.6)" }}
+                    className="block hover:scale-105 transition-transform"
+                    style={{ background: "rgba(209,250,229,0.55)", borderRadius: 18, border: "1px solid rgba(16,185,129,0.20)", padding: "20px 12px", textAlign: "center", boxShadow: "0 2px 8px rgba(16,36,99,0.04)", textDecoration: "none" }}
                   >
-                    <div className="text-4xl mb-2 group-hover:scale-110 transition-transform select-none">
-                      🎫
-                    </div>
-                    <p className="font-extrabold text-[#1B4F8A] text-lg tracking-widest">
-                      {caja.numero}
-                    </p>
-                    <p className="text-emerald-600 text-xs font-semibold mt-1">Disponible</p>
-                    <p className="text-gray-400 text-xs mt-0.5">
-                      ${precioCaja.toLocaleString("es-CO")}
-                    </p>
+                    <div style={{ fontSize: 34, marginBottom: 8 }}>🎫</div>
+                    <p style={{ fontWeight: 900, color: "#102463", fontSize: 20, letterSpacing: "0.12em", margin: 0 }}>{caja.numero}</p>
+                    <p style={{ color: "#059669", fontSize: 11, fontWeight: 600, marginTop: 4, marginBottom: 0 }}>Disponible</p>
+                    <p style={{ color: "#6b7693", fontSize: 11, marginTop: 2, marginBottom: 0 }}>${precioCaja.toLocaleString("es-CO")}</p>
                   </Link>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-gray-400 py-8 text-sm">Cargando membresías disponibles…</p>
+              <p style={{ textAlign: "center", color: "#6b7693", padding: "32px 0", fontSize: 14 }}>
+                Cargando membresías disponibles…
+              </p>
             )}
 
-            <div className="text-center">
+            <div style={{ textAlign: "center" }}>
               <Link
                 href="/tienda"
-                className="inline-flex items-center gap-2 bg-[#1B4F8A] hover:bg-[#0d3b6e] text-white font-bold px-8 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg text-sm md:text-base"
+                style={{ background: "#102463", color: "white", fontWeight: 700, fontSize: 15, padding: "14px 32px", borderRadius: 999, boxShadow: "0 8px 20px -4px rgba(16,36,99,0.40)", textDecoration: "none", display: "inline-block" }}
               >
                 🛒 Ver todas las membresías
               </Link>
@@ -183,14 +309,15 @@ export default async function Inicio() {
           </div>
         </section>
 
-        {/* ── Cómo funciona ─────────────────────────────── */}
-        <section id="como-funciona" className="py-16 md:py-24 bg-white">
+        {/* ═══════════════════════════════════════════════════
+            CÓMO FUNCIONA
+        ═══════════════════════════════════════════════════ */}
+        <section id="como-funciona" style={{ background: "white", padding: "80px 0" }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-14">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-[#1B4F8A] mb-4">
-                ¿Cómo funciona?
-              </h2>
-              <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            <div style={{ textAlign: "center", marginBottom: 56 }}>
+              <span style={eyebrow}>Fácil y transparente</span>
+              <h2 style={sectionTitle}>¿Cómo funciona?</h2>
+              <p style={sectionSub}>
                 Participar es muy fácil. En 3 simples pasos puedes estar en la lista de miembros beneficiados.
               </p>
             </div>
@@ -198,34 +325,34 @@ export default async function Inicio() {
               {pasos.map((paso) => (
                 <div
                   key={paso.numero}
-                  className="relative bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8 border border-blue-100 hover:shadow-lg transition-shadow group"
+                  style={{ position: "relative", background: "white", borderRadius: 18, padding: "36px 24px 28px", border: "1px solid #e3e7f2", boxShadow: "0 4px 16px rgba(16,36,99,0.06)" }}
                 >
-                  <div className="absolute -top-4 -left-4 w-12 h-12 bg-[#1B4F8A] text-white rounded-xl flex items-center justify-center font-bold text-sm shadow-lg">
+                  <div style={{ position: "absolute", top: -20, left: 24, width: 40, height: 40, borderRadius: 999, background: "#102463", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 16, boxShadow: "0 6px 16px rgba(16,36,99,0.30)" }}>
                     {paso.numero}
                   </div>
-                  <div className="text-[#F5A623] mb-4 mt-2 group-hover:scale-110 transition-transform">
+                  <div style={{ color: "#ffbd1f", marginBottom: 14, marginTop: 4 }}>
                     {paso.icono}
                   </div>
-                  <h3 className="text-xl font-bold text-[#1B4F8A] mb-3">{paso.titulo}</h3>
-                  <p className="text-gray-600 leading-relaxed">{paso.descripcion}</p>
+                  <h3 style={{ fontWeight: 700, color: "#102463", fontSize: 18, margin: "0 0 8px" }}>{paso.titulo}</h3>
+                  <p style={{ color: "#6b7693", fontSize: 14, lineHeight: 1.6, margin: 0 }}>{paso.descripcion}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── Próximas selecciones anticipadas ──────────── */}
+        {/* ═══════════════════════════════════════════════════
+            ANTICIPADAS
+        ═══════════════════════════════════════════════════ */}
         {anticipadas.length > 0 && (
-          <section className="py-16 md:py-24 bg-white">
+          <section style={{ background: "var(--c10-ink-50)", padding: "80px 0" }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-12">
-                <span className="inline-block bg-[#F5A623]/15 text-[#b87b00] text-sm font-bold px-4 py-1.5 rounded-full mb-4 border border-[#F5A623]/30">
+              <div style={{ textAlign: "center", marginBottom: 48 }}>
+                <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#f0a500", background: "rgba(255,189,31,0.12)", border: "1px solid rgba(255,189,31,0.30)", borderRadius: 999, padding: "4px 14px", marginBottom: 16 }}>
                   ¡Antes del evento principal!
                 </span>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-[#1B4F8A] mb-4">
-                  Próximas selecciones
-                </h2>
-                <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+                <h2 style={sectionTitle}>Próximas selecciones</h2>
+                <p style={sectionSub}>
                   Selecciones especiales con beneficios exclusivos. ¡Tu membresía puede ser beneficiada antes del evento principal!
                 </p>
               </div>
@@ -233,38 +360,38 @@ export default async function Inicio() {
                 {anticipadas.map((a) => (
                   <div
                     key={a.id}
-                    className="bg-gradient-to-br from-[#1B4F8A]/5 to-[#F5A623]/5 rounded-2xl border border-[#1B4F8A]/10 p-6 hover:shadow-lg transition-shadow"
+                    style={{ background: "white", borderRadius: 18, border: "1px solid #e3e7f2", padding: 24, boxShadow: "0 4px 16px rgba(16,36,99,0.06)" }}
                   >
                     <div className="flex items-start justify-between mb-4">
-                      <span className="text-3xl">🎯</span>
-                      <span className="bg-[#1B4F8A]/10 text-[#1B4F8A] text-xs font-bold px-2.5 py-1 rounded-full">
+                      <span style={{ fontSize: 32 }}>🎯</span>
+                      <span style={{ background: "rgba(16,36,99,0.08)", color: "#102463", fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 999 }}>
                         {a.cantidadGanadores} miembro{a.cantidadGanadores !== 1 ? "s beneficiados" : " beneficiado"}
                       </span>
                     </div>
-                    <h3 className="font-extrabold text-[#1B4F8A] text-lg mb-1">{a.nombre}</h3>
+                    <h3 style={{ fontWeight: 800, color: "#102463", fontSize: 18, margin: "0 0 6px" }}>{a.nombre}</h3>
                     {a.descripcion && (
-                      <p className="text-gray-500 text-sm mb-3">{a.descripcion}</p>
+                      <p style={{ color: "#6b7693", fontSize: 14, margin: "0 0 14px" }}>{a.descripcion}</p>
                     )}
-                    <div className="bg-[#F5A623]/10 rounded-xl px-4 py-3 mb-4">
-                      <p className="text-xs text-gray-500 mb-0.5">Beneficio</p>
-                      <p className="font-extrabold text-[#b87b00] text-lg">{a.premioDescripcion}</p>
+                    <div style={{ background: "rgba(255,189,31,0.10)", borderRadius: 12, padding: "12px 16px", marginBottom: 16 }}>
+                      <p style={{ fontSize: 11, color: "#6b7693", margin: "0 0 2px" }}>Beneficio</p>
+                      <p style={{ fontWeight: 800, color: "#f0a500", fontSize: 18, margin: 0 }}>{a.premioDescripcion}</p>
                     </div>
-                    <div className="border-t border-[#1B4F8A]/10 pt-4">
-                      <p className="text-xs text-gray-500 mb-1.5">
+                    <div style={{ borderTop: "1px solid #e3e7f2", paddingTop: 14 }}>
+                      <p style={{ fontSize: 12, color: "#6b7693", margin: "0 0 6px" }}>
                         {new Date(a.fecha).toLocaleString("es-CO", { dateStyle: "full", timeStyle: "short" })}
                       </p>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-gray-500">Faltan:</span>
+                        <span style={{ fontSize: 12, color: "#6b7693" }}>Faltan:</span>
                         <CountdownAnticipada fecha={a.fecha.toISOString()} />
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="text-center mt-8">
+              <div style={{ textAlign: "center", marginTop: 32 }}>
                 <Link
                   href="/registro"
-                  className="inline-block bg-[#1B4F8A] hover:bg-[#1a5fa8] text-white font-bold px-8 py-3.5 rounded-xl transition-all shadow-md hover:shadow-lg"
+                  style={{ background: "#102463", color: "white", fontWeight: 700, fontSize: 15, padding: "14px 32px", borderRadius: 999, boxShadow: "0 8px 20px -4px rgba(16,36,99,0.40)", textDecoration: "none", display: "inline-block" }}
                 >
                   Participar en las selecciones →
                 </Link>
@@ -273,74 +400,68 @@ export default async function Inicio() {
           </section>
         )}
 
-        {/* ── Tabla de premios ──────────────────────────── */}
-        <section id="premios" className="py-16 md:py-24 bg-gray-50">
+        {/* ═══════════════════════════════════════════════════
+            TABLA DE BENEFICIOS
+        ═══════════════════════════════════════════════════ */}
+        <section id="premios" style={{ background: "white", padding: "80px 0" }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-14">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-[#1B4F8A] mb-4">
-                Tabla de beneficios
-              </h2>
-              <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-                El número ganador lo determina la Lotería de Bogotá. Mientras más cifras coincidan, mayor es tu beneficio.
+            <div style={{ textAlign: "center", marginBottom: 56 }}>
+              <span style={eyebrow}>Tabla de beneficios</span>
+              <h2 style={sectionTitle}>Mientras más coincidas, más ganas</h2>
+              <p style={sectionSub}>
+                El número ganador lo determina la Lotería de Bogotá. Participa desde ${precioCaja.toLocaleString("es-CO")}.
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {premios.map((p) => (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {premios.map((p, i) => (
                 <div
                   key={p.categoria}
-                  className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow border border-gray-100"
+                  style={{ background: "white", borderRadius: 18, overflow: "hidden", boxShadow: "0 6px 16px rgba(16,36,99,0.08)", border: "1px solid #e3e7f2" }}
                 >
-                  <div className={`bg-gradient-to-br ${p.color} p-6 text-center`}>
-                    <span className="text-4xl">{p.icono}</span>
+                  <div style={{ background: benefitTops[i].bg, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ fontSize: 36 }}>{p.icono}</span>
                   </div>
-                  <div className="p-5">
-                    <h3 className="font-bold text-[#1B4F8A] mb-1">{p.categoria}</h3>
-                    <p className="text-[#F5A623] font-extrabold text-xl mb-2">{p.premio}</p>
-                    <p className="text-gray-500 text-sm">{p.descripcion}</p>
+                  <div style={{ padding: 20 }}>
+                    <p style={{ fontWeight: 700, color: "#102463", fontSize: 15, margin: "0 0 4px" }}>{p.categoria}</p>
+                    <p style={{ fontWeight: 800, color: "#f0a500", fontSize: 18, margin: "0 0 6px" }}>{p.premio}</p>
+                    <p style={{ color: "#6b7693", fontSize: 13, lineHeight: 1.5, margin: 0 }}>{p.descripcion}</p>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-10 bg-[#1B4F8A]/5 rounded-2xl p-6 border border-[#1B4F8A]/10">
-              <h3 className="font-bold text-[#1B4F8A] mb-3 text-lg">Distribución del recaudo</h3>
-              <div className="grid sm:grid-cols-4 gap-4 text-center">
-                {[
-                  { label: "Premio 4 cifras",   valor: `${Math.round(pct4 * 100)}%` },
-                  { label: "Premio 3 cifras",   valor: `${Math.round(pct3 * 100)}%` },
-                  { label: "Premio 2 cifras",   valor: `${Math.round(pct2 * 100)}%` },
-                  { label: "Operación (gastos)", valor: `${Math.round((1 - pct4 - pct3 - pct2) * 100)}%` },
-                ].map((item) => (
-                  <div key={item.label}>
-                    <p className="text-2xl font-extrabold text-[#1B4F8A]">{item.valor}</p>
-                    <p className="text-gray-500 text-sm">{item.label}</p>
-                  </div>
-                ))}
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════
+            CTA FINAL
+        ═══════════════════════════════════════════════════ */}
+        <section style={{ background: "var(--c10-ink-50)", padding: "64px 0" }}>
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div style={{ background: "linear-gradient(135deg, #102463 0%, #173592 55%, #1e44b8 100%)", borderRadius: 32, padding: "56px 40px", textAlign: "center", color: "white", position: "relative", overflow: "hidden" }}>
+              {/* Radial glows */}
+              <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 25% 20%, rgba(255,189,31,0.25), transparent 55%)", pointerEvents: "none" }} />
+              <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 75% 80%, rgba(255,189,31,0.12), transparent 50%)", pointerEvents: "none" }} />
+
+              <div style={{ position: "relative", zIndex: 1 }}>
+                <h2 style={{ fontSize: "clamp(28px,3.6vw,40px)", fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 12px" }}>
+                  ¡No te quedes sin tu número!
+                </h2>
+                <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 18, margin: "0 0 32px", maxWidth: 460, marginLeft: "auto", marginRight: "auto" }}>
+                  Solo quedan{" "}
+                  <strong style={{ color: "#ffbd1f" }}>{disponibles.toLocaleString("es-CO")}</strong>{" "}
+                  membresías disponibles. Regístrate ahora y asegura la tuya.
+                </p>
+                <Link
+                  href="/registro"
+                  style={{ background: "#ffbd1f", color: "#102463", fontWeight: 800, fontSize: 17, padding: "16px 40px", borderRadius: 999, boxShadow: "0 8px 24px -4px rgba(255,165,0,0.50)", textDecoration: "none", display: "inline-block" }}
+                >
+                  Adquiere tu membresía — ${precioCaja.toLocaleString("es-CO")} COP
+                </Link>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ── CTA final ─────────────────────────────────── */}
-        <section className="bg-gradient-to-r from-[#1B4F8A] to-[#0d3b6e] py-16 text-white text-center">
-          <div className="max-w-3xl mx-auto px-4">
-            <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
-              ¡No te quedes sin tu número!
-            </h2>
-            <p className="text-blue-200 text-lg mb-8">
-              Solo quedan{" "}
-              <strong className="text-[#F5A623]">
-                {(TOTAL_CAJAS - vendidas).toLocaleString("es-CO")}
-              </strong>{" "}
-              membresías disponibles. Regístrate ahora y asegura la tuya.
-            </p>
-            <Link
-              href="/registro"
-              className="inline-block bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold text-xl px-10 py-4 rounded-xl transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
-            >
-              Adquiere tu membresía — ${precioCaja.toLocaleString("es-CO")} COP
-            </Link>
-          </div>
-        </section>
       </main>
 
       <Footer />
