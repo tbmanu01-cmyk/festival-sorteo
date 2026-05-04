@@ -20,24 +20,38 @@ https://festival-sorteo.vercel.app
 - Mobile-first
 - No romper lo que ya funciona
 - Imports dinámicos para Prisma y bcryptjs (evita bug Turbopack)
+- Siempre usar `npx prisma db push` (no migrations) para cambios de schema
+- `useSearchParams` siempre dentro de `<Suspense>` para evitar error de build en Vercel
 
 ---
 
-## MÓDULOS COMPLETADOS (verificado 3 mayo 2026)
+## MÓDULOS COMPLETADOS (verificado 4 mayo 2026)
 
 ### Público / Usuario
 - ✅ Página de inicio: hero, cómo funciona, tabla de premios, próximas selecciones anticipadas
-- ✅ Registro y login (NextAuth + JWT)
+- ✅ Registro con toggle de visibilidad en campos de contraseña (ojito SVG)
+- ✅ Login con toggle de visibilidad en campo de contraseña (ojito SVG)
+- ✅ Recuperación de contraseña: `/recuperar-password` → correo con enlace → `/resetear-password?token=xxx` → nueva contraseña (token expira en 1 hora)
 - ✅ Dashboard: reservas activas, cajas compradas, saldo, código de referido + QR descargable, mensaje motivacional si está cerca de 10 cajas
 - ✅ Tienda de 10.000 cajas (0000-9999) con búsqueda, filtros y iconos 🎁
 - ✅ Reservas con countdown de 15 minutos
 - ✅ Compra simulada (billetera virtual en puntos)
 - ✅ Ranking público /ranking: top 20 compradores, medallas top 3, badge 10+ cajas
+- ✅ Todos los montos en COP sin decimales (`maximumFractionDigits: 0`)
+- ✅ Precio de caja dinámico (se lee de Config, no hardcodeado)
 
-### Sistema de referidos y fidelización
+### Sistema de referidos y gift cards
 - ✅ Código de referido único por usuario
-- ✅ Cupones automáticos: 1 caja gratis por cada 5 referidos que compren
-- ✅ Modelos Referido y Cupon en BD
+- ✅ Gift card automática por cada 5 referidos que compren su primera membresía (valor = precio actual de la membresía)
+- ✅ Gift cards con 3 acciones: añadir a saldo, regalar a otro usuario (por correo), usar en compra de membresía
+- ✅ En tienda: banner verde cuando hay gift card activa, descuento visible en modal de compra
+- ✅ Selector/carrusel de gift cards en dashboard (compacto, un card a la vez con flechas y dots)
+- ✅ Historial de gift cards usadas/regaladas (lista simple con badge de estado)
+- ✅ Modelos Referido, Cupon (legacy) y GiftCard en BD
+
+### Retiros
+- ✅ Retiro mínimo: $100.000 COP
+- ✅ Botón de retiro solo aparece cuando saldo ≥ $100.000
 
 ### Notificaciones por correo (Nodemailer)
 - ✅ Comprobante de compra al confirmar pago
@@ -45,6 +59,7 @@ https://festival-sorteo.vercel.app
 - ✅ Notificación de premio en selección anticipada
 - ✅ Retiro aprobado (con monto y cuenta destino)
 - ✅ Retiro rechazado (saldo devuelto)
+- ✅ Recuperación de contraseña (enlace con token, válido 1 hora)
 
 ### Panel Admin
 - ✅ Dashboard admin /admin con estadísticas generales
@@ -81,7 +96,7 @@ Panel con 4 tabs que centraliza todos los tipos de sorteo:
 
 ### Animación Ruleta (/components/RuletaSorteo.tsx)
 - ✅ 4 slots (Millares, Centenas, Decenas, Unidades)
-- ✅ Números girandose y frenando progresivamente de izquierda a derecha
+- ✅ Números girándose y frenando progresivamente de izquierda a derecha
 - ✅ Shake + glow dorado al aterrizar cada dígito
 - ✅ Confetti + reveal del número completo al terminar
 - ✅ Integrada en: sorteo principal, Grandes Sorteos, Sorteos Previos, Motor unificado
@@ -96,7 +111,9 @@ Panel con 4 tabs que centraliza todos los tipos de sorteo:
 
 ### Modelos en BD (Prisma)
 User, Caja, Sorteo, Premio, Retiro, Transaccion, Config,
-SorteoAnticipado, Referido, Cupon, GranSorteo, SorteoPrevioGran
+SorteoAnticipado, Referido, Cupon, GiftCard, GranSorteo, SorteoPrevioGran
+
+Campos agregados recientemente a User: `resetToken`, `resetTokenExpiry`
 
 ---
 
@@ -111,3 +128,6 @@ SorteoAnticipado, Referido, Cupon, GranSorteo, SorteoPrevioGran
 ## Lecciones importantes
 - Vercel bloquea deploys en repos privados si detecta commits de usuarios que no son owner en plan Hobby → solución: eliminar y reimportar el proyecto
 - Imports dinámicos para Prisma y bcryptjs son obligatorios para evitar bug con Turbopack
+- `className` en `CampoTexto`/componentes similares se aplica al `<input>`, no al wrapper — para col-span usar un `<div>` externo
+- `Date.toLocaleString()` no acepta `maximumFractionDigits` — solo números usan esa opción
+- `$transaction` con operaciones condicionales: usar spread `...(cond ? [op] : [])` en vez de array dinámico
