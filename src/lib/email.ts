@@ -168,6 +168,36 @@ export async function enviarPremioAnticipado(opts: {
   });
 }
 
+// ── Recuperación de contraseña ────────────────────────────────────────────
+
+export async function enviarRecuperacionPassword(opts: {
+  correo: string;
+  nombre: string;
+  enlace: string;
+}) {
+  const { correo, nombre, enlace } = opts;
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">Recuperar contraseña</h2>
+    <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, recibimos una solicitud para restablecer tu contraseña.</p>
+    <p style="margin:0 0 16px;color:#555;font-size:14px;line-height:1.6;">
+      Haz clic en el siguiente botón para crear una nueva contraseña. Este enlace es válido por <strong>1 hora</strong>.
+    </p>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${enlace}" style="display:inline-block;background:#1B4F8A;color:#ffffff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:999px;text-decoration:none;">
+        Restablecer contraseña
+      </a>
+    </div>
+    <p style="margin:0;color:#999;font-size:13px;line-height:1.6;">
+      Si no solicitaste esto, ignora este correo. Tu contraseña no cambiará.
+    </p>`;
+  await crearTransporter().sendMail({
+    from: FROM,
+    to: correo,
+    subject: "Restablece tu contraseña — Cajas Sorpresa 10K",
+    html: base(cuerpo),
+  });
+}
+
 // ── Retiro rechazado ──────────────────────────────────────────────────────
 
 export async function enviarRetiroRechazado(opts: {

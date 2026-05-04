@@ -78,7 +78,9 @@ model User {
   activo          Boolean       @default(true)
   confirmado      Boolean       @default(false)
   fechaRegistro   DateTime      @default(now())
-  codigoRef       String?       @unique
+  codigoRef          String?       @unique
+  resetToken         String?       @unique
+  resetTokenExpiry   DateTime?
 
   cajas           Caja[]
   transacciones   Transaccion[]
