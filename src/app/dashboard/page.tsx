@@ -895,17 +895,29 @@ export default function Dashboard() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
           {/* Bienvenida */}
-          <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] rounded-2xl p-6 text-white flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-extrabold mb-0.5">Hola, {nombre} 👋</h1>
-              <p className="text-blue-200 text-sm">Bienvenido a tu panel de participación</p>
+          <div
+            className="rounded-3xl p-6 text-white relative overflow-hidden"
+            style={{ background: "linear-gradient(135deg, #102463 0%, #173592 60%, #0a1845 100%)" }}
+          >
+            {/* Brillo dorado decorativo */}
+            <div
+              className="absolute -top-8 -right-8 w-32 h-32 rounded-full pointer-events-none"
+              style={{ background: "radial-gradient(circle, rgba(255,189,31,0.25) 0%, transparent 70%)" }}
+            />
+            <div className="relative flex items-center justify-between gap-4">
+              <div>
+                <p className="text-blue-200 text-xs font-semibold uppercase tracking-widest mb-1">Bienvenido de vuelta</p>
+                <h1 className="text-2xl font-extrabold tracking-tight leading-tight">Hola, {nombre} 👋</h1>
+              </div>
+              <Link
+                href="/dashboard/perfil"
+                className="flex-shrink-0 flex flex-col items-center justify-center gap-1 w-14 h-14 rounded-2xl text-[#102463] font-extrabold text-[11px] transition-transform hover:scale-105"
+                style={{ background: "#ffbd1f", boxShadow: "0 4px 14px rgba(255,189,31,0.4)" }}
+              >
+                <span className="text-xl leading-none">✏️</span>
+                <span>Perfil</span>
+              </Link>
             </div>
-            <Link
-              href="/dashboard/perfil"
-              className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-xl transition-colors"
-            >
-              ✏️ Editar perfil
-            </Link>
           </div>
 
           {/* Resumen */}
