@@ -8,11 +8,24 @@ export async function GET(req: NextRequest) {
 
   const { prisma } = await import("@/lib/prisma");
   const pagina = Math.max(1, Number(req.nextUrl.searchParams.get("pagina") ?? 1));
+  const busqueda = req.nextUrl.searchParams.get("busqueda")?.trim() ?? "";
   const limite = 20;
+
+  const where = {
+    rol: "USER" as const,
+    ...(busqueda && {
+      OR: [
+        { nombre: { contains: busqueda, mode: "insensitive" as const } },
+        { apellido: { contains: busqueda, mode: "insensitive" as const } },
+        { correo: { contains: busqueda, mode: "insensitive" as const } },
+        { documento: { contains: busqueda, mode: "insensitive" as const } },
+      ],
+    }),
+  };
 
   const [usuarios, total] = await Promise.all([
     prisma.user.findMany({
-      where: { rol: "USER" },
+      where,
       select: {
         id: true, nombre: true, apellido: true, documento: true,
         correo: true, celular: true, ciudad: true, departamento: true,
@@ -23,7 +36,7 @@ export async function GET(req: NextRequest) {
       skip: (pagina - 1) * limite,
       take: limite,
     }),
-    prisma.user.count({ where: { rol: "USER" } }),
+    prisma.user.count({ where }),
   ]);
 
   return NextResponse.json({ usuarios, total, pagina, totalPaginas: Math.ceil(total / limite) });
