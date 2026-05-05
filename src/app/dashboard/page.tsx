@@ -895,9 +895,17 @@ export default function Dashboard() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
           {/* Bienvenida */}
-          <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] rounded-2xl p-6 text-white">
-            <h1 className="text-2xl font-extrabold mb-0.5">Hola, {nombre} 👋</h1>
-            <p className="text-blue-200 text-sm">Bienvenido a tu panel de participación</p>
+          <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] rounded-2xl p-6 text-white flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-extrabold mb-0.5">Hola, {nombre} 👋</h1>
+              <p className="text-blue-200 text-sm">Bienvenido a tu panel de participación</p>
+            </div>
+            <Link
+              href="/dashboard/perfil"
+              className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-xl transition-colors"
+            >
+              ✏️ Editar perfil
+            </Link>
           </div>
 
           {/* Resumen */}
