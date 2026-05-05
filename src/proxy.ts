@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(req) {
-    const token = req.nextauth.token as { rol?: string } | null;
-    const esAdmin = token?.rol === "ADMIN";
-    const esRutaAdmin = req.nextUrl.pathname.startsWith("/admin");
+    const token = req.nextauth.token;
+    const pathname = req.nextUrl.pathname;
 
-    if (esRutaAdmin && !esAdmin) {
+    // Solo ADMIN puede acceder a /admin/*
+    if (pathname.startsWith("/admin") && token?.rol !== "ADMIN") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
@@ -17,10 +17,9 @@ export default withAuth(
     callbacks: {
       authorized: ({ token }) => !!token,
     },
-    pages: { signIn: "/login" },
   }
 );
 
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*"],
 };
