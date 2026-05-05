@@ -2,9 +2,9 @@
 # Cajas Sorpresa 10K — Estado del Proyecto
 
 ## Stack
-- Next.js 14 + TypeScript + Tailwind CSS
+- Next.js 16 + TypeScript + Tailwind CSS
 - Prisma ORM + PostgreSQL (Railway)
-- NextAuth para autenticación
+- NextAuth JWT strategy para autenticación
 - Nodemailer para correos (Gmail SMTP)
 
 ## URL en producción
@@ -16,12 +16,14 @@ https://festival-sorteo.vercel.app
 
 ## Reglas importantes
 - Todo el código en español
-- Colores: azul #1B4F8A y dorado #F5A623
-- Mobile-first
+- Colores primarios: azul `#102463` / `#173592` y dorado `#ffbd1f` (Kit Visual 10K)
+- Mobile-first, estilo DiDi-inspired: formas muy redondeadas, tarjetas con sombra suave
 - No romper lo que ya funciona
 - Imports dinámicos para Prisma y bcryptjs (evita bug Turbopack)
 - Siempre usar `npx prisma db push` (no migrations) para cambios de schema
 - `useSearchParams` siempre dentro de `<Suspense>` para evitar error de build en Vercel
+- En Next.js 16 el middleware se llama `src/proxy.ts` (NO `middleware.ts`) — tener ambos rompe el build
+- Script de dev: `next dev --webpack` (Turbopack tiene bugs con este proyecto)
 
 ---
 
@@ -39,6 +41,7 @@ https://festival-sorteo.vercel.app
 - ✅ Ranking público /ranking: top 20 compradores, medallas top 3, badge 10+ cajas
 - ✅ Todos los montos en COP sin decimales (`maximumFractionDigits: 0`)
 - ✅ Precio de caja dinámico (se lee de Config, no hardcodeado)
+- ✅ Perfil de usuario `/dashboard/perfil`: editar nombre, correo, celular, ubicación, banco y contraseña (requiere contraseña actual). Diseño Kit Visual 10K con hero card degradado, avatar con iniciales, secciones accordion.
 
 ### Sistema de referidos y gift cards
 - ✅ Código de referido único por usuario
@@ -61,12 +64,30 @@ https://festival-sorteo.vercel.app
 - ✅ Retiro rechazado (saldo devuelto)
 - ✅ Recuperación de contraseña (enlace con token, válido 1 hora)
 
+### Ciberseguridad multicapa
+- ✅ Headers HTTP de seguridad en `next.config.js`: X-Frame-Options, HSTS, CSP, Permissions-Policy
+- ✅ Protección de rutas en `src/proxy.ts`: usuarios no autenticados → `/login`, usuarios sin rol ADMIN → `/dashboard`
+- ✅ Lockout de cuenta: 5 intentos fallidos → bloqueo 15 minutos (`loginIntentos` + `bloqueadoHasta`)
+- ✅ Rate limiting de recuperación de contraseña: máximo 1 solicitud cada 15 min (`resetSolicitadoEn`)
+- ✅ Enmascaramiento de datos: `mascararCuenta()` (****1234), `mascararCorreo()` (ma***@gmail.com)
+- ✅ Registro de auditoría (`AuditLog`): LOGIN_OK, LOGIN_FALLIDO, PASSWORD_CAMBIADO, RECUPERACION_*, RETIRO_*, ADMIN_EDITO_USUARIO
+
 ### Panel Admin
-- ✅ Dashboard admin /admin con estadísticas generales
-- ✅ Gestión de usuarios /admin/usuarios (activar/desactivar, ver saldo y cajas)
-- ✅ Gestión de retiros /admin/retiros (aprobar / rechazar con email automático)
-- ✅ Cajas vendidas /admin/cajas-vendidas
-- ✅ Configuración /admin/configuracion: precio por caja, distribución de premios (%), fecha del sorteo
+- ✅ Dashboard `/admin` con estadísticas generales y links a todos los módulos
+- ✅ Gestión de retiros `/admin/retiros` (aprobar / rechazar con email automático)
+- ✅ Cajas vendidas `/admin/cajas-vendidas`
+- ✅ Configuración `/admin/configuracion`: precio por caja, distribución de premios (%), fecha del sorteo
+- ✅ Red Multinivel `/admin/red-multinivel`: red de referidos por usuario, niveles L1/L2, sistema de tiers (Bronce→Diamante), estadísticas expandibles
+- ✅ Auditoría `/admin/auditoria`: log paginado con filtros por tipo de acción, badges de color
+- ✅ Gestión de usuarios `/admin/usuarios`:
+  - Lista todos los usuarios (USER y ADMIN) con búsqueda por nombre/correo/documento
+  - Filtros: Todos / 👤 Usuarios / 🛡️ Admins
+  - Badge de rol en tabla (púrpura Admin, gris Usuario)
+  - Modal de edición con 5 tabs: Perfil, Ubicación, Banco, Cuenta, Contraseña
+  - Tab Cuenta: activar/desactivar, cambiar rol (con modal de confirmación), confirmar cuenta, desbloquear intentos, ajuste de saldo con motivo
+  - Cambio de contraseña sin requerir la actual (admin puede forzarlo)
+  - Ajuste de saldo crea registro en Transaccion para trazabilidad
+  - Todo auditado como ADMIN_EDITO_USUARIO
 
 ### Motor de Sorteos unificado (/admin/motor-sorteos)
 Panel con 4 tabs que centraliza todos los tipos de sorteo:
@@ -111,23 +132,32 @@ Panel con 4 tabs que centraliza todos los tipos de sorteo:
 
 ### Modelos en BD (Prisma)
 User, Caja, Sorteo, Premio, Retiro, Transaccion, Config,
-SorteoAnticipado, Referido, Cupon, GiftCard, GranSorteo, SorteoPrevioGran
+SorteoAnticipado, Referido, Cupon, GiftCard, GranSorteo, SorteoPrevioGran, AuditLog
 
-Campos agregados recientemente a User: `resetToken`, `resetTokenExpiry`
+Campos en User: `resetToken`, `resetTokenExpiry`, `resetSolicitadoEn`,
+`loginIntentos`, `bloqueadoHasta`
+
+Campos en User aún sin lógica conectada: `confirmado` (se guarda pero ningún
+código lo verifica — reservado para uso futuro, posiblemente verificación de
+identidad antes de habilitar retiros)
 
 ---
 
 ## PENDIENTE
 
 - **Integración Wompi** (pagos reales) — cuenta del socio en trámite
+- **`confirmado`** — definir para qué usarlo (ej: validar identidad antes de habilitar retiros)
 - **"Grabable para redes sociales"** — captura de video del overlay de animación (no implementado)
 - Logo personalizado final (cuando esté diseñado)
 
 ---
 
 ## Lecciones importantes
+- En Next.js 16, el archivo de proxy/middleware se llama `src/proxy.ts`. Si existe `src/middleware.ts` al mismo tiempo, el build falla silenciosamente en Vercel → borrar `middleware.ts` siempre
 - Vercel bloquea deploys en repos privados si detecta commits de usuarios que no son owner en plan Hobby → solución: eliminar y reimportar el proyecto
 - Imports dinámicos para Prisma y bcryptjs son obligatorios para evitar bug con Turbopack
 - `className` en `CampoTexto`/componentes similares se aplica al `<input>`, no al wrapper — para col-span usar un `<div>` externo
 - `Date.toLocaleString()` no acepta `maximumFractionDigits` — solo números usan esa opción
 - `$transaction` con operaciones condicionales: usar spread `...(cond ? [op] : [])` en vez de array dinámico
+- `pages: { signIn }` en `withAuth` de next-auth/middleware conflictúa con el mismo setting en `authOptions` → solo definirlo en `authOptions`, no en `withAuth`
+- El campo `activo = false` bloquea el login completamente (el usuario recibe "credenciales incorrectas"). Es un ban manual permanente, diferente al lockout por intentos (que expira en 15 min)
