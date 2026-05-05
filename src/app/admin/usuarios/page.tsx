@@ -25,6 +25,72 @@ interface UsuarioDetalle extends UsuarioLista {
 
 type TabEdicion = "perfil" | "ubicacion" | "banco" | "cuenta" | "password";
 
+// ── Modal confirmación de cambio de rol ──────────────────────────────────────
+
+function ModalConfirmacionRol({
+  nombreUsuario,
+  rolActual,
+  rolNuevo,
+  onConfirmar,
+  onCancelar,
+}: {
+  nombreUsuario: string;
+  rolActual: string;
+  rolNuevo: string;
+  onConfirmar: () => void;
+  onCancelar: () => void;
+}) {
+  const subiendo = rolNuevo === "ADMIN";
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+        <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 ${
+          subiendo ? "bg-orange-100" : "bg-blue-50"
+        }`}>
+          {subiendo ? "⚠️" : "👤"}
+        </div>
+        <h3 className="text-lg font-extrabold text-gray-900 mb-2">
+          {subiendo ? "¿Dar permisos de Admin?" : "¿Quitar permisos de Admin?"}
+        </h3>
+        <p className="text-gray-500 text-sm mb-1">
+          Estás a punto de cambiar el rol de
+        </p>
+        <p className="font-bold text-gray-900 mb-1">{nombreUsuario}</p>
+        <p className="text-sm mb-5">
+          <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold ${rolActual === "ADMIN" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600"}`}>
+            {rolActual === "ADMIN" ? "Administrador" : "Usuario"}
+          </span>
+          <span className="mx-2 text-gray-400">→</span>
+          <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold ${rolNuevo === "ADMIN" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600"}`}>
+            {rolNuevo === "ADMIN" ? "Administrador" : "Usuario"}
+          </span>
+        </p>
+        {subiendo && (
+          <p className="text-xs text-orange-700 bg-orange-50 rounded-xl px-4 py-2 mb-5 font-semibold">
+            Un administrador tiene acceso total al panel. Asegúrate de que confías en esta persona.
+          </p>
+        )}
+        <div className="flex gap-3">
+          <button
+            onClick={onCancelar}
+            className="flex-1 py-2.5 border border-gray-200 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirmar}
+            className={`flex-1 py-2.5 rounded-xl text-white font-bold text-sm transition-colors ${
+              subiendo ? "bg-orange-500 hover:bg-orange-600" : "bg-[#102463] hover:bg-[#173592]"
+            }`}
+          >
+            Sí, cambiar rol
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Modal de edición ─────────────────────────────────────────────────────────
 
 function ModalEdicion({
@@ -61,6 +127,7 @@ function ModalEdicion({
   const [nuevaPassword, setNuevaPassword] = useState("");
   const [verPassword, setVerPassword] = useState(false);
   const [desbloquear, setDesbloquear] = useState(false);
+  const [pendingRol, setPendingRol] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/admin/usuarios/${userId}`)
@@ -254,7 +321,7 @@ function ModalEdicion({
                       <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
                       <select
                         value={rol}
-                        onChange={(e) => setRol(e.target.value)}
+                        onChange={(e) => setPendingRol(e.target.value)}
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30"
                       >
                         <option value="USER">Usuario</option>
@@ -400,6 +467,17 @@ function ModalEdicion({
           </div>
         </div>
       </div>
+
+      {/* Confirmación de cambio de rol */}
+      {pendingRol && user && (
+        <ModalConfirmacionRol
+          nombreUsuario={`${user.nombre} ${user.apellido}`}
+          rolActual={rol}
+          rolNuevo={pendingRol}
+          onConfirmar={() => { setRol(pendingRol); setPendingRol(null); }}
+          onCancelar={() => setPendingRol(null)}
+        />
+      )}
     </div>
   );
 }
@@ -434,6 +512,7 @@ export default function AdminUsuarios() {
   const [pagina, setPagina] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [busqueda, setBusqueda] = useState("");
+  const [filtroRol, setFiltroRol] = useState("");
   const [cargando, setCargando] = useState(true);
   const [editandoId, setEditandoId] = useState<string | null>(null);
 
@@ -445,6 +524,7 @@ export default function AdminUsuarios() {
     setCargando(true);
     const params = new URLSearchParams({ pagina: String(pagina) });
     if (busqueda) params.set("busqueda", busqueda);
+    if (filtroRol) params.set("rol", filtroRol);
     fetch(`/api/admin/usuarios?${params}`)
       .then((r) => r.json())
       .then((data) => {
@@ -454,7 +534,7 @@ export default function AdminUsuarios() {
         setCargando(false);
       })
       .catch(() => setCargando(false));
-  }, [pagina, busqueda]);
+  }, [pagina, busqueda, filtroRol]);
 
   useEffect(() => { cargar(); }, [cargar]);
 
@@ -482,15 +562,34 @@ export default function AdminUsuarios() {
           </button>
         </div>
 
-        {/* Búsqueda */}
-        <div className="mb-4">
+        {/* Búsqueda + filtro rol */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <input
             type="text"
             value={busqueda}
             onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
             placeholder="Buscar por nombre, correo o documento..."
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 bg-white"
+            className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 bg-white"
           />
+          <div className="flex gap-2">
+            {[
+              { label: "Todos", valor: "" },
+              { label: "👤 Usuarios", valor: "USER" },
+              { label: "🛡️ Admins", valor: "ADMIN" },
+            ].map(({ label, valor }) => (
+              <button
+                key={valor}
+                onClick={() => { setFiltroRol(valor); setPagina(1); }}
+                className={`px-4 py-2 text-sm font-semibold rounded-xl border transition-colors whitespace-nowrap ${
+                  filtroRol === valor
+                    ? "bg-[#102463] text-white border-[#102463]"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-[#102463] hover:text-[#102463]"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Tabla */}
@@ -515,6 +614,7 @@ export default function AdminUsuarios() {
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Ciudad</th>
                     <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wide">Membresías</th>
                     <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wide">Saldo</th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wide">Rol</th>
                     <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wide">Estado</th>
                     <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wide">Acción</th>
                   </tr>
@@ -531,6 +631,13 @@ export default function AdminUsuarios() {
                       <td className="px-4 py-3 text-center font-extrabold text-[#1B4F8A]">{u._count.cajas}</td>
                       <td className="px-4 py-3 text-center text-xs font-semibold text-green-600">
                         ${u.saldoPuntos.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          u.rol === "ADMIN" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600"
+                        }`}>
+                          {u.rol === "ADMIN" ? "🛡️ Admin" : "Usuario"}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${
