@@ -8,14 +8,8 @@ export default function Footer() {
 
           {/* Marca */}
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div style={{ width: 36, height: 36, background: "#ffbd1f", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#102463", fontSize: 12 }}>
-                10K
-              </div>
-              <div>
-                <p className="text-white font-bold">Club 10K</p>
-                <p style={{ color: "#ffbd1f", fontSize: 12 }}>10,000 membresías</p>
-              </div>
+            <div className="mb-3">
+              <img src="/logo.png" alt="Club 10K" style={{ height: 40, width: "auto" }} />
             </div>
             <p className="text-sm leading-relaxed">
               Elige tu número del 0000 al 9999 y obtén increíbles beneficios.
