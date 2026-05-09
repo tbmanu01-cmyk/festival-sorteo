@@ -27,7 +27,7 @@ https://festival-sorteo.vercel.app
 
 ---
 
-## MÓDULOS COMPLETADOS (verificado 4 mayo 2026)
+## MÓDULOS COMPLETADOS (verificado 9 mayo 2026)
 
 ### Público / Usuario
 - ✅ Página de inicio: hero, cómo funciona, tabla de premios, próximas selecciones anticipadas
@@ -35,7 +35,7 @@ https://festival-sorteo.vercel.app
 - ✅ Login con toggle de visibilidad en campo de contraseña (ojito SVG)
 - ✅ Recuperación de contraseña: `/recuperar-password` → correo con enlace → `/resetear-password?token=xxx` → nueva contraseña (token expira en 1 hora)
 - ✅ Dashboard: reservas activas, cajas compradas, saldo, código de referido + QR descargable, mensaje motivacional si está cerca de 10 cajas
-- ✅ Tienda de 10.000 cajas (0000-9999) con búsqueda, filtros y iconos 🎁
+- ✅ Tienda de 10.000 cajas (0000-9999) con búsqueda en tiempo real (debounce 400ms), filtros y iconos 🎁
 - ✅ Reservas con countdown de 15 minutos
 - ✅ Compra simulada (billetera virtual en puntos)
 - ✅ Ranking público /ranking: top 20 compradores, medallas top 3, badge 10+ cajas
@@ -143,12 +143,19 @@ identidad antes de habilitar retiros)
 
 ---
 
+### Identidad visual y SEO (9 mayo 2026)
+- ✅ Logo personalizado real (`/public/logo.png`) aplicado en Header, Login y Registro
+- ✅ Favicon (`/public/favicon.ico`) y Apple Touch Icon (`/public/apple-touch-icon.png`)
+- ✅ PWA icon estático (`/public/logo-icon.png`) — manifest.json actualizado
+- ✅ OG Image (`/public/og-image.png` 1200×630) con metadata openGraph + Twitter Card en layout.tsx
+
+---
+
 ## PENDIENTE
 
 - **Integración Wompi** (pagos reales) — cuenta del socio en trámite
 - **`confirmado`** — definir para qué usarlo (ej: validar identidad antes de habilitar retiros)
 - **"Grabable para redes sociales"** — captura de video del overlay de animación (no implementado)
-- Logo personalizado final (cuando esté diseñado)
 
 ---
 
