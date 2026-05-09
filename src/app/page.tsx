@@ -46,9 +46,6 @@ async function obtenerDatos() {
     return {
       precioCaja: config?.precioCaja ?? 10_000,
       fechaSorteo: config?.fechaSorteo ? config.fechaSorteo.toISOString() : null,
-      pct4: config?.pct4Cifras ?? 0.35,
-      pct3: config?.pct3Cifras ?? 0.15,
-      pct2: config?.pct2Cifras ?? 0.10,
       vendidas,
       cajasPreview,
       anticipadas,
@@ -57,9 +54,6 @@ async function obtenerDatos() {
     return {
       precioCaja: 10_000,
       fechaSorteo: null,
-      pct4: 0.35,
-      pct3: 0.15,
-      pct2: 0.10,
       vendidas: 0,
       cajasPreview: [],
       anticipadas: [],
@@ -100,12 +94,6 @@ const pasos = [
   },
 ];
 
-const benefitTops = [
-  { bg: "linear-gradient(135deg, #ffbd1f, #f0a500)" },
-  { bg: "linear-gradient(135deg, #c5cbe0, #98a2bf)" },
-  { bg: "linear-gradient(135deg, #d28a4a, #b86c2c)" },
-  { bg: "linear-gradient(135deg, #2f5fdf, #102463)" },
-];
 
 /* ── Helpers de estilo reutilizables ───────────────────── */
 const eyebrow: CSSProperties = {
@@ -145,17 +133,10 @@ const pill: CSSProperties = {
 };
 
 export default async function Inicio() {
-  const { precioCaja, fechaSorteo, pct4, pct3, pct2, vendidas, cajasPreview, anticipadas } = await obtenerDatos();
+  const { precioCaja, fechaSorteo, vendidas, cajasPreview, anticipadas } = await obtenerDatos();
 
   const disponibles = TOTAL_CAJAS - vendidas;
   const pctVendido = ((vendidas / TOTAL_CAJAS) * 100).toFixed(1);
-
-  const premios = [
-    { categoria: "4 cifras exactas", premio: `${Math.round(pct4 * 100)}% del recaudo`, icono: "🏆", descripcion: "El número completo coincide con el resultado" },
-    { categoria: "3 últimas cifras", premio: `${Math.round(pct3 * 100)}% del recaudo`, icono: "🥈", descripcion: "Las 3 últimas cifras coinciden" },
-    { categoria: "2 últimas cifras", premio: `${Math.round(pct2 * 100)}% del recaudo`, icono: "🥉", descripcion: "Las 2 últimas cifras coinciden" },
-    { categoria: "1 última cifra",   premio: "Devolución del valor",                  icono: "🎁", descripcion: "La última cifra coincide con el resultado" },
-  ];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -399,38 +380,6 @@ export default async function Inicio() {
             </div>
           </section>
         )}
-
-        {/* ═══════════════════════════════════════════════════
-            TABLA DE BENEFICIOS
-        ═══════════════════════════════════════════════════ */}
-        <section id="premios" style={{ background: "white", padding: "80px 0" }}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div style={{ textAlign: "center", marginBottom: 56 }}>
-              <span style={eyebrow}>Tabla de beneficios</span>
-              <h2 style={sectionTitle}>Mientras más coincidas, más ganas</h2>
-              <p style={sectionSub}>
-                El número ganador lo determina la Lotería de Bogotá. Participa desde ${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}.
-              </p>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {premios.map((p, i) => (
-                <div
-                  key={p.categoria}
-                  style={{ background: "white", borderRadius: 18, overflow: "hidden", boxShadow: "0 6px 16px rgba(16,36,99,0.08)", border: "1px solid #e3e7f2" }}
-                >
-                  <div style={{ background: benefitTops[i].bg, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: 36 }}>{p.icono}</span>
-                  </div>
-                  <div style={{ padding: 20 }}>
-                    <p style={{ fontWeight: 700, color: "#102463", fontSize: 15, margin: "0 0 4px" }}>{p.categoria}</p>
-                    <p style={{ fontWeight: 800, color: "#f0a500", fontSize: 18, margin: "0 0 6px" }}>{p.premio}</p>
-                    <p style={{ color: "#6b7693", fontSize: 13, lineHeight: 1.5, margin: 0 }}>{p.descripcion}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* ═══════════════════════════════════════════════════
             CTA FINAL
