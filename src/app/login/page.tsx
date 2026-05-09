@@ -158,14 +158,8 @@ export default function PaginaLogin() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 c10-hero-wrap" style={{ background: "linear-gradient(135deg, #102463 0%, #173592 55%, #0a1845 100%)" }}>
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-2 mb-8" style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ width: 48, height: 48, background: "#ffbd1f", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#102463", fontSize: 13 }}>
-          10K
-        </div>
-        <div>
-          <p className="text-white font-bold text-xl">Club 10K</p>
-          <p style={{ color: "#ffbd1f", fontSize: 13 }}>10,000 membresías</p>
-        </div>
+      <Link href="/" className="mb-8" style={{ position: "relative", zIndex: 1 }}>
+        <img src="/logo.png" alt="Club 10K" style={{ height: 52, width: "auto" }} />
       </Link>
 
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" style={{ position: "relative", zIndex: 1 }}>

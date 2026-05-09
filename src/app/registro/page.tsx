@@ -154,11 +154,8 @@ function FormularioRegistro() {
     <div className="min-h-screen c10-hero-wrap flex flex-col" style={{ background: "linear-gradient(135deg, #102463 0%, #173592 55%, #0a1845 100%)" }}>
       {/* Header simple */}
       <div className="py-4 px-6" style={{ position: "relative", zIndex: 1 }}>
-        <Link href="/" className="flex items-center gap-2 w-fit">
-          <div style={{ width: 36, height: 36, background: "#ffbd1f", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#102463", fontSize: 12 }}>
-            10K
-          </div>
-          <span className="text-white font-bold">Club 10K</span>
+        <Link href="/" className="w-fit">
+          <img src="/logo.png" alt="Club 10K" style={{ height: 40, width: "auto" }} />
         </Link>
       </div>
 

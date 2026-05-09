@@ -11,13 +11,13 @@
   "categories": ["finance", "entertainment"],
   "icons": [
     {
-      "src": "/api/pwa-icon?size=192",
+      "src": "/logo-icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/api/pwa-icon?size=512",
+      "src": "/logo-icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

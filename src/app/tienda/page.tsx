@@ -374,7 +374,16 @@ function TiendaCajasInner() {
     };
   }, [fetchCajas]);
 
-  // Al buscar: resetear página
+  // Búsqueda en tiempo real con debounce de 400ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setBuscar(buscarInput);
+      setPagina(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [buscarInput]);
+
+  // Al buscar: resetear página (mantener para Enter/botón)
   const handleBuscar = (e: React.FormEvent) => {
     e.preventDefault();
     setBuscar(buscarInput);

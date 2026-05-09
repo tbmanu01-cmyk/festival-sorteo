@@ -13,14 +13,12 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-[#ffbd1f] rounded-full flex items-center justify-center font-bold text-[#102463] text-sm group-hover:scale-110 transition-transform">
-              CK
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-white font-bold text-lg leading-tight">10K</p>
-              <p className="text-[#F5A623] text-xs font-medium">Club</p>
-            </div>
+          <Link href="/" className="flex items-center group">
+            <img
+              src="/logo.png"
+              alt="Club 10K"
+              className="h-10 w-auto group-hover:scale-110 transition-transform"
+            />
           </Link>
 
           {/* Desktop Nav */}
