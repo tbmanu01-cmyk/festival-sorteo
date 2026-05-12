@@ -60,7 +60,6 @@ export default function Header() {
                     Administrar
                   </Link>
                 )}
-                <NotifBell />
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
                   className="bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
@@ -86,12 +85,14 @@ export default function Header() {
             )}
           </nav>
 
-          {/* Mobile menu button */}
-          <button
-            onClick={() => setMenuAbierto(!menuAbierto)}
-            className="md:hidden text-white p-2"
-            aria-label="Abrir menú"
-          >
+          {/* Campana + hamburguesa (siempre visibles en móvil) */}
+          <div className="flex items-center gap-1 md:hidden">
+            {session && <NotifBell />}
+            <button
+              onClick={() => setMenuAbierto(!menuAbierto)}
+              className="text-white p-2"
+              aria-label="Abrir menú"
+            >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {menuAbierto ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -99,7 +100,8 @@ export default function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               )}
             </svg>
-          </button>
+            </button>
+          </div>
         </div>
 
         {/* Mobile menu */}

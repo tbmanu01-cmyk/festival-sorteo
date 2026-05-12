@@ -244,8 +244,7 @@ export default function NotifBell() {
       {/* Dropdown */}
       {abierto && (
         <div
-          className="absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
-          style={{ width: "22rem" }}
+          className="absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden w-[22rem] max-w-[calc(100vw-1rem)]"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
