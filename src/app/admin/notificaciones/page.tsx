@@ -78,6 +78,7 @@ export default function PaginaNotificaciones() {
   // Historial
   const [historial,   setHistorial]   = useState<NotifAdmin[]>([]);
   const [cargandoH,   setCargandoH]   = useState(true);
+  const [errorH,      setErrorH]      = useState<string | null>(null);
   const [eliminando,  setEliminando]  = useState<string | null>(null);
 
   // Panel de reacciones
@@ -85,12 +86,22 @@ export default function PaginaNotificaciones() {
   const [detalleReacc,  setDetalleReacc]  = useState<DetalleReacciones | null>(null);
   const [cargandoReacc, setCargandoReacc] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/admin/notificaciones")
-      .then((r) => r.json())
-      .then((d) => setHistorial((d as { notificaciones: NotifAdmin[] }).notificaciones ?? []))
-      .finally(() => setCargandoH(false));
-  }, []);
+  async function cargarHistorial() {
+    setCargandoH(true);
+    setErrorH(null);
+    try {
+      const r = await fetch("/api/admin/notificaciones");
+      const d = await r.json() as { notificaciones?: NotifAdmin[]; mensaje?: string };
+      if (!r.ok) { setErrorH(d.mensaje ?? `Error ${r.status}`); return; }
+      setHistorial(d.notificaciones ?? []);
+    } catch {
+      setErrorH("Error de conexión al cargar el historial.");
+    } finally {
+      setCargandoH(false);
+    }
+  }
+
+  useEffect(() => { cargarHistorial(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -328,12 +339,29 @@ export default function PaginaNotificaciones() {
 
           {/* ── Historial ─────────────────────────────────────────── */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="font-bold text-gray-800 mb-4">Historial enviadas</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-gray-800">Historial enviadas</h2>
+              <button
+                onClick={cargarHistorial}
+                disabled={cargandoH}
+                className="text-xs text-[#1B4F8A] hover:underline disabled:opacity-40"
+              >
+                {cargandoH ? "Cargando..." : "↻ Actualizar"}
+              </button>
+            </div>
 
             {cargandoH ? (
               <div className="flex items-center justify-center py-8 gap-2 text-gray-400 text-sm">
                 <div className="w-4 h-4 rounded-full border-2 border-[#1B4F8A] border-t-transparent animate-spin" />
                 Cargando...
+              </div>
+            ) : errorH ? (
+              <div className="text-center py-8 text-red-400">
+                <p className="text-2xl mb-2">⚠️</p>
+                <p className="text-sm font-medium">{errorH}</p>
+                <button onClick={cargarHistorial} className="mt-3 text-xs text-[#1B4F8A] hover:underline">
+                  Reintentar
+                </button>
               </div>
             ) : historial.length === 0 ? (
               <div className="text-center py-10 text-gray-400">

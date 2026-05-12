@@ -326,7 +326,7 @@ model Notificacion {
 
   lecturas     NotifLectura[]
   reacciones   NotifReaccion[]
-  usuario      User?          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario      User?          @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
 
   @@map("notificaciones")
 }
