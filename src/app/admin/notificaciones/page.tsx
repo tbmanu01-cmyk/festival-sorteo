@@ -32,6 +32,21 @@ interface NotifAdmin {
   usuarioId: string | null;
   createdAt: string;
   lecturas: number;
+  reacciones: Record<string, number>;
+  totalReacciones: number;
+}
+
+interface DetalleReaccion {
+  emoji: string;
+  nombre: string;
+  correo: string;
+  fecha: string;
+}
+
+interface DetalleReacciones {
+  total: number;
+  porEmoji: Record<string, { count: number; usuarios: { nombre: string; correo: string }[] }>;
+  detalle: DetalleReaccion[];
 }
 
 function destinoLabel(n: NotifAdmin) {
@@ -65,6 +80,11 @@ export default function PaginaNotificaciones() {
   const [cargandoH,   setCargandoH]   = useState(true);
   const [eliminando,  setEliminando]  = useState<string | null>(null);
 
+  // Panel de reacciones
+  const [panelReacc,    setPanelReacc]    = useState<string | null>(null); // id notif abierta
+  const [detalleReacc,  setDetalleReacc]  = useState<DetalleReacciones | null>(null);
+  const [cargandoReacc, setCargandoReacc] = useState(false);
+
   useEffect(() => {
     fetch("/api/admin/notificaciones")
       .then((r) => r.json())
@@ -95,6 +115,19 @@ export default function PaginaNotificaciones() {
       setMsg({ ok: false, texto: "Error de conexión." });
     } finally {
       setEnviando(false);
+    }
+  }
+
+  async function verReacciones(id: string) {
+    if (panelReacc === id) { setPanelReacc(null); return; }
+    setPanelReacc(id);
+    setDetalleReacc(null);
+    setCargandoReacc(true);
+    try {
+      const r = await fetch(`/api/admin/notificaciones/${id}/reacciones`);
+      if (r.ok) setDetalleReacc(await r.json() as DetalleReacciones);
+    } finally {
+      setCargandoReacc(false);
     }
   }
 
@@ -312,31 +345,92 @@ export default function PaginaNotificaciones() {
                 {historial.map((n) => {
                   const dest = destinoLabel(n);
                   return (
-                    <div key={n.id} className="border border-gray-100 rounded-xl p-4 hover:border-gray-200 transition-colors">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-start gap-2 min-w-0">
-                          <span className="text-lg flex-shrink-0">{n.icono}</span>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-gray-900 text-sm leading-snug">{n.titulo}</p>
-                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.cuerpo}</p>
+                    <div key={n.id} className={`border rounded-xl overflow-hidden transition-colors ${panelReacc === n.id ? "border-[#1B4F8A]/40" : "border-gray-100 hover:border-gray-200"}`}>
+                      <div className="p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2 min-w-0">
+                            <span className="text-lg flex-shrink-0">{n.icono}</span>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-gray-900 text-sm leading-snug">{n.titulo}</p>
+                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.cuerpo}</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => eliminar(n.id)}
+                            disabled={eliminando === n.id}
+                            className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors text-sm"
+                            title="Eliminar"
+                          >
+                            {eliminando === n.id ? "..." : "✕"}
+                          </button>
+                        </div>
+
+                        {/* Meta + reacciones resumen */}
+                        <div className="flex items-center justify-between mt-2 flex-wrap gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${dest.color}`}>
+                              {dest.label}
+                            </span>
+                            <span className="text-[10px] text-gray-400">{tiempoRelativo(n.createdAt)}</span>
+                            <span className="text-[10px] text-gray-400">{n.lecturas} leída{n.lecturas !== 1 ? "s" : ""}</span>
+                          </div>
+
+                          {/* Reacciones + botón ver */}
+                          <div className="flex items-center gap-1.5">
+                            {Object.entries(n.reacciones ?? {}).map(([emoji, count]) => (
+                              <span key={emoji} className="flex items-center gap-0.5 text-xs bg-gray-100 px-1.5 py-0.5 rounded-full text-gray-600">
+                                {emoji} <span className="font-bold">{count}</span>
+                              </span>
+                            ))}
+                            <button
+                              onClick={() => verReacciones(n.id)}
+                              className={`text-[10px] font-semibold px-2 py-1 rounded-lg transition-colors ${
+                                panelReacc === n.id
+                                  ? "bg-[#1B4F8A] text-white"
+                                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                              }`}
+                            >
+                              {n.totalReacciones > 0 ? `${n.totalReacciones} reacción${n.totalReacciones !== 1 ? "es" : ""}` : "Ver reacciones"}
+                            </button>
                           </div>
                         </div>
-                        <button
-                          onClick={() => eliminar(n.id)}
-                          disabled={eliminando === n.id}
-                          className="flex-shrink-0 text-gray-300 hover:text-red-400 transition-colors text-sm"
-                          title="Eliminar"
-                        >
-                          {eliminando === n.id ? "..." : "✕"}
-                        </button>
                       </div>
-                      <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${dest.color}`}>
-                          {dest.label}
-                        </span>
-                        <span className="text-[10px] text-gray-400">{tiempoRelativo(n.createdAt)}</span>
-                        <span className="text-[10px] text-gray-400">{n.lecturas} leída{n.lecturas !== 1 ? "s" : ""}</span>
-                      </div>
+
+                      {/* Panel de detalle de reacciones */}
+                      {panelReacc === n.id && (
+                        <div className="border-t border-gray-100 bg-gray-50 px-4 py-3">
+                          {cargandoReacc ? (
+                            <div className="flex items-center gap-2 text-gray-400 text-xs py-2">
+                              <div className="w-3 h-3 rounded-full border-2 border-[#1B4F8A] border-t-transparent animate-spin" />
+                              Cargando reacciones...
+                            </div>
+                          ) : !detalleReacc || detalleReacc.total === 0 ? (
+                            <p className="text-xs text-gray-400 py-1">Nadie ha reaccionado aún.</p>
+                          ) : (
+                            <div>
+                              {/* Totales por emoji */}
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                {Object.entries(detalleReacc.porEmoji).map(([emoji, data]) => (
+                                  <div key={emoji} className="bg-white rounded-xl px-3 py-1.5 border border-gray-200 text-xs">
+                                    <span className="text-base">{emoji}</span>
+                                    <span className="font-bold text-gray-800 ml-1">{data.count}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              {/* Lista de quién reaccionó */}
+                              <div className="space-y-1 max-h-40 overflow-y-auto">
+                                {detalleReacc.detalle.map((r, i) => (
+                                  <div key={i} className="flex items-center gap-2 text-xs text-gray-600">
+                                    <span className="text-base">{r.emoji}</span>
+                                    <span className="font-semibold">{r.nombre}</span>
+                                    <span className="text-gray-400">{r.correo}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

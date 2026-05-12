@@ -11,22 +11,33 @@ export async function GET() {
   const notifs = await prisma.notificacion.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,
-    include: { _count: { select: { lecturas: true } } },
+    include: {
+      _count:     { select: { lecturas: true } },
+      reacciones: { select: { emoji: true } },
+    },
   });
 
   return NextResponse.json({
-    notificaciones: notifs.map((n) => ({
-      id:          n.id,
-      tipo:        n.tipo,
-      titulo:      n.titulo,
-      cuerpo:      n.cuerpo,
-      icono:       n.icono,
-      paraAdmins:  n.paraAdmins,
-      paraUsuarios: n.paraUsuarios,
-      usuarioId:   n.usuarioId,
-      createdAt:   n.createdAt,
-      lecturas:    n._count.lecturas,
-    })),
+    notificaciones: notifs.map((n) => {
+      const resumenReacciones: Record<string, number> = {};
+      for (const r of n.reacciones) {
+        resumenReacciones[r.emoji] = (resumenReacciones[r.emoji] ?? 0) + 1;
+      }
+      return {
+        id:           n.id,
+        tipo:         n.tipo,
+        titulo:       n.titulo,
+        cuerpo:       n.cuerpo,
+        icono:        n.icono,
+        paraAdmins:   n.paraAdmins,
+        paraUsuarios: n.paraUsuarios,
+        usuarioId:    n.usuarioId,
+        createdAt:    n.createdAt,
+        lecturas:     n._count.lecturas,
+        reacciones:   resumenReacciones,
+        totalReacciones: n.reacciones.length,
+      };
+    }),
   });
 }
 

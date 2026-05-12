@@ -98,6 +98,7 @@ model User {
   auditLogs          AuditLog[]
   notificaciones     Notificacion[]
   notifLecturas      NotifLectura[]
+  notifReacciones    NotifReaccion[]
 
   @@map("users")
 }
@@ -323,9 +324,23 @@ model Notificacion {
   createdAt    DateTime       @default(now())
 
   lecturas     NotifLectura[]
+  reacciones   NotifReaccion[]
   usuario      User?          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@map("notificaciones")
+}
+
+model NotifReaccion {
+  notificacionId String
+  usuarioId      String
+  emoji          String
+  createdAt      DateTime     @default(now())
+
+  notificacion   Notificacion @relation(fields: [notificacionId], references: [id], onDelete: Cascade)
+  usuario        User         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@id([notificacionId, usuarioId])
+  @@map("notif_reacciones")
 }
 
 model NotifLectura {

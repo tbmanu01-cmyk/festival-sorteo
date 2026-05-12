@@ -23,22 +23,33 @@ export async function GET() {
       ],
     },
     include: {
-      lecturas: { where: { usuarioId: userId }, select: { leidaEn: true } },
+      lecturas:   { where: { usuarioId: userId }, select: { leidaEn: true } },
+      reacciones: { select: { emoji: true, usuarioId: true } },
     },
     orderBy: { createdAt: "desc" },
     take: 50,
   });
 
   return NextResponse.json({
-    notificaciones: notifs.map((n) => ({
-      id:        n.id,
-      tipo:      n.tipo,
-      titulo:    n.titulo,
-      cuerpo:    n.cuerpo,
-      icono:     n.icono,
-      createdAt: n.createdAt,
-      leida:     n.lecturas.length > 0,
-    })),
+    notificaciones: notifs.map((n) => {
+      // Resumen de reacciones: { "👍": 3, "❤️": 1 }
+      const resumenReacciones: Record<string, number> = {};
+      for (const r of n.reacciones) {
+        resumenReacciones[r.emoji] = (resumenReacciones[r.emoji] ?? 0) + 1;
+      }
+      const miReaccion = n.reacciones.find((r) => r.usuarioId === userId)?.emoji ?? null;
+      return {
+        id:                n.id,
+        tipo:              n.tipo,
+        titulo:            n.titulo,
+        cuerpo:            n.cuerpo,
+        icono:             n.icono,
+        createdAt:         n.createdAt,
+        leida:             n.lecturas.length > 0,
+        reacciones:        resumenReacciones,
+        miReaccion,
+      };
+    }),
     noLeidas: notifs.filter((n) => n.lecturas.length === 0).length,
   });
 }

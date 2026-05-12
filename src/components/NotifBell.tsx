@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
+const EMOJIS = ["👍", "❤️", "😮", "😂", "🙏", "🔥"];
+
 interface Notif {
   id: string;
   tipo: string;
@@ -10,23 +12,22 @@ interface Notif {
   icono: string;
   createdAt: string;
   leida: boolean;
+  reacciones: Record<string, number>;
+  miReaccion: string | null;
 }
 
 export default function NotifBell() {
-  const [abierto,   setAbierto]   = useState(false);
-  const [notifs,    setNotifs]    = useState<Notif[]>([]);
-  const [noLeidas,  setNoLeidas]  = useState(0);
-  const [cargando,  setCargando]  = useState(false);
+  const [abierto,  setAbierto]  = useState(false);
+  const [notifs,   setNotifs]   = useState<Notif[]>([]);
+  const [noLeidas, setNoLeidas] = useState(0);
+  const [cargando, setCargando] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   // Polling del badge cada 30s
   const fetchCount = useCallback(async () => {
     try {
       const r = await fetch("/api/notificaciones/no-leidas");
-      if (r.ok) {
-        const d = await r.json() as { count: number };
-        setNoLeidas(d.count);
-      }
+      if (r.ok) setNoLeidas(((await r.json()) as { count: number }).count);
     } catch { /* silencioso */ }
   }, []);
 
@@ -36,10 +37,10 @@ export default function NotifBell() {
     return () => clearInterval(id);
   }, [fetchCount]);
 
-  // Cargar lista al abrir
   async function abrir() {
-    setAbierto((v) => !v);
-    if (!abierto) {
+    const siguiente = !abierto;
+    setAbierto(siguiente);
+    if (siguiente) {
       setCargando(true);
       try {
         const r = await fetch("/api/notificaciones");
@@ -54,14 +55,37 @@ export default function NotifBell() {
     }
   }
 
-  // Marcar todas como leídas
   async function marcarTodas() {
     await fetch("/api/notificaciones", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
     setNotifs((prev) => prev.map((n) => ({ ...n, leida: true })));
     setNoLeidas(0);
   }
 
-  // Cerrar al hacer click fuera
+  async function reaccionar(notifId: string, emoji: string) {
+    const res = await fetch(`/api/notificaciones/${notifId}/reaccion`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emoji }),
+    });
+    if (!res.ok) return;
+    const data = await res.json() as { accion: string; emoji: string | null };
+
+    setNotifs((prev) => prev.map((n) => {
+      if (n.id !== notifId) return n;
+      const nuevasReacciones = { ...n.reacciones };
+      // Quitar la reacción anterior si existía
+      if (n.miReaccion) {
+        nuevasReacciones[n.miReaccion] = (nuevasReacciones[n.miReaccion] ?? 1) - 1;
+        if (nuevasReacciones[n.miReaccion] <= 0) delete nuevasReacciones[n.miReaccion];
+      }
+      // Añadir la nueva si no fue "quitada"
+      if (data.accion === "guardada" && data.emoji) {
+        nuevasReacciones[data.emoji] = (nuevasReacciones[data.emoji] ?? 0) + 1;
+      }
+      return { ...n, reacciones: nuevasReacciones, miReaccion: data.emoji };
+    }));
+  }
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setAbierto(false);
@@ -102,8 +126,8 @@ export default function NotifBell() {
 
       {/* Dropdown */}
       {abierto && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
-          {/* Header dropdown */}
+        <div className="absolute right-0 top-full mt-2 w-84 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden" style={{ width: "22rem" }}>
+          {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="font-bold text-gray-800 text-sm">Notificaciones</span>
             {noLeidas > 0 && (
@@ -114,7 +138,7 @@ export default function NotifBell() {
           </div>
 
           {/* Lista */}
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-[32rem] overflow-y-auto">
             {cargando ? (
               <div className="flex items-center justify-center py-8 gap-2 text-gray-400 text-sm">
                 <div className="w-4 h-4 rounded-full border-2 border-[#1B4F8A] border-t-transparent animate-spin" />
@@ -129,20 +153,57 @@ export default function NotifBell() {
               notifs.map((n) => (
                 <div
                   key={n.id}
-                  className={`flex gap-3 px-4 py-3 border-b border-gray-50 last:border-0 transition-colors ${
-                    n.leida ? "bg-white" : "bg-blue-50"
-                  }`}
+                  className={`border-b border-gray-50 last:border-0 transition-colors ${n.leida ? "bg-white" : "bg-blue-50"}`}
                 >
-                  <span className="text-xl flex-shrink-0 mt-0.5">{n.icono}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm font-semibold leading-snug ${n.leida ? "text-gray-700" : "text-gray-900"}`}>
-                        {n.titulo}
-                      </p>
-                      <span className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">{tiempoRelativo(n.createdAt)}</span>
+                  {/* Contenido */}
+                  <div className="flex gap-3 px-4 pt-3 pb-2">
+                    <span className="text-xl flex-shrink-0 mt-0.5">{n.icono}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`text-sm font-semibold leading-snug ${n.leida ? "text-gray-700" : "text-gray-900"}`}>
+                          {n.titulo}
+                        </p>
+                        <span className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">{tiempoRelativo(n.createdAt)}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.cuerpo}</p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.cuerpo}</p>
-                    {!n.leida && <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#1B4F8A] mt-1" />}
+                  </div>
+
+                  {/* Reacciones existentes + picker */}
+                  <div className="flex items-center justify-between px-4 pb-2.5">
+                    {/* Resumen de reacciones */}
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {Object.entries(n.reacciones).map(([emoji, count]) => (
+                        <button
+                          key={emoji}
+                          onClick={() => reaccionar(n.id, emoji)}
+                          className={`flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs border transition-colors ${
+                            n.miReaccion === emoji
+                              ? "bg-blue-100 border-blue-300 text-blue-700 font-bold"
+                              : "bg-gray-100 border-gray-200 text-gray-600 hover:border-gray-300"
+                          }`}
+                        >
+                          <span>{emoji}</span>
+                          <span>{count}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Picker de emojis */}
+                    <div className="flex items-center gap-0.5 ml-2">
+                      {EMOJIS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => reaccionar(n.id, emoji)}
+                          title={`Reaccionar con ${emoji}`}
+                          className={`w-6 h-6 flex items-center justify-center rounded-full text-sm transition-all hover:scale-125 ${
+                            n.miReaccion === emoji ? "bg-blue-100 scale-110" : "hover:bg-gray-100"
+                          }`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ))
