@@ -7,14 +7,15 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 interface Config {
-  precioCaja:       number;
-  margenGanancia:   number;
-  pct4Cifras:       number;
-  pct3Cifras:       number;
-  pct2Cifras:       number;
-  pct1Cifra:        number;
-  ganadores4Cifras: number;
-  fechaSorteo:      string | null;
+  precioCaja:            number;
+  margenGanancia:        number;
+  pct4Cifras:            number;
+  pct3Cifras:            number;
+  pct2Cifras:            number;
+  pct1Cifra:             number;
+  ganadores4Cifras:      number;
+  membresiasPorGiftCard: number;
+  fechaSorteo:           string | null;
 }
 
 function pct(v: number) { return +(v * 100).toFixed(2); }
@@ -43,6 +44,7 @@ export default function PaginaConfiguracion() {
   const [pct2,        setPct2]        = useState(15);
   const [pct1,        setPct1]        = useState(25);
   const [n4,          setN4]          = useState(4);
+  const [mpgc,        setMpgc]        = useState(5);
   const [fechaSorteo, setFechaSorteo] = useState("");
 
   // Validaciones en tiempo real
@@ -50,6 +52,7 @@ export default function PaginaConfiguracion() {
   const sumaTotal   = margen + sumaPremios;
   const sumaOk      = Math.abs(sumaTotal - 100) < 0.1;
   const n4Ok        = Number.isInteger(n4) && n4 >= 1 && n4 <= 10;
+  const mpgcOk      = Number.isInteger(mpgc) && mpgc >= 1 && mpgc <= 100;
 
   useEffect(() => {
     fetch("/api/admin/config")
@@ -62,6 +65,7 @@ export default function PaginaConfiguracion() {
         setPct2(pct(c.pct2Cifras));
         setPct1(pct(c.pct1Cifra ?? 0.25));
         setN4(c.ganadores4Cifras ?? 4);
+        setMpgc(c.membresiasPorGiftCard ?? 5);
         setFechaSorteo(
           c.fechaSorteo ? new Date(c.fechaSorteo).toISOString().slice(0, 16) : ""
         );
@@ -71,7 +75,7 @@ export default function PaginaConfiguracion() {
 
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
-    if (!sumaOk || !n4Ok) return;
+    if (!sumaOk || !n4Ok || !mpgcOk) return;
     setGuardando(true);
     setMensaje(null);
     try {
@@ -80,13 +84,14 @@ export default function PaginaConfiguracion() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           precioCaja,
-          margenGanancia:   dec(margen),
-          pct4Cifras:       dec(pct4),
-          pct3Cifras:       dec(pct3),
-          pct2Cifras:       dec(pct2),
-          pct1Cifra:        dec(pct1),
-          ganadores4Cifras: n4,
-          fechaSorteo:      fechaSorteo || null,
+          margenGanancia:        dec(margen),
+          pct4Cifras:            dec(pct4),
+          pct3Cifras:            dec(pct3),
+          pct2Cifras:            dec(pct2),
+          pct1Cifra:             dec(pct1),
+          ganadores4Cifras:      n4,
+          membresiasPorGiftCard: mpgc,
+          fechaSorteo:           fechaSorteo || null,
         }),
       });
       const json = await res.json() as { mensaje: string };
@@ -191,6 +196,32 @@ export default function PaginaConfiguracion() {
                     {i === n4 - 1 && <span className="ml-1 opacity-70">(principal)</span>}
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* ── Membresías por gift card ──────────────────────────────── */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="font-bold text-gray-800 mb-1">Membresías por gift card de referidos</h2>
+              <p className="text-xs text-gray-400 mb-4">
+                Cada vez que tus referidos acumulen esta cantidad de membresías compradas, recibes una gift card automática.
+              </p>
+              <div className="flex items-center gap-4">
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={mpgc}
+                  onChange={(e) => setMpgc(Math.max(1, Math.round(Number(e.target.value))))}
+                  className="w-28 text-center text-3xl font-extrabold tracking-widest border-2 rounded-xl py-3 border-[#1B4F8A]/40 text-[#1B4F8A] focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">
+                    1 gift card cada <span className="text-[#1B4F8A]">{mpgc}</span> membresía{mpgc !== 1 ? "s" : ""}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Ejemplo: si tus referidos compran 20 membresías → <strong>{Math.floor(20 / mpgc)} gift card{Math.floor(20 / mpgc) !== 1 ? "s" : ""}</strong>
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -318,7 +349,7 @@ export default function PaginaConfiguracion() {
 
             <button
               type="submit"
-              disabled={guardando || !sumaOk || !n4Ok}
+              disabled={guardando || !sumaOk || !n4Ok || !mpgcOk}
               className="w-full bg-[#1B4F8A] hover:bg-[#1a5fa8] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-3.5 rounded-xl transition-colors shadow-md text-base"
             >
               {guardando ? "Guardando..." : "Guardar configuración"}

@@ -50,9 +50,11 @@ export async function GET() {
   `;
 
   // Total de membresías compradas por TODOS los referidos
+  const config = await prisma.config.findUnique({ where: { id: "singleton" } });
+  const mpgc = config?.membresiasPorGiftCard ?? 5;
   const totalMembresias = referidos.reduce((s, r) => s + Number(r.totalMembresias), 0);
-  const progreso = totalMembresias % 5;
-  const gcGanadas = Math.floor(totalMembresias / 5);
+  const progreso = totalMembresias % mpgc;
+  const gcGanadas = Math.floor(totalMembresias / mpgc);
 
   type CuponRow = { id: string; codigo: string; usado: boolean; fechaCreacion: Date; fechaUso: Date | null };
   const cupones = await prisma.$queryRaw<CuponRow[]>`

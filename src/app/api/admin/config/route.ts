@@ -27,6 +27,7 @@ export async function PUT(req: NextRequest) {
     pct2Cifras?: number;
     pct1Cifra?: number;
     ganadores4Cifras?: number;
+    membresiasPorGiftCard?: number;
     fechaSorteo?: string | null;
   };
 
@@ -52,6 +53,16 @@ export async function PUT(req: NextRequest) {
     if (!Number.isInteger(n) || n < 1 || n > 10) {
       return NextResponse.json(
         { mensaje: "La cantidad de ganadores de 4 cifras debe ser un número entero entre 1 y 10." },
+        { status: 400 }
+      );
+    }
+  }
+
+  if (body.membresiasPorGiftCard !== undefined) {
+    const n = body.membresiasPorGiftCard;
+    if (!Number.isInteger(n) || n < 1 || n > 100) {
+      return NextResponse.json(
+        { mensaje: "Las membresías por gift card deben ser un número entero entre 1 y 100." },
         { status: 400 }
       );
     }

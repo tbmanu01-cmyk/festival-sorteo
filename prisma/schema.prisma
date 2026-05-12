@@ -236,8 +236,9 @@ model Config {
   pct3Cifras       Float     @default(0.10)
   pct2Cifras       Float     @default(0.15)
   pct1Cifra        Float     @default(0.25)
-  ganadores4Cifras Int       @default(4)
-  fechaSorteo      DateTime?
+  ganadores4Cifras       Int       @default(4)
+  membresiasPorGiftCard  Int       @default(5)
+  fechaSorteo            DateTime?
   updatedAt        DateTime  @updatedAt
 
   @@map("config")

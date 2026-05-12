@@ -111,7 +111,8 @@ export async function POST(
         WHERE r."referidorId" = ${ref.referidorId}
       `;
       const totalNum = Number(totalMembresias);
-      const debeHaber = Math.floor(totalNum / 5);
+      const mpgc = config?.membresiasPorGiftCard ?? 5;
+      const debeHaber = Math.floor(totalNum / mpgc);
       if (debeHaber === 0) return;
 
       // Gift cards ya emitidas por referidos (evita duplicar)
