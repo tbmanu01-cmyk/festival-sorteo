@@ -91,31 +91,45 @@ export async function POST(
       })
       .catch(() => undefined);
 
-    // Referidos: marcar compra y emitir gift card si corresponde — fire and forget
+    // Referidos: emitir gift cards según total de membresías compradas por todos los referidos
     Promise.resolve().then(async () => {
-      type RefRow = { id: string; referidorId: string; compro: boolean };
-      const [ref] = await prisma.$queryRaw<RefRow[]>`
-        SELECT id, "referidorId", compro FROM referidos WHERE "referidoId" = ${userId} LIMIT 1
+      type RefRow = { id: string; referidorId: string };
+      const refs = await prisma.$queryRaw<RefRow[]>`
+        SELECT id, "referidorId" FROM referidos WHERE "referidoId" = ${userId} LIMIT 1
       `;
-      if (!ref || ref.compro) return;
+      if (!refs.length) return;
+      const ref = refs[0];
 
-      const cajasCount = await prisma.caja.count({ where: { userId, estado: "VENDIDA" } });
-      if (cajasCount !== 1) return;
+      // Marcar como "compró" para el dashboard (solo si aún no estaba)
+      await prisma.$executeRaw`UPDATE referidos SET compro = true WHERE id = ${ref.id} AND compro = false`;
 
-      await prisma.$executeRaw`UPDATE referidos SET compro = true WHERE id = ${ref.id}`;
-
-      const [{ total }] = await prisma.$queryRaw<{ total: bigint }[]>`
-        SELECT COUNT(*) AS total FROM referidos WHERE "referidorId" = ${ref.referidorId} AND compro = true
+      // Total de membresías vendidas a TODOS los referidos de este referidor
+      const [{ totalMembresias }] = await prisma.$queryRaw<{ totalMembresias: bigint }[]>`
+        SELECT COUNT(c.id) AS "totalMembresias"
+        FROM referidos r
+        INNER JOIN cajas c ON c."userId" = r."referidoId" AND c.estado = 'VENDIDA'
+        WHERE r."referidorId" = ${ref.referidorId}
       `;
-      const totalNum = Number(total);
-      if (totalNum > 0 && totalNum % 5 === 0) {
+      const totalNum = Number(totalMembresias);
+      const debeHaber = Math.floor(totalNum / 5);
+      if (debeHaber === 0) return;
+
+      // Gift cards ya emitidas por referidos (evita duplicar)
+      const yaEmitidas = await prisma.giftCard.count({
+        where: { propietarioId: ref.referidorId, nota: { contains: "referidos" } },
+      });
+
+      const porEmitir = debeHaber - yaEmitidas;
+      if (porEmitir <= 0) return;
+
+      for (let i = 0; i < porEmitir; i++) {
         const gcCodigo = `GC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
         await prisma.giftCard.create({
           data: {
             codigo: gcCodigo,
             valor: precioCaja,
             propietarioId: ref.referidorId,
-            nota: "Premio por 5 referidos",
+            nota: "Premio por referidos",
           },
         });
       }

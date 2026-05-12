@@ -37,18 +37,22 @@ export async function GET() {
     }
   }
 
-  type RefRow = { id: string; referidoNombre: string; fecha: Date; compro: boolean };
+  type RefRow = { id: string; referidoNombre: string; fecha: Date; compro: boolean; totalMembresias: bigint };
   const referidos = await prisma.$queryRaw<RefRow[]>`
-    SELECT r.id, u.nombre AS "referidoNombre", r.fecha, r.compro
+    SELECT r.id, u.nombre AS "referidoNombre", r.fecha, r.compro,
+           COUNT(c.id) AS "totalMembresias"
     FROM referidos r
     JOIN users u ON u.id = r."referidoId"
+    LEFT JOIN cajas c ON c."userId" = r."referidoId" AND c.estado = 'VENDIDA'
     WHERE r."referidorId" = ${userId}
+    GROUP BY r.id, u.nombre, r.fecha, r.compro
     ORDER BY r.fecha DESC
   `;
 
-  const comprados = referidos.filter((r) => r.compro).length;
-  const progreso = comprados % 5;
-  const cuponesGanados = Math.floor(comprados / 5);
+  // Total de membresías compradas por TODOS los referidos
+  const totalMembresias = referidos.reduce((s, r) => s + Number(r.totalMembresias), 0);
+  const progreso = totalMembresias % 5;
+  const gcGanadas = Math.floor(totalMembresias / 5);
 
   type CuponRow = { id: string; codigo: string; usado: boolean; fechaCreacion: Date; fechaUso: Date | null };
   const cupones = await prisma.$queryRaw<CuponRow[]>`
@@ -61,13 +65,17 @@ export async function GET() {
   return NextResponse.json({
     codigoRef,
     referidos: referidos.map((r) => ({
-      ...r,
+      id: r.id,
+      referidoNombre: r.referidoNombre,
       fecha: r.fecha instanceof Date ? r.fecha.toISOString() : r.fecha,
+      compro: r.compro,
+      totalMembresias: Number(r.totalMembresias),
     })),
     totalReferidos: referidos.length,
-    comprados,
+    comprados: referidos.filter((r) => r.compro).length,
+    totalMembresias,
     progreso,
-    cuponesGanados,
+    cuponesGanados: gcGanadas,
     cupones: cupones.map((c) => ({
       ...c,
       fechaCreacion: c.fechaCreacion instanceof Date ? c.fechaCreacion.toISOString() : c.fechaCreacion,
