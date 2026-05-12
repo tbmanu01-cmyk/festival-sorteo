@@ -60,14 +60,18 @@ export async function GET() {
       cajasPorReferido.set(c.userId!, (cajasPorReferido.get(c.userId!) ?? 0) + 1);
     }
 
-    // ── Gift cards DISPONIBLE de cada referidor ───────────────────────────
+    // ── Gift cards de cada referidor (todas) ─────────────────────────────
     const gcsRaw = await prisma.giftCard.findMany({
-      where: { propietarioId: { in: referidorIds }, estado: "DISPONIBLE" },
-      select: { propietarioId: true },
+      where: { propietarioId: { in: referidorIds } },
+      select: { propietarioId: true, estado: true },
     });
-    const gcPorReferidor = new Map<string, number>();
+    const gcPorReferidor = new Map<string, { total: number; disponibles: number }>();
     for (const g of gcsRaw) {
-      gcPorReferidor.set(g.propietarioId, (gcPorReferidor.get(g.propietarioId) ?? 0) + 1);
+      const prev = gcPorReferidor.get(g.propietarioId) ?? { total: 0, disponibles: 0 };
+      gcPorReferidor.set(g.propietarioId, {
+        total: prev.total + 1,
+        disponibles: prev.disponibles + (g.estado === "DISPONIBLE" ? 1 : 0),
+      });
     }
 
     // ── Red de nivel 2: referidos de los referidos ────────────────────────
@@ -119,7 +123,9 @@ export async function GET() {
       const directos    = misRelaciones.length;
       const activos     = misRelaciones.filter((r) => r.compro).length;
       const membresiasRed = misRelaciones.reduce((sum, r) => sum + (cajasPorReferido.get(r.referidoId) ?? 0), 0);
-      const giftCards   = gcPorReferidor.get(u.id) ?? 0;
+      const gcData      = gcPorReferidor.get(u.id) ?? { total: 0, disponibles: 0 };
+      const giftCards   = gcData.total;
+      const giftCardsDisponibles = gcData.disponibles;
       const n2          = nivel2PorReferidor.get(u.id) ?? { total: 0, activos: 0, membresias: 0 };
       const nivel        = calcularNivel(activos);
 
@@ -149,6 +155,7 @@ export async function GET() {
         activos,
         membresiasRed,
         giftCards,
+        giftCardsDisponibles,
         nivel2: n2.total,
         activosNivel2: n2.activos,
         membresiasNivel2: n2.membresias,

@@ -19,7 +19,7 @@ interface ReferidoItem {
 interface ReferidorData {
   id: string; nombre: string; correo: string; fechaRegistro: string;
   nivel: NivelData;
-  directos: number; activos: number; membresiasRed: number; giftCards: number;
+  directos: number; activos: number; membresiasRed: number; giftCards: number; giftCardsDisponibles: number;
   nivel2: number; activosNivel2: number; membresiasNivel2: number;
   faltanParaSiguiente: number; siguienteNivel: NivelData | null;
   referidosList: ReferidoItem[];
@@ -95,9 +95,19 @@ function FilaReferidor({ r, rank }: { r: ReferidorData; rank: number }) {
         </td>
         {/* Gift cards */}
         <td className="px-4 py-3 text-center">
-          <span className={`text-base font-bold ${r.giftCards > 0 ? "text-green-600" : "text-gray-300"}`}>
-            {r.giftCards > 0 ? `${r.giftCards} 🎁` : "—"}
-          </span>
+          {r.giftCards > 0 ? (
+            <div>
+              <span className="text-base font-bold text-green-600">{r.giftCards} 🎁</span>
+              {r.giftCardsDisponibles < r.giftCards && (
+                <p className="text-[10px] text-gray-400 mt-0.5">{r.giftCardsDisponibles} disponibles</p>
+              )}
+              {r.giftCardsDisponibles === r.giftCards && (
+                <p className="text-[10px] text-green-500 mt-0.5">todas disponibles</p>
+              )}
+            </div>
+          ) : (
+            <span className="text-gray-300">—</span>
+          )}
         </td>
         {/* Expandir */}
         <td className="px-4 py-3 text-center">
