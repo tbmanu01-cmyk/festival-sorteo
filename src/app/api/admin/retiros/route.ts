@@ -8,13 +8,22 @@ export async function GET() {
 
   const { prisma } = await import("@/lib/prisma");
 
-  const retiros = await prisma.retiro.findMany({
-    where: { estado: "PENDIENTE" },
-    include: {
-      user: { select: { nombre: true, apellido: true, correo: true, celular: true, banco: true } },
-    },
-    orderBy: { fecha: "asc" },
-  });
+  const [preAprobados, pendientes] = await Promise.all([
+    prisma.retiro.findMany({
+      where: { estado: "PRE_APROBADO" },
+      include: {
+        user: { select: { nombre: true, apellido: true, correo: true, celular: true, banco: true } },
+      },
+      orderBy: { preAprobadoEn: "asc" },
+    }),
+    prisma.retiro.findMany({
+      where: { estado: "PENDIENTE" },
+      include: {
+        user: { select: { nombre: true, apellido: true, correo: true, celular: true, banco: true } },
+      },
+      orderBy: { fecha: "asc" },
+    }),
+  ]);
 
-  return NextResponse.json({ retiros });
+  return NextResponse.json({ retiros: preAprobados, pendientes });
 }

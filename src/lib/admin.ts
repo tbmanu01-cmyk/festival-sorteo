@@ -7,3 +7,11 @@ export async function verificarAdmin() {
   if ((session.user as { rol?: string }).rol !== "ADMIN") return null;
   return session;
 }
+
+export async function verificarAsistente() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) return null;
+  const rol = (session.user as { rol?: string }).rol;
+  if (rol !== "ASISTENTE" && rol !== "ADMIN") return null;
+  return session;
+}

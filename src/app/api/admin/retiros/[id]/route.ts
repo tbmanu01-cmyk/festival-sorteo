@@ -14,7 +14,10 @@ export async function PATCH(
   const ip = obtenerIP(req);
   const adminId = (session.user as unknown as { id: string }).id;
   const { id } = await params;
-  const { accion } = await req.json() as { accion: "aprobar" | "rechazar" };
+  const { accion, motivoRechazo } = await req.json() as {
+    accion: "aprobar" | "rechazar";
+    motivoRechazo?: string;
+  };
 
   if (!["aprobar", "rechazar"].includes(accion)) {
     return NextResponse.json({ mensaje: "Acción inválida." }, { status: 400 });
@@ -24,7 +27,8 @@ export async function PATCH(
 
   const retiro = await prisma.retiro.findUnique({ where: { id } });
   if (!retiro) return NextResponse.json({ mensaje: "Retiro no encontrado." }, { status: 404 });
-  if (retiro.estado !== "PENDIENTE") {
+
+  if (!["PENDIENTE", "PRE_APROBADO"].includes(retiro.estado)) {
     return NextResponse.json({ mensaje: "Este retiro ya fue procesado." }, { status: 409 });
   }
 
@@ -34,14 +38,16 @@ export async function PATCH(
   });
 
   if (accion === "aprobar") {
+    const montoFinal = retiro.montoNeto ?? retiro.monto;
+
     await prisma.$transaction([
       prisma.retiro.update({ where: { id }, data: { estado: "PAGADO" } }),
       prisma.transaccion.create({
         data: {
           userId: retiro.userId,
           tipo: "RETIRO",
-          monto: -retiro.monto,
-          descripcion: `Retiro aprobado — $${retiro.monto.toLocaleString("es-CO")}`,
+          monto: -montoFinal,
+          descripcion: `Retiro pagado — $${montoFinal.toLocaleString("es-CO")}${retiro.retencion ? ` (retención $${retiro.retencion.toLocaleString("es-CO")})` : ""}`,
           referencia: id,
         },
       }),
@@ -50,7 +56,7 @@ export async function PATCH(
     await registrarAuditoria({
       userId: adminId,
       accion: "RETIRO_APROBADO",
-      detalle: `Retiro ${id} de $${retiro.monto.toLocaleString("es-CO")} aprobado para usuario ${retiro.userId}`,
+      detalle: `Retiro ${id} aprobado. Monto bruto: $${retiro.monto.toLocaleString("es-CO")}. Neto pagado: $${montoFinal.toLocaleString("es-CO")}`,
       ip,
     });
 
@@ -59,14 +65,17 @@ export async function PATCH(
         enviarRetiroAprobado({
           correo: usuario.correo,
           nombre: usuario.nombre,
-          monto: retiro.monto,
+          monto: montoFinal,
           cuentaDestino: retiro.cuentaDestino,
-        }).catch((err) => console.error("Email retiro aprobado error:", err))
+        }).catch((err) => console.error("Email retiro aprobado:", err))
       );
     }
   } else {
     await prisma.$transaction([
-      prisma.retiro.update({ where: { id }, data: { estado: "RECHAZADO" } }),
+      prisma.retiro.update({
+        where: { id },
+        data: { estado: "RECHAZADO", motivoRechazo: motivoRechazo?.trim() || null },
+      }),
       prisma.user.update({
         where: { id: retiro.userId },
         data: { saldoPuntos: { increment: retiro.monto } },
@@ -76,7 +85,7 @@ export async function PATCH(
     await registrarAuditoria({
       userId: adminId,
       accion: "RETIRO_RECHAZADO",
-      detalle: `Retiro ${id} de $${retiro.monto.toLocaleString("es-CO")} rechazado, saldo devuelto a ${retiro.userId}`,
+      detalle: `Retiro ${id} rechazado por admin. Saldo de $${retiro.monto.toLocaleString("es-CO")} devuelto.`,
       ip,
     });
 
@@ -86,12 +95,12 @@ export async function PATCH(
           correo: usuario.correo,
           nombre: usuario.nombre,
           monto: retiro.monto,
-        }).catch((err) => console.error("Email retiro rechazado error:", err))
+        }).catch((err) => console.error("Email retiro rechazado:", err))
       );
     }
   }
 
   return NextResponse.json({
-    mensaje: accion === "aprobar" ? "Retiro aprobado." : "Retiro rechazado y saldo devuelto.",
+    mensaje: accion === "aprobar" ? "Retiro aprobado y pagado." : "Retiro rechazado y saldo devuelto.",
   });
 }

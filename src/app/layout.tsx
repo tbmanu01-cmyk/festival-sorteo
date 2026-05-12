@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     title: "Club 10K | 10,000 membresías numeradas",
     description:
       "Elige tu número del 0000 al 9999 y obtén increíbles beneficios en Club 10K.",
-    url: "https://festival-sorteo.vercel.app",
+    url: "https://club-10k.vercel.app",
     siteName: "Club 10K",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     locale: "es_CO",

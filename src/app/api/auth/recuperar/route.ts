@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const base = process.env.NEXTAUTH_URL ?? "https://festival-sorteo.vercel.app";
+    const base = process.env.NEXTAUTH_URL ?? "https://club-10k.vercel.app";
     const enlace = `${base}/resetear-password?token=${token}`;
 
     const { enviarRecuperacionPassword } = await import("@/lib/email");

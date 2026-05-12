@@ -13,7 +13,7 @@ export async function GET() {
     prisma.caja.count({ where: { estado: "VENDIDA" } }),
     prisma.caja.count({ where: { estado: "RESERVADA" } }),
     prisma.user.count({ where: { rol: "USER" } }),
-    prisma.retiro.count({ where: { estado: "PENDIENTE" } }),
+    prisma.retiro.count({ where: { estado: { in: ["PENDIENTE", "PRE_APROBADO"] } } }),
   ]);
 
   const precioCaja = cfg?.precioCaja ?? 50_000;

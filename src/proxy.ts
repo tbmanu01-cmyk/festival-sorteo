@@ -5,9 +5,13 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const pathname = req.nextUrl.pathname;
+    const rol = token?.rol as string | undefined;
 
-    // Solo ADMIN puede acceder a /admin/*
-    if (pathname.startsWith("/admin") && token?.rol !== "ADMIN") {
+    if (pathname.startsWith("/admin") && rol !== "ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
+    if (pathname.startsWith("/asistente") && rol !== "ASISTENTE" && rol !== "ADMIN") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
 
@@ -21,5 +25,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/asistente/:path*"],
 };

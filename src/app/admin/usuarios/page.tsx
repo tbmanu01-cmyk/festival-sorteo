@@ -40,34 +40,40 @@ function ModalConfirmacionRol({
   onConfirmar: () => void;
   onCancelar: () => void;
 }) {
-  const subiendo = rolNuevo === "ADMIN";
+  const etiquetaRol = (r: string) =>
+    r === "ADMIN" ? "Administrador" : r === "ASISTENTE" ? "Asistente Administrativo" : "Usuario";
+  const colorRol = (r: string) =>
+    r === "ADMIN" ? "bg-purple-100 text-purple-700" : r === "ASISTENTE" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600";
+  const esAdmin = rolNuevo === "ADMIN";
+
   return (
     <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
         <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 ${
-          subiendo ? "bg-orange-100" : "bg-blue-50"
+          esAdmin ? "bg-orange-100" : "bg-blue-50"
         }`}>
-          {subiendo ? "⚠️" : "👤"}
+          {esAdmin ? "⚠️" : rolNuevo === "ASISTENTE" ? "🧑‍💼" : "👤"}
         </div>
-        <h3 className="text-lg font-extrabold text-gray-900 mb-2">
-          {subiendo ? "¿Dar permisos de Admin?" : "¿Quitar permisos de Admin?"}
-        </h3>
-        <p className="text-gray-500 text-sm mb-1">
-          Estás a punto de cambiar el rol de
-        </p>
-        <p className="font-bold text-gray-900 mb-1">{nombreUsuario}</p>
+        <h3 className="text-lg font-extrabold text-gray-900 mb-2">Cambiar rol de usuario</h3>
+        <p className="text-gray-500 text-sm mb-1">Estás a punto de cambiar el rol de</p>
+        <p className="font-bold text-gray-900 mb-3">{nombreUsuario}</p>
         <p className="text-sm mb-5">
-          <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold ${rolActual === "ADMIN" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600"}`}>
-            {rolActual === "ADMIN" ? "Administrador" : "Usuario"}
+          <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold ${colorRol(rolActual)}`}>
+            {etiquetaRol(rolActual)}
           </span>
           <span className="mx-2 text-gray-400">→</span>
-          <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold ${rolNuevo === "ADMIN" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600"}`}>
-            {rolNuevo === "ADMIN" ? "Administrador" : "Usuario"}
+          <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-bold ${colorRol(rolNuevo)}`}>
+            {etiquetaRol(rolNuevo)}
           </span>
         </p>
-        {subiendo && (
+        {esAdmin && (
           <p className="text-xs text-orange-700 bg-orange-50 rounded-xl px-4 py-2 mb-5 font-semibold">
             Un administrador tiene acceso total al panel. Asegúrate de que confías en esta persona.
+          </p>
+        )}
+        {rolNuevo === "ASISTENTE" && (
+          <p className="text-xs text-blue-700 bg-blue-50 rounded-xl px-4 py-2 mb-5 font-semibold">
+            El asistente podrá pre-aprobar retiros y aplicar retenciones, pero el admin da la aprobación final.
           </p>
         )}
         <div className="flex gap-3">
@@ -80,7 +86,7 @@ function ModalConfirmacionRol({
           <button
             onClick={onConfirmar}
             className={`flex-1 py-2.5 rounded-xl text-white font-bold text-sm transition-colors ${
-              subiendo ? "bg-orange-500 hover:bg-orange-600" : "bg-[#102463] hover:bg-[#173592]"
+              esAdmin ? "bg-orange-500 hover:bg-orange-600" : "bg-[#102463] hover:bg-[#173592]"
             }`}
           >
             Sí, cambiar rol
@@ -325,6 +331,7 @@ function ModalEdicion({
                         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30"
                       >
                         <option value="USER">Usuario</option>
+                        <option value="ASISTENTE">Asistente Administrativo</option>
                         <option value="ADMIN">Administrador</option>
                       </select>
                     </div>
@@ -575,6 +582,7 @@ export default function AdminUsuarios() {
             {[
               { label: "Todos", valor: "" },
               { label: "👤 Usuarios", valor: "USER" },
+              { label: "🧑‍💼 Asistentes", valor: "ASISTENTE" },
               { label: "🛡️ Admins", valor: "ADMIN" },
             ].map(({ label, valor }) => (
               <button
@@ -634,9 +642,11 @@ export default function AdminUsuarios() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          u.rol === "ADMIN" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600"
+                          u.rol === "ADMIN" ? "bg-purple-100 text-purple-700"
+                          : u.rol === "ASISTENTE" ? "bg-blue-100 text-blue-700"
+                          : "bg-gray-100 text-gray-600"
                         }`}>
-                          {u.rol === "ADMIN" ? "🛡️ Admin" : "Usuario"}
+                          {u.rol === "ADMIN" ? "🛡️ Admin" : u.rol === "ASISTENTE" ? "🧑‍💼 Asistente" : "Usuario"}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">

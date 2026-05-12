@@ -27,7 +27,9 @@ interface CajaAdmin {
 }
 
 interface Retiro {
-  id: string; monto: number; estado: string; cuentaDestino: string; fecha: string;
+  id: string; monto: number; montoNeto: number | null; estado: string;
+  cuentaDestino: string; fecha: string; preAprobadoEn: string | null;
+  retencion: number | null; porcentajeRetencion: number | null; notaRetencion: string | null;
   user: { nombre: string; apellido: string; correo: string; celular: string; banco: string | null };
 }
 
@@ -192,34 +194,58 @@ function TablaCajas() {
 
 function TablaRetiros() {
   const [retiros, setRetiros] = useState<Retiro[]>([]);
+  const [pendientes, setPendientes] = useState<Retiro[]>([]);
   const [procesando, setProcesando] = useState<string | null>(null);
-  const [mensaje, setMensaje] = useState("");
+  const [mensaje, setMensaje] = useState<{ texto: string; tipo: "ok" | "error" } | null>(null);
+  const [modalRechazo, setModalRechazo] = useState<{ id: string; nombre: string } | null>(null);
+  const [motivoRechazo, setMotivoRechazo] = useState("");
 
   const cargar = useCallback(() => {
-    fetch("/api/admin/retiros").then((r) => r.json()).then((d) => setRetiros(d.retiros ?? []));
+    fetch("/api/admin/retiros")
+      .then((r) => r.json())
+      .then((d) => { setRetiros(d.retiros ?? []); setPendientes(d.pendientes ?? []); });
   }, []);
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  async function accion(id: string, accion: "aprobar" | "rechazar") {
+  async function aprobar(id: string) {
     setProcesando(id);
-    setMensaje("");
     const res = await fetch(`/api/admin/retiros/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accion }),
+      body: JSON.stringify({ accion: "aprobar" }),
     });
     const json = await res.json();
-    setMensaje(json.mensaje);
+    setMensaje({ texto: json.mensaje, tipo: res.ok ? "ok" : "error" });
     setProcesando(null);
     cargar();
   }
 
-  if (retiros.length === 0) {
+  async function rechazar() {
+    if (!modalRechazo) return;
+    setProcesando(modalRechazo.id);
+    const res = await fetch(`/api/admin/retiros/${modalRechazo.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accion: "rechazar", motivoRechazo }),
+    });
+    const json = await res.json();
+    setMensaje({ texto: json.mensaje, tipo: res.ok ? "ok" : "error" });
+    setModalRechazo(null);
+    setMotivoRechazo("");
+    setProcesando(null);
+    cargar();
+  }
+
+  const fmt = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 0 });
+
+  const totalItems = retiros.length + pendientes.length;
+
+  if (totalItems === 0) {
     return (
       <div className="text-center py-12 text-gray-400">
         <p className="text-4xl mb-2">✅</p>
-        <p className="font-medium">No hay retiros pendientes</p>
+        <p className="font-medium">No hay retiros en proceso</p>
       </div>
     );
   }
@@ -227,49 +253,142 @@ function TablaRetiros() {
   return (
     <div>
       {mensaje && (
-        <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4 text-green-700 text-sm">
-          {mensaje}
+        <div className={`rounded-xl px-4 py-3 mb-4 text-sm font-medium ${
+          mensaje.tipo === "ok"
+            ? "bg-green-50 border border-green-200 text-green-700"
+            : "bg-red-50 border border-red-200 text-red-700"
+        }`}>
+          {mensaje.texto}
+          <button onClick={() => setMensaje(null)} className="float-right font-bold">×</button>
         </div>
       )}
-      <div className="space-y-3">
-        {retiros.map((r) => (
-          <div key={r.id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <p className="font-bold text-gray-900">
-                  {r.user.nombre} {r.user.apellido}
-                </p>
-                <p className="text-gray-500 text-xs">{r.user.correo} · {r.user.celular}</p>
-                <p className="text-gray-500 text-xs mt-0.5">
-                  {r.user.banco} · {r.cuentaDestino}
-                </p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {new Date(r.fecha).toLocaleString("es-CO")}
-                </p>
+
+      {/* PRE_APROBADOS — listos para aprobación final */}
+      {retiros.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
+            <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">
+              Pre-aprobados — pendientes de aprobación final ({retiros.length})
+            </h3>
+          </div>
+          <div className="space-y-3">
+            {retiros.map((r) => {
+              const montoFinal = r.montoNeto ?? r.monto;
+              return (
+                <div key={r.id} className="bg-amber-50 rounded-xl p-4 border border-amber-200">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900">{r.user.nombre} {r.user.apellido}</p>
+                      <p className="text-gray-500 text-xs">{r.user.correo} · {r.user.celular}</p>
+                      <p className="text-gray-500 text-xs mt-0.5">{r.user.banco} · {r.cuentaDestino}</p>
+                      {r.retencion && r.retencion > 0 && (
+                        <div className="mt-2 bg-white rounded-lg px-3 py-2 border border-amber-100 text-xs">
+                          <p className="text-gray-500">
+                            Bruto: <span className="font-semibold">${fmt(r.monto)}</span>
+                            {" · "}
+                            Retención ({r.porcentajeRetencion}%): <span className="font-semibold text-red-600">−${fmt(r.retencion)}</span>
+                          </p>
+                          {r.notaRetencion && <p className="text-gray-400 mt-0.5">{r.notaRetencion}</p>}
+                          <p className="font-bold text-green-700 mt-0.5">
+                            Neto a pagar: ${fmt(montoFinal)}
+                          </p>
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">
+                        Pre-aprobado: {r.preAprobadoEn ? new Date(r.preAprobadoEn).toLocaleString("es-CO") : "—"}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <span className="text-xl font-extrabold text-[#1B4F8A]">${fmt(montoFinal)}</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => aprobar(r.id)}
+                          disabled={!!procesando}
+                          className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+                        >
+                          {procesando === r.id ? "..." : "Aprobar y pagar"}
+                        </button>
+                        <button
+                          onClick={() => { setModalRechazo({ id: r.id, nombre: `${r.user.nombre} ${r.user.apellido}` }); setMotivoRechazo(""); }}
+                          disabled={!!procesando}
+                          className="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+                        >
+                          Rechazar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* PENDIENTES — esperando asistente */}
+      {pendientes.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-gray-400 inline-block" />
+            <h3 className="font-bold text-gray-500 text-sm uppercase tracking-wide">
+              Esperando pre-aprobación del asistente ({pendientes.length})
+            </h3>
+          </div>
+          <div className="space-y-3">
+            {pendientes.map((r) => (
+              <div key={r.id} className="bg-gray-50 rounded-xl p-4 border border-gray-200 opacity-75">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <p className="font-bold text-gray-700">{r.user.nombre} {r.user.apellido}</p>
+                    <p className="text-gray-400 text-xs">{r.user.correo} · {r.user.celular}</p>
+                    <p className="text-gray-400 text-xs mt-0.5">{r.user.banco} · {r.cuentaDestino}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{new Date(r.fecha).toLocaleString("es-CO")}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-extrabold text-gray-500">${fmt(r.monto)}</span>
+                    <span className="text-xs bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg font-medium">
+                      En revisión
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xl font-extrabold text-[#1B4F8A]">
-                  ${r.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
-                </span>
-                <button
-                  onClick={() => accion(r.id, "aprobar")}
-                  disabled={!!procesando}
-                  className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
-                >
-                  {procesando === r.id ? "..." : "Aprobar"}
-                </button>
-                <button
-                  onClick={() => accion(r.id, "rechazar")}
-                  disabled={!!procesando}
-                  className="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
-                >
-                  Rechazar
-                </button>
-              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modal rechazo */}
+      {modalRechazo && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-lg font-extrabold text-red-600 mb-1">Rechazar retiro</h2>
+            <p className="text-gray-500 text-sm mb-4">{modalRechazo.nombre} — el saldo será devuelto al usuario.</p>
+            <textarea
+              value={motivoRechazo}
+              onChange={(e) => setMotivoRechazo(e.target.value)}
+              placeholder="Motivo del rechazo (opcional)..."
+              rows={3}
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setModalRechazo(null)}
+                className="flex-1 border border-gray-200 text-gray-600 font-semibold py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={rechazar}
+                disabled={!!procesando}
+                className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
+              >
+                {procesando ? "..." : "Confirmar rechazo"}
+              </button>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -358,6 +477,12 @@ export default function AdminPanel() {
                 className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
               >
                 🌐 Red Multinivel
+              </Link>
+              <Link
+                href="/admin/retenciones"
+                className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
+              >
+                💰 Retenciones
               </Link>
               <Link
                 href="/admin/auditoria"

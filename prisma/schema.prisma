@@ -9,6 +9,7 @@ datasource db {
 
 enum Rol {
   USER
+  ASISTENTE
   ADMIN
 }
 
@@ -39,6 +40,7 @@ enum CategoriaPremio {
 
 enum EstadoRetiro {
   PENDIENTE
+  PRE_APROBADO
   APROBADO
   RECHAZADO
   PAGADO
@@ -204,14 +206,24 @@ model Premio {
 }
 
 model Retiro {
-  id             String       @id @default(cuid())
-  userId         String
-  monto          Float
-  estado         EstadoRetiro @default(PENDIENTE)
-  cuentaDestino  String
-  fecha          DateTime     @default(now())
+  id                  String       @id @default(cuid())
+  userId              String
+  monto               Float
+  estado              EstadoRetiro @default(PENDIENTE)
+  cuentaDestino       String
+  fecha               DateTime     @default(now())
 
-  user           User         @relation(fields: [userId], references: [id])
+  preAprobadoPorId    String?
+  preAprobadoEn       DateTime?
+  retencion           Float?
+  porcentajeRetencion Float?
+  notaRetencion       String?
+  montoNeto           Float?
+
+  motivoRechazo       String?
+  retencionDetalle    Json?
+
+  user                User         @relation(fields: [userId], references: [id])
 
   @@map("retiros")
 }
@@ -294,6 +306,16 @@ model SorteoPrevioGran {
   granSorteo        GranSorteo   @relation(fields: [granSorteoId], references: [id])
 
   @@map("sorteos_previos_gran")
+}
+
+model ConceptoRetencion {
+  id         String   @id @default(cuid())
+  nombre     String
+  porcentaje Float
+  activo     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@map("conceptos_retencion")
 }
 
 model AuditLog {

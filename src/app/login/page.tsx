@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { useState, useEffect } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -61,7 +61,11 @@ function FormularioLogin() {
     if (result?.error) {
       setError("Correo o contraseña incorrectos. Tras 5 intentos fallidos la cuenta se bloquea 15 minutos.");
     } else {
-      router.push("/dashboard");
+      const session = await getSession();
+      const rol = (session?.user as { rol?: string })?.rol;
+      if (rol === "ADMIN") router.push("/admin");
+      else if (rol === "ASISTENTE") router.push("/asistente/retiros");
+      else router.push("/dashboard");
       router.refresh();
     }
   }

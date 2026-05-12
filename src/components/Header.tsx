@@ -43,6 +43,14 @@ export default function Header() {
                 >
                   Mi cuenta
                 </Link>
+                {(session.user as { rol?: string })?.rol === "ASISTENTE" && (
+                  <Link
+                    href="/asistente/retiros"
+                    className="text-[#F5A623] hover:text-yellow-300 text-sm font-medium transition-colors"
+                  >
+                    Panel Asistente
+                  </Link>
+                )}
                 {(session.user as { rol?: string })?.rol === "ADMIN" && (
                   <Link
                     href="/admin"
@@ -112,6 +120,11 @@ export default function Header() {
                 <Link href="/dashboard" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
                   Mi cuenta
                 </Link>
+                {(session.user as { rol?: string })?.rol === "ASISTENTE" && (
+                  <Link href="/asistente/retiros" className="block text-[#F5A623] hover:text-yellow-300 px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+                    Panel Asistente
+                  </Link>
+                )}
                 {(session.user as { rol?: string })?.rol === "ADMIN" && (
                   <Link href="/admin" className="block text-[#F5A623] hover:text-yellow-300 px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
                     Administrar
