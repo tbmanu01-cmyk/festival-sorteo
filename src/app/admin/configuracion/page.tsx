@@ -15,6 +15,7 @@ interface Config {
   pct1Cifra:             number;
   ganadores4Cifras:      number;
   membresiasPorGiftCard: number;
+  giftCardActivo:        boolean;
   fechaSorteo:           string | null;
 }
 
@@ -44,8 +45,9 @@ export default function PaginaConfiguracion() {
   const [pct2,        setPct2]        = useState(15);
   const [pct1,        setPct1]        = useState(25);
   const [n4,          setN4]          = useState(4);
-  const [mpgc,        setMpgc]        = useState(5);
-  const [fechaSorteo, setFechaSorteo] = useState("");
+  const [mpgc,          setMpgc]          = useState(5);
+  const [gcActivo,      setGcActivo]      = useState(true);
+  const [fechaSorteo,   setFechaSorteo]   = useState("");
 
   // Validaciones en tiempo real
   const sumaPremios = pct4 + pct3 + pct2 + pct1;
@@ -66,6 +68,7 @@ export default function PaginaConfiguracion() {
         setPct1(pct(c.pct1Cifra ?? 0.25));
         setN4(c.ganadores4Cifras ?? 4);
         setMpgc(c.membresiasPorGiftCard ?? 5);
+        setGcActivo(c.giftCardActivo ?? true);
         setFechaSorteo(
           c.fechaSorteo ? new Date(c.fechaSorteo).toISOString().slice(0, 16) : ""
         );
@@ -91,6 +94,7 @@ export default function PaginaConfiguracion() {
           pct1Cifra:             dec(pct1),
           ganadores4Cifras:      n4,
           membresiasPorGiftCard: mpgc,
+          giftCardActivo:        gcActivo,
           fechaSorteo:           fechaSorteo || null,
         }),
       });
@@ -223,6 +227,38 @@ export default function PaginaConfiguracion() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* ── Activar / desactivar gift cards ──────────────────────── */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-bold text-gray-800">Sistema de gift cards</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {gcActivo
+                      ? "Activo — los referidos acumulan membresías y el sistema emite gift cards automáticamente."
+                      : "Inactivo — no se generarán nuevas gift cards por referidos aunque se alcance el umbral."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setGcActivo((v) => !v)}
+                  className={`relative flex-shrink-0 w-14 h-7 rounded-full transition-colors duration-200 focus:outline-none ${
+                    gcActivo ? "bg-green-500" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform duration-200 ${
+                      gcActivo ? "translate-x-7" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+              {!gcActivo && (
+                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs text-amber-700 font-medium">
+                  ⚠️ Las gift cards existentes siguen vigentes. Solo se pausan las nuevas emisiones automáticas.
+                </div>
+              )}
             </div>
 
             {/* ── Distribución del recaudo ──────────────────────────────── */}

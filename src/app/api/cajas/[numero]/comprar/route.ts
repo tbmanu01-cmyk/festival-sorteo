@@ -111,6 +111,7 @@ export async function POST(
         WHERE r."referidorId" = ${ref.referidorId}
       `;
       const totalNum = Number(totalMembresias);
+      if (!(config?.giftCardActivo ?? true)) return;
       const mpgc = config?.membresiasPorGiftCard ?? 5;
       const debeHaber = Math.floor(totalNum / mpgc);
       if (debeHaber === 0) return;

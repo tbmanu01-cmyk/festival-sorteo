@@ -28,6 +28,7 @@ export async function PUT(req: NextRequest) {
     pct1Cifra?: number;
     ganadores4Cifras?: number;
     membresiasPorGiftCard?: number;
+    giftCardActivo?: boolean;
     fechaSorteo?: string | null;
   };
 

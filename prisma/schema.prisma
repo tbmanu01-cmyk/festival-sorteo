@@ -241,6 +241,7 @@ model Config {
   pct1Cifra        Float     @default(0.25)
   ganadores4Cifras       Int       @default(4)
   membresiasPorGiftCard  Int       @default(5)
+  giftCardActivo         Boolean   @default(true)
   fechaSorteo            DateTime?
   updatedAt        DateTime  @updatedAt
 
