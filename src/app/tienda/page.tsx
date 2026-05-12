@@ -31,13 +31,14 @@ interface ModalProps {
   precio: number;
   giftCardId: string | null;
   giftCardValor: number;
+  esSorpresa: boolean;
   onCerrar: () => void;
   onConfirmar: (numero: string) => Promise<void>;
   cargando: boolean;
   resultado: { ok: boolean; mensaje: string; expira?: string } | null;
 }
 
-function ModalReserva({ caja, precio, giftCardId, giftCardValor, onCerrar, onConfirmar, cargando, resultado }: ModalProps) {
+function ModalReserva({ caja, precio, giftCardId, giftCardValor, esSorpresa, onCerrar, onConfirmar, cargando, resultado }: ModalProps) {
   if (!caja) return null;
   const descuento = giftCardId ? Math.min(giftCardValor, precio) : 0;
   const total = precio - descuento;
@@ -98,7 +99,13 @@ function ModalReserva({ caja, precio, giftCardId, giftCardValor, onCerrar, onCon
         ) : (
           <>
             <div className="text-center mb-6">
-              <p className="text-gray-500 text-sm mb-1">Número seleccionado</p>
+              {esSorpresa && (
+                <div className="bg-[#ffbd1f]/20 rounded-xl px-3 py-1.5 mb-3 inline-flex items-center gap-1.5">
+                  <span className="text-lg">🎲</span>
+                  <span className="text-[#102463] text-xs font-bold">¡La suerte eligió este número!</span>
+                </div>
+              )}
+              <p className="text-gray-500 text-sm mb-1">{esSorpresa ? "Tu número de la suerte" : "Número seleccionado"}</p>
               <div className="text-7xl font-extrabold text-[#102463] my-3 tracking-widest">
                 {caja.numero}
               </div>
@@ -315,6 +322,8 @@ function TiendaCajasInner() {
     mensaje: string;
     expira?: string;
   } | null>(null);
+  const [buscandoAleatoria, setBuscandoAleatoria] = useState(false);
+  const [esSorpresa, setEsSorpresa] = useState(false);
 
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -395,11 +404,27 @@ function TiendaCajasInner() {
     setPagina(1);
   };
 
+  const elegirAleatoria = async () => {
+    if (!session) { router.push("/login?redirect=/tienda"); return; }
+    setBuscandoAleatoria(true);
+    try {
+      const res = await fetch("/api/cajas/aleatoria");
+      const json = await res.json();
+      if (!res.ok || !json.caja) return;
+      setEsSorpresa(true);
+      setCajaSeleccionada({ numero: json.caja.numero, estado: "DISPONIBLE" });
+      setResultadoReserva(null);
+    } finally {
+      setBuscandoAleatoria(false);
+    }
+  };
+
   const abrirModal = (caja: Caja) => {
     if (!session) {
       router.push("/login?redirect=/tienda");
       return;
     }
+    setEsSorpresa(false);
     setCajaSeleccionada(caja);
     setResultadoReserva(null);
   };
@@ -408,6 +433,7 @@ function TiendaCajasInner() {
     if (resultadoReserva?.ok) fetchCajas(true);
     setCajaSeleccionada(null);
     setResultadoReserva(null);
+    setEsSorpresa(false);
   };
 
   const confirmarReserva = async (numero: string) => {
@@ -474,6 +500,22 @@ function TiendaCajasInner() {
         )}
 
         <div className="max-w-7xl mx-auto px-4 py-6">
+          {/* Banner sorpresa */}
+          <div className="bg-gradient-to-r from-[#ffbd1f] to-yellow-300 rounded-2xl p-4 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div>
+              <p className="font-extrabold text-[#102463] text-base">¿No sabes cuál elegir?</p>
+              <p className="text-[#102463]/70 text-sm">Deja que la suerte decida por ti — te asignamos un número disponible al azar.</p>
+            </div>
+            <button
+              onClick={elegirAleatoria}
+              disabled={buscandoAleatoria}
+              className="shrink-0 bg-[#102463] hover:bg-[#173592] disabled:opacity-60 text-white font-bold px-6 py-3 rounded-full text-sm transition-all shadow-md flex items-center gap-2 whitespace-nowrap"
+            >
+              <span className={buscandoAleatoria ? "animate-spin inline-block" : "inline-block"}>🎲</span>
+              {buscandoAleatoria ? "Eligiendo..." : "¡Quiero una sorpresa!"}
+            </button>
+          </div>
+
           {/* Controles */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
             <div className="flex flex-col sm:flex-row gap-4">
@@ -504,8 +546,8 @@ function TiendaCajasInner() {
                 )}
               </form>
 
-              {/* Filtros */}
-              <div className="flex gap-2 flex-shrink-0">
+              {/* Filtros + botón sorpresa compacto */}
+              <div className="flex gap-2 flex-shrink-0 flex-wrap">
                 {(["todos", "disponibles", "ocupados"] as Filtro[]).map((f) => (
                   <button
                     key={f}
@@ -519,6 +561,15 @@ function TiendaCajasInner() {
                     {f === "todos" ? "Todos" : f === "disponibles" ? "Disponibles" : "Ocupados"}
                   </button>
                 ))}
+                <button
+                  onClick={elegirAleatoria}
+                  disabled={buscandoAleatoria}
+                  title="Elegir número al azar"
+                  className="px-4 py-2 rounded-full text-sm font-semibold bg-[#ffbd1f] hover:bg-yellow-300 text-[#102463] disabled:opacity-60 transition-all flex items-center gap-1.5"
+                >
+                  <span className={buscandoAleatoria ? "animate-spin inline-block" : "inline-block"}>🎲</span>
+                  Sorpresa
+                </button>
               </div>
             </div>
 
@@ -601,6 +652,7 @@ function TiendaCajasInner() {
         precio={precioCaja}
         giftCardId={giftCardId}
         giftCardValor={giftCardValor}
+        esSorpresa={esSorpresa}
         onCerrar={cerrarModal}
         onConfirmar={confirmarReserva}
         cargando={reservandoCaja}
