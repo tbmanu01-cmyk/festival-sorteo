@@ -193,29 +193,45 @@ function TablaCajas() {
 }
 
 function TablaRetiros() {
-  const [retiros, setRetiros] = useState<Retiro[]>([]);
+  const [retiros,    setRetiros]    = useState<Retiro[]>([]);
   const [pendientes, setPendientes] = useState<Retiro[]>([]);
   const [procesando, setProcesando] = useState<string | null>(null);
-  const [mensaje, setMensaje] = useState<{ texto: string; tipo: "ok" | "error" } | null>(null);
-  const [modalRechazo, setModalRechazo] = useState<{ id: string; nombre: string } | null>(null);
-  const [motivoRechazo, setMotivoRechazo] = useState("");
+  const [procesandoMasivo, setProcesandoMasivo] = useState(false);
+  const [mensaje,    setMensaje]    = useState<{ texto: string; tipo: "ok" | "error" } | null>(null);
+
+  // Modales
+  const [modalRechazo,   setModalRechazo]   = useState<{ id: string; nombre: string } | null>(null);
+  const [motivoRechazo,  setMotivoRechazo]  = useState("");
+  const [modalConfirmar, setModalConfirmar] = useState<Retiro | null>(null);
+  const [modalMasivo,    setModalMasivo]    = useState(false);
+
+  // Selección masiva
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
 
   const cargar = useCallback(() => {
     fetch("/api/admin/retiros")
       .then((r) => r.json())
-      .then((d) => { setRetiros(d.retiros ?? []); setPendientes(d.pendientes ?? []); });
+      .then((d) => {
+        setRetiros(d.retiros ?? []);
+        setPendientes(d.pendientes ?? []);
+        setSeleccionados(new Set()); // limpiar selección al recargar
+      });
   }, []);
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  async function aprobar(id: string) {
+  const fmt = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 0 });
+
+  // ── Individual ──────────────────────────────────────────────────────────────
+  async function aprobarUno(id: string) {
+    setModalConfirmar(null);
     setProcesando(id);
-    const res = await fetch(`/api/admin/retiros/${id}`, {
+    const res  = await fetch(`/api/admin/retiros/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ accion: "aprobar" }),
     });
-    const json = await res.json();
+    const json = await res.json() as { mensaje: string };
     setMensaje({ texto: json.mensaje, tipo: res.ok ? "ok" : "error" });
     setProcesando(null);
     cargar();
@@ -224,12 +240,12 @@ function TablaRetiros() {
   async function rechazar() {
     if (!modalRechazo) return;
     setProcesando(modalRechazo.id);
-    const res = await fetch(`/api/admin/retiros/${modalRechazo.id}`, {
+    const res  = await fetch(`/api/admin/retiros/${modalRechazo.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ accion: "rechazar", motivoRechazo }),
     });
-    const json = await res.json();
+    const json = await res.json() as { mensaje: string };
     setMensaje({ texto: json.mensaje, tipo: res.ok ? "ok" : "error" });
     setModalRechazo(null);
     setMotivoRechazo("");
@@ -237,9 +253,46 @@ function TablaRetiros() {
     cargar();
   }
 
-  const fmt = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 0 });
+  // ── Masivo ──────────────────────────────────────────────────────────────────
+  function toggleSeleccion(id: string) {
+    setSeleccionados((prev) => {
+      const s = new Set(prev);
+      s.has(id) ? s.delete(id) : s.add(id);
+      return s;
+    });
+  }
 
-  const totalItems = retiros.length + pendientes.length;
+  function toggleTodos() {
+    if (seleccionados.size === retiros.length) {
+      setSeleccionados(new Set());
+    } else {
+      setSeleccionados(new Set(retiros.map((r) => r.id)));
+    }
+  }
+
+  async function aprobarMasivo() {
+    setModalMasivo(false);
+    setProcesandoMasivo(true);
+    const ids = [...seleccionados];
+    const res  = await fetch("/api/admin/retiros/bulk", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+    const json = await res.json() as { ok: number; error: number };
+    setMensaje({
+      texto: `${json.ok} retiro${json.ok !== 1 ? "s" : ""} aprobado${json.ok !== 1 ? "s" : ""}${json.error > 0 ? ` · ${json.error} con error` : ""}.`,
+      tipo: json.error === 0 ? "ok" : "error",
+    });
+    setProcesandoMasivo(false);
+    cargar();
+  }
+
+  // ── Datos derivados ─────────────────────────────────────────────────────────
+  const retirosSeleccionados = retiros.filter((r) => seleccionados.has(r.id));
+  const totalSeleccionado    = retirosSeleccionados.reduce((s, r) => s + (r.montoNeto ?? r.monto), 0);
+  const todosSeleccionados   = retiros.length > 0 && seleccionados.size === retiros.length;
+  const totalItems           = retiros.length + pendientes.length;
 
   if (totalItems === 0) {
     return (
@@ -251,7 +304,9 @@ function TablaRetiros() {
   }
 
   return (
-    <div>
+    <div className="pb-24">
+
+      {/* Mensaje de resultado */}
       {mensaje && (
         <div className={`rounded-xl px-4 py-3 mb-4 text-sm font-medium ${
           mensaje.tipo === "ok"
@@ -263,59 +318,96 @@ function TablaRetiros() {
         </div>
       )}
 
-      {/* PRE_APROBADOS — listos para aprobación final */}
+      {/* ── PRE_APROBADOS ─────────────────────────────────────────────────── */}
       {retiros.length > 0 && (
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
-            <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">
-              Pre-aprobados — pendientes de aprobación final ({retiros.length})
-            </h3>
+          {/* Cabecera con "seleccionar todos" */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={todosSeleccionados}
+                onChange={toggleTodos}
+                className="w-4 h-4 rounded accent-[#1B4F8A] cursor-pointer"
+                title="Seleccionar todos"
+              />
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
+              <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">
+                Pre-aprobados — aprobación final ({retiros.length})
+              </h3>
+            </div>
+            {seleccionados.size > 0 && (
+              <span className="text-xs text-[#1B4F8A] font-semibold">
+                {seleccionados.size} seleccionado{seleccionados.size !== 1 ? "s" : ""}
+              </span>
+            )}
           </div>
+
           <div className="space-y-3">
             {retiros.map((r) => {
-              const montoFinal = r.montoNeto ?? r.monto;
+              const montoFinal  = r.montoNeto ?? r.monto;
+              const marcado     = seleccionados.has(r.id);
               return (
-                <div key={r.id} className="bg-amber-50 rounded-xl p-4 border border-amber-200">
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-gray-900">{r.user.nombre} {r.user.apellido}</p>
-                      <p className="text-gray-500 text-xs">{r.user.correo} · {r.user.celular}</p>
-                      <p className="text-gray-500 text-xs mt-0.5">{r.user.banco} · {r.cuentaDestino}</p>
-                      {r.retencion && r.retencion > 0 && (
-                        <div className="mt-2 bg-white rounded-lg px-3 py-2 border border-amber-100 text-xs">
-                          <p className="text-gray-500">
-                            Bruto: <span className="font-semibold">${fmt(r.monto)}</span>
-                            {" · "}
-                            Retención ({r.porcentajeRetencion}%): <span className="font-semibold text-red-600">−${fmt(r.retencion)}</span>
-                          </p>
-                          {r.notaRetencion && <p className="text-gray-400 mt-0.5">{r.notaRetencion}</p>}
-                          <p className="font-bold text-green-700 mt-0.5">
-                            Neto a pagar: ${fmt(montoFinal)}
-                          </p>
-                        </div>
-                      )}
-                      <p className="text-xs text-gray-400 mt-1">
-                        Pre-aprobado: {r.preAprobadoEn ? new Date(r.preAprobadoEn).toLocaleString("es-CO") : "—"}
-                      </p>
+                <div
+                  key={r.id}
+                  className={`rounded-xl p-4 border transition-colors ${
+                    marcado
+                      ? "bg-blue-50 border-[#1B4F8A]/40"
+                      : "bg-amber-50 border-amber-200"
+                  }`}
+                >
+                  <div className="flex gap-3">
+                    {/* Checkbox */}
+                    <div className="pt-1 flex-shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={marcado}
+                        onChange={() => toggleSeleccion(r.id)}
+                        className="w-4 h-4 rounded accent-[#1B4F8A] cursor-pointer"
+                      />
                     </div>
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <span className="text-xl font-extrabold text-[#1B4F8A]">${fmt(montoFinal)}</span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => aprobar(r.id)}
-                          disabled={!!procesando}
-                          className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
-                        >
-                          {procesando === r.id ? "..." : "Aprobar y pagar"}
-                        </button>
-                        <button
-                          onClick={() => { setModalRechazo({ id: r.id, nombre: `${r.user.nombre} ${r.user.apellido}` }); setMotivoRechazo(""); }}
-                          disabled={!!procesando}
-                          className="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
-                        >
-                          Rechazar
-                        </button>
+
+                    {/* Info */}
+                    <div className="flex-1 flex flex-col sm:flex-row sm:items-start justify-between gap-3 min-w-0">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900">{r.user.nombre} {r.user.apellido}</p>
+                        <p className="text-gray-500 text-xs">{r.user.correo} · {r.user.celular}</p>
+                        <p className="text-gray-500 text-xs mt-0.5">{r.user.banco} · {r.cuentaDestino}</p>
+                        {r.retencion && r.retencion > 0 && (
+                          <div className="mt-2 bg-white rounded-lg px-3 py-2 border border-amber-100 text-xs">
+                            <p className="text-gray-500">
+                              Bruto: <span className="font-semibold">${fmt(r.monto)}</span>
+                              {" · "}
+                              Retención ({r.porcentajeRetencion}%): <span className="font-semibold text-red-600">−${fmt(r.retencion)}</span>
+                            </p>
+                            {r.notaRetencion && <p className="text-gray-400 mt-0.5">{r.notaRetencion}</p>}
+                            <p className="font-bold text-green-700 mt-0.5">Neto: ${fmt(montoFinal)}</p>
+                          </div>
+                        )}
+                        <p className="text-xs text-gray-400 mt-1">
+                          Pre-aprobado: {r.preAprobadoEn ? new Date(r.preAprobadoEn).toLocaleString("es-CO") : "—"}
+                        </p>
+                      </div>
+
+                      {/* Acciones */}
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <span className="text-xl font-extrabold text-[#1B4F8A]">${fmt(montoFinal)}</span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setModalConfirmar(r)}
+                            disabled={!!procesando || procesandoMasivo}
+                            className="bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+                          >
+                            {procesando === r.id ? "..." : "Aprobar y pagar"}
+                          </button>
+                          <button
+                            onClick={() => { setModalRechazo({ id: r.id, nombre: `${r.user.nombre} ${r.user.apellido}` }); setMotivoRechazo(""); }}
+                            disabled={!!procesando || procesandoMasivo}
+                            className="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+                          >
+                            Rechazar
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -326,7 +418,7 @@ function TablaRetiros() {
         </div>
       )}
 
-      {/* PENDIENTES — esperando asistente */}
+      {/* ── PENDIENTES ────────────────────────────────────────────────────── */}
       {pendientes.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -347,9 +439,7 @@ function TablaRetiros() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-extrabold text-gray-500">${fmt(r.monto)}</span>
-                    <span className="text-xs bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg font-medium">
-                      En revisión
-                    </span>
+                    <span className="text-xs bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg font-medium">En revisión</span>
                   </div>
                 </div>
               </div>
@@ -358,7 +448,153 @@ function TablaRetiros() {
         </div>
       )}
 
-      {/* Modal rechazo */}
+      {/* ── Barra de acción masiva (sticky bottom) ──────────────────────── */}
+      {seleccionados.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#1B4F8A] shadow-2xl border-t border-blue-700 px-4 py-3">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+            <div className="text-white">
+              <p className="font-bold text-sm">
+                {seleccionados.size} retiro{seleccionados.size !== 1 ? "s" : ""} seleccionado{seleccionados.size !== 1 ? "s" : ""}
+              </p>
+              <p className="text-blue-200 text-xs">
+                Total a pagar: <span className="font-bold text-white">${fmt(totalSeleccionado)}</span>
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSeleccionados(new Set())}
+                className="border border-blue-400 text-blue-200 hover:text-white hover:border-blue-200 font-semibold px-4 py-2 rounded-xl text-sm transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => setModalMasivo(true)}
+                disabled={procesandoMasivo}
+                className="bg-[#F5A623] hover:bg-yellow-400 disabled:opacity-50 text-[#1B4F8A] font-bold px-5 py-2 rounded-xl text-sm transition-colors shadow-md"
+              >
+                {procesandoMasivo ? "Procesando..." : `💸 Aprobar ${seleccionados.size} retiro${seleccionados.size !== 1 ? "s" : ""}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal confirmación individual ────────────────────────────────── */}
+      {modalConfirmar && (() => {
+        const montoFinal = modalConfirmar.montoNeto ?? modalConfirmar.monto;
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-xl flex-shrink-0">💸</div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-gray-900">¿Confirmar pago?</h2>
+                  <p className="text-gray-400 text-xs">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2 mb-5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Beneficiario</span>
+                  <span className="font-semibold text-gray-900">{modalConfirmar.user.nombre} {modalConfirmar.user.apellido}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Banco</span>
+                  <span className="font-semibold text-gray-700">{modalConfirmar.user.banco ?? "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Cuenta destino</span>
+                  <span className="font-semibold text-gray-700 text-right max-w-[60%]">{modalConfirmar.cuentaDestino}</span>
+                </div>
+                {modalConfirmar.retencion && modalConfirmar.retencion > 0 && (
+                  <>
+                    <div className="flex justify-between text-red-600">
+                      <span>Retención ({modalConfirmar.porcentajeRetencion}%)</span>
+                      <span className="font-semibold">−${fmt(modalConfirmar.retencion)}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between border-t border-gray-200 pt-2 mt-1">
+                  <span className="font-bold text-gray-800">Monto a consignar</span>
+                  <span className="font-extrabold text-green-700 text-lg">${fmt(montoFinal)}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setModalConfirmar(null)}
+                  className="flex-1 border border-gray-200 text-gray-600 font-semibold py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => aprobarUno(modalConfirmar.id)}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
+                >
+                  Confirmar pago
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── Modal confirmación masiva ─────────────────────────────────────── */}
+      {modalMasivo && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#F5A623]/20 flex items-center justify-center text-xl flex-shrink-0">💸</div>
+              <div>
+                <h2 className="text-lg font-extrabold text-gray-900">Aprobación masiva</h2>
+                <p className="text-gray-400 text-xs">{seleccionados.size} pagos · Total ${fmt(totalSeleccionado)} COP</p>
+              </div>
+            </div>
+
+            {/* Lista de retiros seleccionados */}
+            <div className="max-h-56 overflow-y-auto space-y-2 mb-5">
+              {retirosSeleccionados.map((r) => {
+                const mf = r.montoNeto ?? r.monto;
+                return (
+                  <div key={r.id} className="flex items-center justify-between text-sm bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 leading-tight">{r.user.nombre} {r.user.apellido}</p>
+                      <p className="text-xs text-gray-400">{r.cuentaDestino}</p>
+                    </div>
+                    <span className="font-bold text-green-700 flex-shrink-0 ml-3">${fmt(mf)}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="bg-green-50 rounded-xl px-4 py-3 border border-green-200 flex justify-between items-center mb-5">
+              <span className="text-sm font-bold text-gray-700">Total a pagar</span>
+              <span className="text-xl font-extrabold text-green-700">${fmt(totalSeleccionado)}</span>
+            </div>
+
+            <p className="text-xs text-gray-400 mb-4 text-center">
+              Se notificará a cada usuario y se registrará en auditoría. Esta acción no se puede deshacer.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setModalMasivo(false)}
+                className="flex-1 border border-gray-200 text-gray-600 font-semibold py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={aprobarMasivo}
+                className="flex-1 bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold py-2.5 rounded-xl text-sm transition-colors shadow-md"
+              >
+                Confirmar {seleccionados.size} pagos
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal rechazo individual ──────────────────────────────────────── */}
       {modalRechazo && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
