@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verificarAdmin } from "@/lib/admin";
+import { crearNotificacion } from "@/lib/notificaciones";
 
 // Los métodos $queryRaw / $executeRaw existen en PrismaClient base,
 // sin depender del modelo generado. Se usan mientras 'prisma generate'
@@ -119,6 +120,16 @@ export async function POST(req: NextRequest) {
       FROM sorteos_anticipados
       WHERE id = ${id}
     `;
+
+    // Notificar a todos los usuarios
+    const { prisma: p2 } = await import("@/lib/prisma");
+    const fechaStr = fechaV.toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" });
+    crearNotificacion(p2, {
+      tipo: "SORTEO",
+      titulo: `Nueva selección anticipada: ${nombreV}`,
+      cuerpo: `Se programó una nueva selección anticipada el ${fechaStr}. Premio: ${premioDescV}. ¡Asegura tu membresía!`,
+      paraUsuarios: true,
+    }).catch(() => undefined);
 
     return NextResponse.json({ anticipada: normalizar(anticipada) }, { status: 201 });
   } catch (err) {

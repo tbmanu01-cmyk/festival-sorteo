@@ -485,6 +485,12 @@ export default function AdminPanel() {
                 💰 Retenciones
               </Link>
               <Link
+                href="/admin/notificaciones"
+                className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
+              >
+                🔔 Notificaciones
+              </Link>
+              <Link
                 href="/admin/auditoria"
                 className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
               >

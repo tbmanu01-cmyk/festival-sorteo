@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { obtenerIP, registrarAuditoria } from "@/lib/auditoria";
+import { crearNotificacion } from "@/lib/notificaciones";
 
 const MONTO_MINIMO = 100_000;
 
@@ -89,6 +90,18 @@ export async function POST(req: NextRequest) {
     detalle: `Monto: $${monto.toLocaleString("es-CO")} COP`,
     ip,
   });
+
+  // Notificar a admins/asistentes de la nueva solicitud
+  Promise.resolve().then(async () => {
+    const u = await prisma.user.findUnique({ where: { id: userId }, select: { nombre: true, apellido: true } });
+    const nombre = u ? `${u.nombre} ${u.apellido}` : "Un usuario";
+    await crearNotificacion(prisma, {
+      tipo: "RETIRO",
+      titulo: "Nueva solicitud de retiro",
+      cuerpo: `${nombre} solicitó un retiro de $${monto.toLocaleString("es-CO")} COP.`,
+      paraAdmins: true,
+    });
+  }).catch(() => undefined);
 
   return NextResponse.json({
     mensaje: "Solicitud enviada. El administrador la procesará pronto.",

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verificarAdmin } from "@/lib/admin";
 import { obtenerIP, registrarAuditoria } from "@/lib/auditoria";
+import { crearNotificacion } from "@/lib/notificaciones";
 
 export async function PATCH(
   req: NextRequest,
@@ -69,6 +70,12 @@ export async function PATCH(
           cuentaDestino: retiro.cuentaDestino,
         }).catch((err) => console.error("Email retiro aprobado:", err))
       );
+      crearNotificacion(prisma, {
+        tipo: "RETIRO",
+        titulo: "¡Retiro aprobado para consignación! 💸",
+        cuerpo: `Tu retiro de $${montoFinal.toLocaleString("es-CO")} COP fue aprobado y será consignado a ${retiro.cuentaDestino}.`,
+        usuarioId: retiro.userId,
+      }).catch(() => undefined);
     }
   } else {
     await prisma.$transaction([
@@ -97,6 +104,12 @@ export async function PATCH(
           monto: retiro.monto,
         }).catch((err) => console.error("Email retiro rechazado:", err))
       );
+      crearNotificacion(prisma, {
+        tipo: "RETIRO",
+        titulo: "Solicitud de retiro rechazada",
+        cuerpo: `Tu solicitud de $${retiro.monto.toLocaleString("es-CO")} COP fue rechazada${motivoRechazo ? `: ${motivoRechazo}` : ""}. El saldo fue devuelto a tu cuenta.`,
+        usuarioId: retiro.userId,
+      }).catch(() => undefined);
     }
   }
 

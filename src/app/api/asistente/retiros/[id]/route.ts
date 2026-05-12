@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verificarAsistente } from "@/lib/admin";
 import { obtenerIP, registrarAuditoria } from "@/lib/auditoria";
+import { crearNotificacion } from "@/lib/notificaciones";
 
 export async function PATCH(
   req: NextRequest,
@@ -85,6 +86,16 @@ export async function PATCH(
       ip,
     });
 
+    // Notificar al usuario
+    Promise.resolve().then(() =>
+      crearNotificacion(prisma, {
+        tipo: "RETIRO",
+        titulo: "Tu retiro está en revisión final",
+        cuerpo: `Tu solicitud de $${retiro.monto.toLocaleString("es-CO")} COP fue revisada por el asistente y pasa a aprobación del administrador.${retencionTotal > 0 ? ` Se aplicarán retenciones por $${retencionTotal.toLocaleString("es-CO")}.` : ""}`,
+        usuarioId: retiro.userId,
+      })
+    ).catch(() => undefined);
+
     return NextResponse.json({ mensaje: "Retiro pre-aprobado y enviado al administrador." });
   }
 
@@ -120,6 +131,12 @@ export async function PATCH(
         monto: retiro.monto,
       }).catch((err) => console.error("Email retiro rechazado:", err))
     );
+    crearNotificacion(prisma, {
+      tipo: "RETIRO",
+      titulo: "Solicitud de retiro rechazada",
+      cuerpo: `Tu solicitud de $${retiro.monto.toLocaleString("es-CO")} COP fue rechazada${body.motivoRechazo ? `: ${body.motivoRechazo}` : ""}. El saldo fue devuelto a tu cuenta.`,
+      usuarioId: retiro.userId,
+    }).catch(() => undefined);
   }
 
   return NextResponse.json({ mensaje: "Retiro rechazado y saldo devuelto al usuario." });

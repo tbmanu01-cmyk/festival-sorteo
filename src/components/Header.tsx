@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
+import NotifBell from "@/components/NotifBell";
 
 export default function Header() {
   const { data: session } = useSession();
@@ -59,6 +60,7 @@ export default function Header() {
                     Administrar
                   </Link>
                 )}
+                <NotifBell />
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
                   className="bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"

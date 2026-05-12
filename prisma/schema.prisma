@@ -96,6 +96,8 @@ model User {
   cupones            Cupon[]
   giftCards          GiftCard[]
   auditLogs          AuditLog[]
+  notificaciones     Notificacion[]
+  notifLecturas      NotifLectura[]
 
   @@map("users")
 }
@@ -307,6 +309,35 @@ model SorteoPrevioGran {
   granSorteo        GranSorteo   @relation(fields: [granSorteoId], references: [id])
 
   @@map("sorteos_previos_gran")
+}
+
+model Notificacion {
+  id           String         @id @default(cuid())
+  tipo         String         // SISTEMA | SORTEO | RETIRO | PROMO | MEMBRESIA
+  titulo       String
+  cuerpo       String
+  icono        String         @default("🔔")
+  usuarioId    String?        // null = broadcast
+  paraAdmins   Boolean        @default(false)
+  paraUsuarios Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+
+  lecturas     NotifLectura[]
+  usuario      User?          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("notificaciones")
+}
+
+model NotifLectura {
+  notificacionId String
+  usuarioId      String
+  leidaEn        DateTime     @default(now())
+
+  notificacion   Notificacion @relation(fields: [notificacionId], references: [id], onDelete: Cascade)
+  usuario        User         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@id([notificacionId, usuarioId])
+  @@map("notif_lecturas")
 }
 
 model ConceptoRetencion {
