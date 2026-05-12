@@ -21,9 +21,7 @@ export async function POST(
 
   const { prisma } = await import("@/lib/prisma");
   const userId = (session.user as unknown as { id: string }).id;
-
-  // Verificar que la notificación existe y le corresponde al usuario
-  const rol = (session.user as unknown as { rol?: string }).rol ?? "USER";
+  const rol     = (session.user as unknown as { rol?: string }).rol ?? "USER";
   const esStaff = rol === "ADMIN" || rol === "ASISTENTE";
 
   const notif = await prisma.notificacion.findFirst({
@@ -39,23 +37,18 @@ export async function POST(
   });
   if (!notif) return NextResponse.json({ mensaje: "Notificación no encontrada." }, { status: 404 });
 
-  // Leer reacción actual
-  const actual = await prisma.notifReaccion.findUnique({
-    where: { notificacionId_usuarioId: { notificacionId: id, usuarioId } },
-  });
+  const clave = { notificacionId: id, usuarioId: userId };
+
+  const actual = await prisma.notifReaccion.findUnique({ where: { notificacionId_usuarioId: clave } });
 
   if (actual?.emoji === emoji) {
-    // Mismo emoji → quitar reacción (toggle)
-    await prisma.notifReaccion.delete({
-      where: { notificacionId_usuarioId: { notificacionId: id, usuarioId } },
-    });
+    await prisma.notifReaccion.delete({ where: { notificacionId_usuarioId: clave } });
     return NextResponse.json({ accion: "quitada", emoji: null });
   }
 
-  // Crear o reemplazar reacción
   await prisma.notifReaccion.upsert({
-    where: { notificacionId_usuarioId: { notificacionId: id, usuarioId } },
-    create: { notificacionId: id, usuarioId, emoji },
+    where:  { notificacionId_usuarioId: clave },
+    create: { notificacionId: id, usuarioId: userId, emoji },
     update: { emoji, createdAt: new Date() },
   });
 

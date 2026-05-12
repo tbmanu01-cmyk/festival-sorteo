@@ -16,6 +16,129 @@ interface Notif {
   miReaccion: string | null;
 }
 
+// ── Picker por notificación ──────────────────────────────────────────────────
+function ReactionPicker({
+  notifId, miReaccion, onReact,
+}: {
+  notifId: string;
+  miReaccion: string | null;
+  onReact: (id: string, emoji: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const abrir  = () => { if (timer.current) clearTimeout(timer.current); setOpen(true); };
+  const cerrar = () => { timer.current = setTimeout(() => setOpen(false), 180); };
+  const toggle = () => setOpen((v) => !v);
+
+  return (
+    <div className="relative flex-shrink-0">
+      {/* Popup de emojis */}
+      {open && (
+        <div
+          onMouseEnter={abrir}
+          onMouseLeave={cerrar}
+          className="absolute bottom-full right-0 mb-1.5 flex items-center gap-1 bg-white rounded-2xl shadow-xl border border-gray-100 px-2.5 py-1.5 z-10"
+        >
+          {EMOJIS.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => { onReact(notifId, emoji); setOpen(false); }}
+              className={`text-lg transition-all hover:scale-125 p-0.5 rounded-full ${
+                miReaccion === emoji ? "bg-blue-100 scale-110" : ""
+              }`}
+              title={emoji}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Botón trigger */}
+      <button
+        onMouseEnter={abrir}
+        onMouseLeave={cerrar}
+        onClick={toggle}
+        className={`w-6 h-6 flex items-center justify-center rounded-full text-sm transition-colors ${
+          miReaccion
+            ? "bg-blue-100 text-blue-700"
+            : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+        }`}
+        title="Reaccionar"
+      >
+        {miReaccion ?? "+"}
+      </button>
+    </div>
+  );
+}
+
+// ── Fila de notificación ─────────────────────────────────────────────────────
+function NotifItem({
+  n, onReact,
+}: {
+  n: Notif;
+  onReact: (id: string, emoji: string) => void;
+}) {
+  function tiempoRelativo(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const min  = Math.floor(diff / 60000);
+    if (min < 1)  return "ahora";
+    if (min < 60) return `${min}m`;
+    const h = Math.floor(min / 60);
+    if (h < 24)   return `${h}h`;
+    return `${Math.floor(h / 24)}d`;
+  }
+
+  const totalReacc = Object.values(n.reacciones ?? {}).reduce((s, c) => s + c, 0);
+
+  return (
+    <div className={`border-b border-gray-50 last:border-0 ${n.leida ? "bg-white" : "bg-blue-50"}`}>
+      {/* Texto */}
+      <div className="flex gap-3 px-4 pt-3 pb-2">
+        <span className="text-xl flex-shrink-0 mt-0.5">{n.icono}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <p className={`text-sm font-semibold leading-snug ${n.leida ? "text-gray-700" : "text-gray-900"}`}>
+              {n.titulo}
+            </p>
+            <span className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">{tiempoRelativo(n.createdAt)}</span>
+          </div>
+          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.cuerpo}</p>
+        </div>
+      </div>
+
+      {/* Footer: reacciones existentes + picker */}
+      <div className="flex items-center justify-between px-4 pb-2.5 gap-2">
+        {/* Chips de reacciones actuales */}
+        <div className="flex items-center gap-1 flex-wrap">
+          {totalReacc > 0 ? (
+            Object.entries(n.reacciones).map(([emoji, count]) => (
+              <button
+                key={emoji}
+                onClick={() => onReact(n.id, emoji)}
+                className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs border transition-colors ${
+                  n.miReaccion === emoji
+                    ? "bg-blue-100 border-blue-300 text-blue-700 font-bold"
+                    : "bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-300"
+                }`}
+              >
+                {emoji} <span>{count}</span>
+              </button>
+            ))
+          ) : (
+            <span className="text-[10px] text-gray-300 select-none">Sin reacciones</span>
+          )}
+        </div>
+
+        {/* Picker */}
+        <ReactionPicker notifId={n.id} miReaccion={n.miReaccion} onReact={onReact} />
+      </div>
+    </div>
+  );
+}
+
+// ── Campana principal ────────────────────────────────────────────────────────
 export default function NotifBell() {
   const [abierto,  setAbierto]  = useState(false);
   const [notifs,   setNotifs]   = useState<Notif[]>([]);
@@ -23,7 +146,6 @@ export default function NotifBell() {
   const [cargando, setCargando] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Polling del badge cada 30s
   const fetchCount = useCallback(async () => {
     try {
       const r = await fetch("/api/notificaciones/no-leidas");
@@ -56,7 +178,11 @@ export default function NotifBell() {
   }
 
   async function marcarTodas() {
-    await fetch("/api/notificaciones", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+    await fetch("/api/notificaciones", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
     setNotifs((prev) => prev.map((n) => ({ ...n, leida: true })));
     setNoLeidas(0);
   }
@@ -72,37 +198,28 @@ export default function NotifBell() {
 
     setNotifs((prev) => prev.map((n) => {
       if (n.id !== notifId) return n;
-      const nuevasReacciones = { ...n.reacciones };
-      // Quitar la reacción anterior si existía
+      const r = { ...n.reacciones };
+      // Quitar reacción anterior
       if (n.miReaccion) {
-        nuevasReacciones[n.miReaccion] = (nuevasReacciones[n.miReaccion] ?? 1) - 1;
-        if (nuevasReacciones[n.miReaccion] <= 0) delete nuevasReacciones[n.miReaccion];
+        r[n.miReaccion] = (r[n.miReaccion] ?? 1) - 1;
+        if (r[n.miReaccion] <= 0) delete r[n.miReaccion];
       }
-      // Añadir la nueva si no fue "quitada"
+      // Añadir nueva
       if (data.accion === "guardada" && data.emoji) {
-        nuevasReacciones[data.emoji] = (nuevasReacciones[data.emoji] ?? 0) + 1;
+        r[data.emoji] = (r[data.emoji] ?? 0) + 1;
       }
-      return { ...n, reacciones: nuevasReacciones, miReaccion: data.emoji };
+      return { ...n, reacciones: r, miReaccion: data.emoji };
     }));
   }
 
+  // Cerrar al hacer click fuera
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
+    function handler(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setAbierto(false);
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  function tiempoRelativo(iso: string) {
-    const diff = Date.now() - new Date(iso).getTime();
-    const min  = Math.floor(diff / 60000);
-    if (min < 1)  return "ahora";
-    if (min < 60) return `${min}m`;
-    const h = Math.floor(min / 60);
-    if (h < 24)   return `${h}h`;
-    return `${Math.floor(h / 24)}d`;
-  }
 
   return (
     <div className="relative" ref={ref}>
@@ -126,7 +243,10 @@ export default function NotifBell() {
 
       {/* Dropdown */}
       {abierto && (
-        <div className="absolute right-0 top-full mt-2 w-84 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden" style={{ width: "22rem" }}>
+        <div
+          className="absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+          style={{ width: "22rem" }}
+        >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="font-bold text-gray-800 text-sm">Notificaciones</span>
@@ -151,61 +271,7 @@ export default function NotifBell() {
               </div>
             ) : (
               notifs.map((n) => (
-                <div
-                  key={n.id}
-                  className={`border-b border-gray-50 last:border-0 transition-colors ${n.leida ? "bg-white" : "bg-blue-50"}`}
-                >
-                  {/* Contenido */}
-                  <div className="flex gap-3 px-4 pt-3 pb-2">
-                    <span className="text-xl flex-shrink-0 mt-0.5">{n.icono}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={`text-sm font-semibold leading-snug ${n.leida ? "text-gray-700" : "text-gray-900"}`}>
-                          {n.titulo}
-                        </p>
-                        <span className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">{tiempoRelativo(n.createdAt)}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.cuerpo}</p>
-                    </div>
-                  </div>
-
-                  {/* Reacciones existentes + picker */}
-                  <div className="flex items-center justify-between px-4 pb-2.5">
-                    {/* Resumen de reacciones */}
-                    <div className="flex items-center gap-1 flex-wrap">
-                      {Object.entries(n.reacciones).map(([emoji, count]) => (
-                        <button
-                          key={emoji}
-                          onClick={() => reaccionar(n.id, emoji)}
-                          className={`flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs border transition-colors ${
-                            n.miReaccion === emoji
-                              ? "bg-blue-100 border-blue-300 text-blue-700 font-bold"
-                              : "bg-gray-100 border-gray-200 text-gray-600 hover:border-gray-300"
-                          }`}
-                        >
-                          <span>{emoji}</span>
-                          <span>{count}</span>
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Picker de emojis */}
-                    <div className="flex items-center gap-0.5 ml-2">
-                      {EMOJIS.map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={() => reaccionar(n.id, emoji)}
-                          title={`Reaccionar con ${emoji}`}
-                          className={`w-6 h-6 flex items-center justify-center rounded-full text-sm transition-all hover:scale-125 ${
-                            n.miReaccion === emoji ? "bg-blue-100 scale-110" : "hover:bg-gray-100"
-                          }`}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <NotifItem key={n.id} n={n} onReact={reaccionar} />
               ))
             )}
           </div>
