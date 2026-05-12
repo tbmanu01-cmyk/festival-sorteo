@@ -441,11 +441,11 @@ export default function AdminPanel() {
       <main className="flex-1 bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Encabezado */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Panel de Administración</h1>
               <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-gray-500 text-sm">Cajas Sorpresa 10K</p>
+                <p className="text-gray-500 text-sm">Club 10K</p>
                 {ultimaActualizacion && (
                   <span className="text-gray-400 text-xs">
                     · Actualizado {ultimaActualizacion.toLocaleTimeString("es-CO", { timeStyle: "short" })}
@@ -453,62 +453,12 @@ export default function AdminPanel() {
                 )}
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={cargarStats}
-                className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
-              >
-                ↻ Actualizar
-              </button>
-              <Link
-                href="/admin/reportes"
-                className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
-              >
-                📊 Reportes
-              </Link>
-              <Link
-                href="/admin/configuracion"
-                className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
-              >
-                ⚙️ Configuración
-              </Link>
-              <Link
-                href="/admin/red-multinivel"
-                className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
-              >
-                🌐 Red Multinivel
-              </Link>
-              <Link
-                href="/admin/retenciones"
-                className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
-              >
-                💰 Retenciones
-              </Link>
-              <Link
-                href="/admin/notificaciones"
-                className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
-              >
-                🔔 Notificaciones
-              </Link>
-              <Link
-                href="/admin/auditoria"
-                className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
-              >
-                🔐 Auditoría
-              </Link>
-              <Link
-                href="/admin/usuarios"
-                className="border border-gray-200 hover:border-[#1B4F8A] text-gray-600 hover:text-[#1B4F8A] font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
-              >
-                👤 Gestión de usuarios
-              </Link>
-              <Link
-                href="/admin/motor-sorteos"
-                className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-5 py-2.5 rounded-xl transition-colors shadow-md text-sm flex items-center gap-1.5"
-              >
-                ⚙️ Motor de Sorteos
-              </Link>
-            </div>
+            <button
+              onClick={cargarStats}
+              className="border border-gray-200 hover:border-[#1B4F8A] text-gray-500 hover:text-[#1B4F8A] font-semibold px-4 py-2 rounded-xl transition-colors text-sm"
+            >
+              ↻ Actualizar
+            </button>
           </div>
 
           {/* Tarjetas de métricas */}
@@ -563,6 +513,121 @@ export default function AdminPanel() {
               <span className="text-red-500 font-medium">{stats.vendidas} vendidas</span>
             </div>
           </div>
+
+          {/* ── Grid de módulos ─────────────────────────────────────── */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+
+            {/* Sorteos & Red */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="px-4 pt-4 pb-2">
+                <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Sorteos &amp; Red</p>
+              </div>
+              <div className="px-2 pb-3 space-y-0.5">
+                <Link href="/admin/motor-sorteos"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#F5A623]/10 hover:bg-[#F5A623]/20 transition-colors group">
+                  <span className="text-xl">🎰</span>
+                  <div>
+                    <p className="text-sm font-bold text-[#b87b00] leading-tight">Motor de Sorteos</p>
+                    <p className="text-[10px] text-yellow-700/60">Ejecutar y configurar sorteos</p>
+                  </div>
+                  <span className="ml-auto text-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
+                </Link>
+                <Link href="/admin/red-multinivel"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
+                  <span className="text-xl">🌐</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">Red Multinivel</p>
+                    <p className="text-[10px] text-gray-400">Referidos, niveles y gift cards</p>
+                  </div>
+                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
+                </Link>
+                <Link href="/admin/anticipadas"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
+                  <span className="text-xl">⚡</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">Selecciones Anticipadas</p>
+                    <p className="text-[10px] text-gray-400">Sorteos previos al principal</p>
+                  </div>
+                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Finanzas */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="px-4 pt-4 pb-2">
+                <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Finanzas</p>
+              </div>
+              <div className="px-2 pb-3 space-y-0.5">
+                <Link href="/admin/usuarios"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
+                  <span className="text-xl">👤</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">Gestión de Usuarios</p>
+                    <p className="text-[10px] text-gray-400">Roles, saldo, cuenta bancaria</p>
+                  </div>
+                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
+                </Link>
+                <Link href="/admin/reportes"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
+                  <span className="text-xl">📊</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">Reportes</p>
+                    <p className="text-[10px] text-gray-400">Ventas, sorteos, usuarios CSV/PDF</p>
+                  </div>
+                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
+                </Link>
+                <Link href="/admin/retenciones"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
+                  <span className="text-xl">💰</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">Retenciones</p>
+                    <p className="text-[10px] text-gray-400">Conceptos de descuento en retiros</p>
+                  </div>
+                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Sistema */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="px-4 pt-4 pb-2">
+                <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Sistema</p>
+              </div>
+              <div className="px-2 pb-3 space-y-0.5">
+                <Link href="/admin/notificaciones"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
+                  <span className="text-xl">🔔</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">Notificaciones</p>
+                    <p className="text-[10px] text-gray-400">Avisos en masa y recordatorios</p>
+                  </div>
+                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
+                </Link>
+                <Link href="/admin/auditoria"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
+                  <span className="text-xl">🔐</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">Auditoría</p>
+                    <p className="text-[10px] text-gray-400">Log de acciones del sistema</p>
+                  </div>
+                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
+                </Link>
+                <Link href="/admin/configuracion"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
+                  <span className="text-xl">⚙️</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">Configuración</p>
+                    <p className="text-[10px] text-gray-400">Precios, sorteo, gift cards</p>
+                  </div>
+                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Monitor en vivo ─────────────────────────────────────── */}
+          <p className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-3 px-1">Monitor en vivo</p>
 
           {/* Tabs */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
