@@ -207,7 +207,7 @@ export default function PaginaRanking() {
                 El ranking se llenará cuando los primeros miembros adquieran sus membresías.
               </p>
               <Link
-                href="/tienda"
+                href="/membresias"
                 style={{ background: "#ffbd1f", color: "#102463", fontWeight: 800, fontSize: 15, padding: "14px 32px", borderRadius: 999, boxShadow: "0 8px 20px -4px rgba(255,165,0,0.40)", textDecoration: "none", display: "inline-block" }}
               >
                 Ver membresías →
@@ -281,7 +281,7 @@ export default function PaginaRanking() {
                     Adquiere más membresías y escala en el ranking.
                   </p>
                   <Link
-                    href="/tienda"
+                    href="/membresias"
                     style={{ background: "#ffbd1f", color: "#102463", fontWeight: 800, fontSize: 15, padding: "13px 28px", borderRadius: 999, boxShadow: "0 8px 20px -4px rgba(255,165,0,0.45)", textDecoration: "none", display: "inline-block" }}
                   >
                     Ver membresías →

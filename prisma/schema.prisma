@@ -58,6 +58,8 @@ enum TipoTransaccion {
   PREMIO
   RETIRO
   RECARGA
+  COMPRA_BONO
+  CASHBACK_BONO
 }
 
 model User {
@@ -99,6 +101,9 @@ model User {
   notificaciones     Notificacion[]
   notifLecturas      NotifLectura[]
   notifReacciones    NotifReaccion[]
+  bonoCompras        BonoCompra[]
+  bonoComisionesN1   BonoCompra[] @relation("BonoNivel1")
+  bonoComisionesN2   BonoCompra[] @relation("BonoNivel2")
 
   @@map("users")
 }
@@ -379,4 +384,45 @@ model AuditLog {
   @@index([userId])
   @@index([fecha])
   @@map("audit_logs")
+}
+
+model Bono {
+  id          String   @id @default(cuid())
+  nombre      String
+  cadena      String
+  valorFace   Float
+  precio      Float
+  stock       Int      @default(0)
+  descripcion String?
+  imagen      String?
+  activo      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  compras     BonoCompra[]
+
+  @@map("bonos")
+}
+
+model BonoCompra {
+  id                String   @id @default(cuid())
+  bonoId            String
+  userId            String
+  precio            Float
+  cashbackComprador Float
+  nivel1Id          String?
+  cashbackNivel1    Float?
+  nivel2Id          String?
+  cashbackNivel2    Float?
+  codigoRedención   String   @unique
+  fecha             DateTime @default(now())
+
+  bono    Bono  @relation(fields: [bonoId], references: [id])
+  usuario User  @relation(fields: [userId], references: [id])
+  nivel1  User? @relation("BonoNivel1", fields: [nivel1Id], references: [id])
+  nivel2  User? @relation("BonoNivel2", fields: [nivel2Id], references: [id])
+
+  @@index([userId])
+  @@index([bonoId])
+  @@map("bono_compras")
 }

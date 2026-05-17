@@ -27,6 +27,9 @@ export default function Header() {
             <Link href="/" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
               Inicio
             </Link>
+            <Link href="/membresias" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
+              Membresías
+            </Link>
             <Link href="/tienda" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
               Tienda
             </Link>
@@ -110,6 +113,9 @@ export default function Header() {
           <div className="md:hidden border-t border-blue-700 py-3 space-y-2">
             <Link href="/" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
               Inicio
+            </Link>
+            <Link href="/membresias" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+              Membresías
             </Link>
             <Link href="/tienda" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
               Tienda

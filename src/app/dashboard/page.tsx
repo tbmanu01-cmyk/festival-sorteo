@@ -63,6 +63,20 @@ interface MisCajas {
   anticipadasGanadas: AnticipadaGanada[];
 }
 
+interface BonoCompraItem {
+  id: string;
+  precio: number;
+  cashbackComprador: number;
+  codigoRedención: string;
+  fecha: string;
+  bono: { nombre: string; cadena: string };
+}
+
+interface MisBonos {
+  compras: BonoCompraItem[];
+  totalCashback: number;
+}
+
 // ── Hook de cuenta regresiva ──────────────────────────────────────────────
 
 function useCountdown(expira: string | null) {
@@ -230,7 +244,7 @@ function TarjetaReserva({
           <p className="text-gray-500 text-sm mb-3">
             La reserva venció. El número quedó disponible nuevamente.
           </p>
-          <Link href="/tienda" className="inline-block bg-[#1B4F8A] hover:bg-[#1a5fa8] text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors">
+          <Link href="/membresias" className="inline-block bg-[#1B4F8A] hover:bg-[#1a5fa8] text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition-colors">
             Elegir otro número
           </Link>
         </div>
@@ -633,7 +647,7 @@ function SeccionReferidos() {
 
   async function manejarAccion(id: string, accion: "retirar" | "regalar" | "usar") {
     if (accion === "regalar") { setModalRegalar(id); return; }
-    if (accion === "usar") { router.push("/tienda?giftCard=" + id); return; }
+    if (accion === "usar") { router.push("/membresias?giftCard=" + id); return; }
     // retirar → añadir a saldo
     const res = await fetch(`/api/gift-cards/${id}/retirar`, { method: "POST" });
     const json = await res.json() as { mensaje: string };
@@ -804,11 +818,321 @@ function SeccionReferidos() {
 
 // ── Dashboard principal ────────────────────────────────────────────────────
 
+// ── Árbol de familias multinivel ─────────────────────────────────────────────
+
+interface MiembroRed {
+  id: string;
+  nombre: string;
+  apellido: string;
+  fechaRegistro: string;
+  ciudad: string;
+  codigoRef: string | null;
+}
+
+interface FamiliaRed {
+  numero: number;
+  hijos: (MiembroRed | null)[];
+  nietos: (MiembroRed | null)[][];
+  totalMiembros: number;
+  completa: boolean;
+}
+
+interface DatosRed {
+  yo: MiembroRed;
+  familias: FamiliaRed[];
+  totalFamilias: number;
+  totalMiembros: number;
+}
+
+function iniciales(nombre: string, apellido: string) {
+  return `${nombre[0]}${apellido[0]}`.toUpperCase();
+}
+
+function fmtFecha(iso: string) {
+  return new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function AvatarMiembro({ miembro, nivel }: { miembro: MiembroRed; nivel: "hijo" | "nieto" }) {
+  const colores = nivel === "hijo" ? "bg-[#102463] text-white" : "bg-[#ffbd1f] text-[#102463]";
+  const tam = nivel === "hijo" ? "w-12 h-12 text-sm" : "w-10 h-10 text-xs";
+
+  return (
+    <div className="flex flex-col items-center gap-1 group relative">
+      <div className={`${tam} ${colores} rounded-full flex items-center justify-center font-extrabold shadow-sm ring-2 ring-white cursor-default`}>
+        {iniciales(miembro.nombre, miembro.apellido)}
+      </div>
+      <p className="text-[10px] text-gray-600 font-medium text-center leading-tight max-w-[56px] truncate">
+        {miembro.nombre}
+      </p>
+      {/* Tooltip limpio */}
+      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[11px] rounded-xl px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl whitespace-nowrap">
+        <p className="font-bold">{miembro.nombre} {miembro.apellido}</p>
+        <p className="text-gray-400 text-[10px] mt-0.5">Desde {fmtFecha(miembro.fechaRegistro)}</p>
+      </div>
+    </div>
+  );
+}
+
+interface SlotVacioProps {
+  nivel: "hijo" | "nieto";
+  codigoRef: string | null;
+}
+
+function SlotVacio({ nivel, codigoRef }: SlotVacioProps) {
+  const [mostrandoLink, setMostrandoLink] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+  const tam = nivel === "hijo" ? "w-12 h-12 text-base" : "w-10 h-10 text-sm";
+  const colores = nivel === "hijo"
+    ? "bg-[#102463]/10 text-[#102463]/40 hover:bg-[#102463]/20 hover:text-[#102463]/60"
+    : "bg-[#ffbd1f]/15 text-[#102463]/40 hover:bg-[#ffbd1f]/30 hover:text-[#102463]/70";
+
+  const link = codigoRef
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/registro?ref=${codigoRef}`
+    : null;
+
+  function copiar() {
+    if (!link) return;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiado(true);
+      setTimeout(() => { setCopiado(false); setMostrandoLink(false); }, 2000);
+    });
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-1 relative">
+      <button
+        onClick={() => link && setMostrandoLink(true)}
+        title={link ? "Toca para obtener el link de referido" : "Sin link disponible"}
+        className={`${tam} ${colores} rounded-full flex items-center justify-center font-bold ring-2 ring-white transition-all ${link ? "cursor-pointer" : "cursor-default"}`}
+      >
+        +
+      </button>
+      <p className="text-[10px] text-gray-300 font-medium">libre</p>
+
+      {/* Mini modal al hacer click */}
+      {mostrandoLink && link && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+          onClick={() => setMostrandoLink(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Llenar este slot</p>
+            <p className="text-sm text-gray-600 mb-4">
+              Comparte este link para que el nuevo miembro se registre y ocupe este lugar en tu red.
+            </p>
+            <div className="bg-gray-50 rounded-xl px-3 py-2 mb-3 border border-gray-200">
+              <p className="text-[11px] font-mono text-gray-600 break-all leading-relaxed">{link}</p>
+            </div>
+            {copiado ? (
+              <div className="w-full bg-green-100 text-green-700 font-bold py-2.5 rounded-full text-sm text-center">
+                ✓ ¡Copiado!
+              </div>
+            ) : (
+              <button
+                onClick={copiar}
+                className="w-full bg-[#102463] hover:bg-[#173592] text-white font-bold py-2.5 rounded-full text-sm transition-all"
+              >
+                Copiar link
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ArbolFamilia({ familia, yo }: { familia: FamiliaRed; yo: MiembroRed }) {
+  return (
+    <div className="w-full overflow-x-auto pb-2">
+      <div className="min-w-[340px]">
+        {/* Cabeza */}
+        <div className="flex justify-center mb-1">
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-14 h-14 bg-gradient-to-br from-[#102463] to-[#173592] rounded-full flex items-center justify-center font-extrabold text-white text-base shadow-md ring-4 ring-[#ffbd1f]/40">
+              {iniciales(yo.nombre, yo.apellido)}
+            </div>
+            <p className="text-xs text-[#102463] font-bold">{yo.nombre}</p>
+            <span className="text-[9px] bg-[#ffbd1f] text-[#102463] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">Tú</span>
+          </div>
+        </div>
+
+        <div className="flex justify-center"><div className="w-px h-5 bg-gray-200" /></div>
+        <div className="flex justify-center">
+          <div className="flex items-center w-full px-8">
+            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+        </div>
+
+        {/* Nivel 1 — Hijos */}
+        <div className="grid grid-cols-3 gap-2 mb-1">
+          {familia.hijos.map((hijo, i) => (
+            <div key={i} className="flex justify-center">
+              {hijo
+                ? <AvatarMiembro miembro={hijo} nivel="hijo" />
+                : <SlotVacio nivel="hijo" codigoRef={yo.codigoRef} />
+              }
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          {familia.hijos.map((hijo, i) => (
+            <div key={i} className="flex justify-center">
+              {hijo ? <div className="w-px h-4 bg-gray-200" /> : <div className="w-px h-4" />}
+            </div>
+          ))}
+        </div>
+
+        {/* Nivel 2 — Nietos */}
+        <div className="grid grid-cols-3 gap-2">
+          {familia.nietos.map((grupo, i) => (
+            <div key={i} className="flex flex-col items-center gap-1.5">
+              {grupo.map((nieto, j) => (
+                <div key={j}>
+                  {nieto
+                    ? <AvatarMiembro miembro={nieto} nivel="nieto" />
+                    : <SlotVacio nivel="nieto" codigoRef={yo.codigoRef} />
+                  }
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SeccionRed() {
+  const [datos, setDatos] = useState<DatosRed | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [familiaActiva, setFamiliaActiva] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/mi-red")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) setDatos(d); })
+      .catch(() => undefined)
+      .finally(() => setCargando(false));
+  }, []);
+
+  if (cargando) {
+    return (
+      <section>
+        <h2 className="text-lg font-bold text-gray-900 mb-3">Mi red multinivel</h2>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 flex justify-center">
+          <div className="w-8 h-8 border-2 border-[#102463] border-t-transparent rounded-full animate-spin" />
+        </div>
+      </section>
+    );
+  }
+
+  if (!datos || datos.totalMiembros === 0) {
+    return (
+      <section>
+        <h2 className="text-lg font-bold text-gray-900 mb-3">Mi red multinivel</h2>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+          <p className="text-4xl mb-3">🌱</p>
+          <p className="font-semibold text-gray-700 mb-1">Tu red está vacía</p>
+          <p className="text-gray-400 text-sm">Comparte tu código de referido para empezar a construir tu familia.</p>
+        </div>
+      </section>
+    );
+  }
+
+  const familia = datos.familias[familiaActiva];
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-bold text-gray-900">
+          Mi red
+          <span className="ml-2 text-sm font-normal text-gray-500">
+            {datos.totalMiembros} {datos.totalMiembros === 1 ? "miembro" : "miembros"}
+          </span>
+        </h2>
+        {datos.totalFamilias > 1 && (
+          <div className="flex gap-1">
+            {datos.familias.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setFamiliaActiva(i)}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                  i === familiaActiva ? "bg-[#102463] text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                }`}
+              >
+                F{i + 1}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        {/* Stats */}
+        <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
+          <div className="flex-1 text-center">
+            <p className="text-xl font-extrabold text-[#102463]">{familia.totalMiembros}<span className="text-sm text-gray-300">/12</span></p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">slots</p>
+          </div>
+          <div className="flex-1 text-center">
+            <p className="text-xl font-extrabold text-[#102463]">{familia.hijos.filter(Boolean).length}</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">hijos</p>
+          </div>
+          <div className="flex-1 text-center">
+            <p className="text-xl font-extrabold text-[#102463]">{familia.nietos.flat().filter(Boolean).length}</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">nietos</p>
+          </div>
+          <div className="flex-1 text-center">
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${familia.completa ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+              {familia.completa ? "✓ Completa" : "En curso"}
+            </span>
+          </div>
+        </div>
+
+        {/* Leyenda */}
+        <div className="flex gap-3 justify-center mb-4 text-[10px] text-gray-400 flex-wrap">
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#102463] inline-block" /> Nivel 1</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#ffbd1f] inline-block" /> Nivel 2</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-gray-200 inline-block" /> Libre (toca para compartir link)</span>
+        </div>
+
+        <ArbolFamilia familia={familia} yo={datos.yo} />
+
+        {/* Barra de progreso */}
+        <div className="mt-5 pt-4 border-t border-gray-100">
+          <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+            <span>Familia {familia.numero}</span>
+            <span>{familia.totalMiembros}/12 slots llenos</span>
+          </div>
+          <div className="w-full bg-gray-100 rounded-full h-1.5">
+            <div
+              className="bg-[#102463] h-1.5 rounded-full transition-all"
+              style={{ width: `${(familia.totalMiembros / 12) * 100}%` }}
+            />
+          </div>
+          {familia.completa && datos.totalFamilias > familiaActiva + 1 && (
+            <p className="text-xs text-green-600 font-semibold mt-2 text-center">
+              ✓ Familia completa — Familia {familiaActiva + 2} abierta
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   const [datos, setDatos] = useState<MisCajas | null>(null);
+  const [misBonos, setMisBonos] = useState<MisBonos | null>(null);
   const [cargando, setCargando] = useState(true);
   const [precioCaja, setPrecioCaja] = useState(10_000);
   const [giftCardsDisponibles, setGiftCardsDisponibles] = useState<GiftCardDisp[]>([]);
@@ -824,15 +1148,17 @@ export default function Dashboard() {
   }, [status, router]);
 
   const cargarDatos = useCallback(async () => {
-    const [resCajas, resGcs] = await Promise.all([
+    const [resCajas, resGcs, resBonos] = await Promise.all([
       fetch("/api/mis-cajas"),
       fetch("/api/gift-cards"),
+      fetch("/api/mis-bonos"),
     ]);
     if (resCajas.ok) setDatos(await resCajas.json());
     if (resGcs.ok) {
       const gcsData = await resGcs.json() as { giftCards: (GiftCardDisp & { estado: string })[] };
       setGiftCardsDisponibles(gcsData.giftCards.filter((g) => g.estado === "DISPONIBLE"));
     }
+    if (resBonos.ok) setMisBonos(await resBonos.json());
     setCargando(false);
   }, []);
 
@@ -1016,7 +1342,7 @@ export default function Dashboard() {
                   : "Puedes adquirir más membresías y aumentar tus chances de obtener beneficios."}
               </p>
               <Link
-                href="/tienda"
+                href="/membresias"
                 className="inline-block bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-7 py-3 rounded-xl transition-colors shadow-md"
               >
                 Ir a las membresías
@@ -1040,6 +1366,9 @@ export default function Dashboard() {
           {/* Sección de referidos */}
           <SeccionReferidos />
 
+          {/* Árbol de familias multinivel */}
+          <SeccionRed />
+
           {/* Cajas compradas */}
           {cajas.length > 0 && (
             <section>
@@ -1051,7 +1380,7 @@ export default function Dashboard() {
                   </span>
                 </h2>
                 <Link
-                  href="/tienda"
+                  href="/membresias"
                   className="text-[#1B4F8A] text-sm font-semibold hover:underline"
                 >
                   + Adquirir más
@@ -1060,6 +1389,47 @@ export default function Dashboard() {
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
                 {cajas.map((caja) => (
                   <TarjetaCajaComprada key={caja.numero} caja={caja} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Mis Bonos */}
+          {misBonos && misBonos.compras.length > 0 && (
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-bold text-gray-900">
+                  Mis bonos
+                  <span className="ml-2 text-sm font-normal text-gray-500">({misBonos.compras.length})</span>
+                </h2>
+                <Link href="/tienda" className="text-[#1B4F8A] text-sm font-semibold hover:underline">
+                  + Comprar bonos
+                </Link>
+              </div>
+              {/* Resumen cashback */}
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4 mb-3 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-green-700 font-semibold uppercase tracking-wider">Cashback total recibido</p>
+                  <p className="text-2xl font-extrabold text-green-700">${misBonos.totalCashback.toLocaleString("es-CO")} COP</p>
+                </div>
+                <span className="text-4xl">💰</span>
+              </div>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+                {misBonos.compras.slice(0, 5).map((compra) => (
+                  <div key={compra.id} className="flex items-center gap-4 px-4 py-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#102463]/5 flex items-center justify-center text-xl shrink-0">
+                      🏷️
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{compra.bono.nombre}</p>
+                      <p className="text-gray-400 text-xs font-mono">{compra.codigoRedención}</p>
+                      <p className="text-gray-400 text-xs">{new Date(compra.fecha).toLocaleDateString("es-CO", { dateStyle: "medium" })}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-bold text-gray-900">${compra.precio.toLocaleString("es-CO")}</p>
+                      <p className="text-xs font-semibold text-green-600">+${compra.cashbackComprador.toLocaleString("es-CO")} COP</p>
+                    </div>
+                  </div>
                 ))}
               </div>
             </section>

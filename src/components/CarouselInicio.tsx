@@ -65,10 +65,10 @@ export default function CarouselInicio({ vendidas, precioCaja, fechaSorteo, pct4
             />
           </div>
           <Link
-            href="/tienda"
+            href="/membresias"
             className="inline-block bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-extrabold px-8 py-3 rounded-xl text-base md:text-lg transition-all shadow-lg"
           >
-            Ver tienda →
+            Ver membresías →
           </Link>
         </div>
       </div>

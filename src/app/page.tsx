@@ -196,7 +196,7 @@ export default async function Inicio() {
                 {/* CTAs */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
                   <Link
-                    href="/tienda"
+                    href="/membresias"
                     style={{ background: "#ffbd1f", color: "#102463", fontWeight: 800, fontSize: 16, padding: "14px 32px", borderRadius: 999, boxShadow: "0 8px 20px -4px rgba(255,165,0,0.45)", textDecoration: "none", display: "inline-block" }}
                   >
                     Ver membresías →
@@ -216,7 +216,7 @@ export default async function Inicio() {
                   {cajasPreview.slice(0, 4).map((caja) => (
                     <Link
                       key={caja.numero}
-                      href="/tienda"
+                      href="/membresias"
                       className="block hover:scale-105 transition-transform"
                       style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 20, padding: "28px 16px", textAlign: "center", backdropFilter: "blur(8px)", textDecoration: "none" }}
                     >
@@ -252,7 +252,7 @@ export default async function Inicio() {
                   {disponibles.toLocaleString("es-CO", { maximumFractionDigits: 0 })} membresías listas para ser tuyas
                 </p>
               </div>
-              <Link href="/tienda" style={{ color: "#102463", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
+              <Link href="/membresias" style={{ color: "#102463", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
                 Ver todas →
               </Link>
             </div>
@@ -262,7 +262,7 @@ export default async function Inicio() {
                 {cajasPreview.map((caja) => (
                   <Link
                     key={caja.numero}
-                    href="/tienda"
+                    href="/membresias"
                     className="block hover:scale-105 transition-transform"
                     style={{ background: "rgba(209,250,229,0.55)", borderRadius: 18, border: "1px solid rgba(16,185,129,0.20)", padding: "20px 12px", textAlign: "center", boxShadow: "0 2px 8px rgba(16,36,99,0.04)", textDecoration: "none" }}
                   >
@@ -281,7 +281,7 @@ export default async function Inicio() {
 
             <div style={{ textAlign: "center" }}>
               <Link
-                href="/tienda"
+                href="/membresias"
                 style={{ background: "#102463", color: "white", fontWeight: 700, fontSize: 15, padding: "14px 32px", borderRadius: 999, boxShadow: "0 8px 20px -4px rgba(16,36,99,0.40)", textDecoration: "none", display: "inline-block" }}
               >
                 🛒 Ver todas las membresías

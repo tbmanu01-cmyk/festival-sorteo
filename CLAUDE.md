@@ -27,7 +27,7 @@ https://festival-sorteo.vercel.app
 
 ---
 
-## MÓDULOS COMPLETADOS (verificado 9 mayo 2026)
+## MÓDULOS COMPLETADOS (verificado 17 mayo 2026)
 
 ### Público / Usuario
 - ✅ Página de inicio: hero, cómo funciona, tabla de premios, próximas selecciones anticipadas
@@ -130,9 +130,37 @@ Panel con 4 tabs que centraliza todos los tipos de sorteo:
 - ✅ Exportar CSV (compatible Excel) en los 3 reportes
 - ✅ Exportar PDF (ventana imprimible) en los 3 reportes
 
+### Club 10K — Tienda de Bonos (17 mayo 2026)
+- ✅ `/tienda` reemplazada completamente por tienda de bonos de supermercado
+- ✅ Las membresías (cajas) movidas a `/membresias` — Header actualizado con ambos links
+- ✅ Bonos con descuento del 20% sobre valor facial (proveedor da el margen)
+- ✅ Motor de cashback MLM: 7% comprador · 5% nivel1 (quien lo refirió) · 3% nivel2 · 5% plataforma
+- ✅ Cashback distribuido atómicamente via `prisma.$transaction`
+- ✅ Árbol de familias 2×3 en dashboard: 3 hijos (nivel1) + 9 nietos (nivel2) = 12 slots por familia
+- ✅ Familia nueva se abre solo cuando la anterior tiene los 12 slots llenos
+- ✅ Slots vacíos del árbol muestran "+" y generan link de referido del usuario actual al tocar
+- ✅ Sección "Mis bonos" en dashboard con historial de compras y cashback total
+- ✅ Panel admin `/admin/bonos`: CRUD bonos, ajuste rápido de stock, toggle activo/pausado
+- ✅ Preview de distribución de cashback en tiempo real al crear/editar bono
+
+**APIs añadidas:**
+- `GET /api/bonos` — catálogo activo para la tienda
+- `POST /api/bonos/[id]/comprar` — compra con cashback atómico
+- `GET /api/mi-red` — árbol de familias del usuario autenticado
+- `GET /api/mis-bonos` — compras y cashback del usuario autenticado
+- `GET/POST /api/admin/bonos` — gestión admin
+- `PATCH/DELETE /api/admin/bonos/[id]` — editar/eliminar bono
+
+**Regla crítica de imports Prisma:** usar `const { prisma } = await import("@/lib/prisma")` (named export). `const { default: prisma }` devuelve `undefined` y rompe las rutas silenciosamente.
+
 ### Modelos en BD (Prisma)
 User, Caja, Sorteo, Premio, Retiro, Transaccion, Config,
-SorteoAnticipado, Referido, Cupon, GiftCard, GranSorteo, SorteoPrevioGran, AuditLog
+SorteoAnticipado, Referido, Cupon, GiftCard, GranSorteo, SorteoPrevioGran, AuditLog,
+**Bono, BonoCompra**
+
+`TipoTransaccion` enum incluye: COMPRA, PREMIO, RETIRO, RECARGA, **COMPRA_BONO, CASHBACK_BONO**
+
+User tiene 3 relaciones nuevas: `bonoCompras`, `bonoComisionesN1`, `bonoComisionesN2`
 
 Campos en User: `resetToken`, `resetTokenExpiry`, `resetSolicitadoEn`,
 `loginIntentos`, `bloqueadoHasta`
@@ -156,6 +184,7 @@ identidad antes de habilitar retiros)
 - **Integración Wompi** (pagos reales) — cuenta del socio en trámite
 - **`confirmado`** — definir para qué usarlo (ej: validar identidad antes de habilitar retiros)
 - **"Grabable para redes sociales"** — captura de video del overlay de animación (no implementado)
+- **Logo final** — pendiente arte definitivo del cliente
 
 ---
 
@@ -168,3 +197,5 @@ identidad antes de habilitar retiros)
 - `$transaction` con operaciones condicionales: usar spread `...(cond ? [op] : [])` en vez de array dinámico
 - `pages: { signIn }` en `withAuth` de next-auth/middleware conflictúa con el mismo setting en `authOptions` → solo definirlo en `authOptions`, no en `withAuth`
 - El campo `activo = false` bloquea el login completamente (el usuario recibe "credenciales incorrectas"). Es un ban manual permanente, diferente al lockout por intentos (que expira en 15 min)
+- El árbol familiar se calcula dinámicamente desde la tabla `Referido` — no hay modelo Family en BD. Admin tiene referidos ilimitados sin estructura de familias; las familias aplican a usuarios normales
+- Los slots vacíos del árbol siempre usan el `codigoRef` del usuario que está logueado (no el del hijo), porque cada quien comparte su propio link desde su propio dashboard
