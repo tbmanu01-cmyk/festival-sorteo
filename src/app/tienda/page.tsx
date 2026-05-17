@@ -30,16 +30,14 @@ const CADENA_EMOJI: Record<string, string> = {
 // ── Modal de confirmación de compra ───────────────────────────────────────────
 interface ModalProps {
   bono: Bono;
-  saldo: number;
   onCerrar: () => void;
   onConfirmar: () => Promise<void>;
   cargando: boolean;
   resultado: { ok: boolean; mensaje: string; codigo?: string; cashback?: number } | null;
 }
 
-function ModalCompra({ bono, saldo, onCerrar, onConfirmar, cargando, resultado }: ModalProps) {
-  const cashbackEstimado = bono.precio * 0.07;
-  const saldoTrasCompra = saldo - bono.precio + cashbackEstimado;
+function ModalCompra({ bono, onCerrar, onConfirmar, cargando, resultado }: ModalProps) {
+  const cashbackEstimado = Math.round(bono.precio * 0.07);
 
   return (
     <div
@@ -108,26 +106,14 @@ function ModalCompra({ bono, saldo, onCerrar, onConfirmar, cargando, resultado }
                 <span className="font-bold text-gray-900">${bono.valorFace.toLocaleString("es-CO")} COP</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Pagas de tu billetera</span>
+                <span className="text-gray-500">Precio</span>
                 <span className="font-bold text-[#102463]">${bono.precio.toLocaleString("es-CO")} COP</span>
               </div>
               <div className="flex justify-between text-sm border-t border-gray-200 pt-2">
-                <span className="text-green-600 font-medium">Tu cashback (7%)</span>
+                <span className="text-green-600 font-medium">Cashback para ti (7%)</span>
                 <span className="font-bold text-green-600">+${cashbackEstimado.toLocaleString("es-CO")} COP</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400 text-xs">Tu saldo después</span>
-                <span className={`text-xs font-semibold ${saldoTrasCompra >= 0 ? "text-gray-600" : "text-red-500"}`}>
-                  ${saldoTrasCompra.toLocaleString("es-CO")} COP
-                </span>
-              </div>
             </div>
-
-            {saldo < bono.precio && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-sm text-red-700 text-center">
-                Saldo insuficiente. Tienes ${saldo.toLocaleString("es-CO")} COP.
-              </div>
-            )}
 
             <div className="flex gap-3">
               <button
@@ -138,7 +124,7 @@ function ModalCompra({ bono, saldo, onCerrar, onConfirmar, cargando, resultado }
               </button>
               <button
                 onClick={onConfirmar}
-                disabled={cargando || saldo < bono.precio}
+                disabled={cargando}
                 className="flex-1 bg-[#ffbd1f] hover:bg-yellow-300 disabled:bg-gray-300 disabled:cursor-not-allowed text-[#102463] font-bold py-3 rounded-full transition-all shadow-md"
               >
                 {cargando ? "Procesando..." : "Comprar"}
@@ -380,7 +366,6 @@ export default function TiendaBonos() {
       {bonoSeleccionado && (
         <ModalCompra
           bono={bonoSeleccionado}
-          saldo={saldo}
           onCerrar={cerrarModal}
           onConfirmar={confirmarCompra}
           cargando={comprando}

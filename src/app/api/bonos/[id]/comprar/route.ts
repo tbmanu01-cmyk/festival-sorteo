@@ -39,12 +39,8 @@ export async function POST(
   if (bono.stock <= 0) {
     return NextResponse.json({ error: "Sin stock disponible" }, { status: 400 });
   }
-  if (comprador.saldoPuntos < bono.precio) {
-    return NextResponse.json(
-      { error: `Saldo insuficiente. Necesitas $${bono.precio.toLocaleString("es-CO")} COP en tu billetera.` },
-      { status: 400 }
-    );
-  }
+
+  const pagoConSaldo = comprador.saldoPuntos >= bono.precio;
 
   // Buscar cadena de referidos (nivel 1 y nivel 2 del comprador)
   const nivel1Ref = await prisma.referido.findUnique({
@@ -69,20 +65,22 @@ export async function POST(
   const codigo = generarCodigo();
 
   await prisma.$transaction(async (tx) => {
-    // Descontar precio al comprador
-    await tx.user.update({
-      where: { id: comprador.id },
-      data: { saldoPuntos: { decrement: bono.precio } },
-    });
-    await tx.transaccion.create({
-      data: {
-        userId: comprador.id,
-        tipo: "COMPRA_BONO",
-        monto: -bono.precio,
-        descripcion: `Compra ${bono.nombre}`,
-        referencia: codigo,
-      },
-    });
+    // Descontar precio solo si tiene saldo suficiente; si no, queda como pago pendiente (Wompi futuro)
+    if (pagoConSaldo) {
+      await tx.user.update({
+        where: { id: comprador.id },
+        data: { saldoPuntos: { decrement: bono.precio } },
+      });
+      await tx.transaccion.create({
+        data: {
+          userId: comprador.id,
+          tipo: "COMPRA_BONO",
+          monto: -bono.precio,
+          descripcion: `Compra ${bono.nombre}`,
+          referencia: codigo,
+        },
+      });
+    }
 
     // Cashback al comprador (7%)
     await tx.user.update({
@@ -159,6 +157,7 @@ export async function POST(
     ok: true,
     codigo,
     cashbackRecibido: cashbackComprador,
+    pagoConSaldo,
     mensaje: `¡Bono adquirido! Código: ${codigo}. Recibiste $${cashbackComprador.toLocaleString("es-CO")} COP de cashback en tu billetera.`,
   });
 }
