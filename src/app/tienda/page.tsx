@@ -299,7 +299,7 @@ export default function TiendaBonos() {
             {session && (
               <div className="mt-4 inline-flex items-center gap-2 bg-white/10 rounded-xl px-4 py-2">
                 <span className="text-blue-200 text-sm">Tu saldo:</span>
-                <span className="text-white font-extrabold">${saldo.toLocaleString("es-CO")} COP</span>
+                <span className="text-white font-extrabold">${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</span>
               </div>
             )}
           </div>
