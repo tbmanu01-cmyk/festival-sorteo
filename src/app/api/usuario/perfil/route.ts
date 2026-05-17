@@ -20,6 +20,7 @@ export async function GET() {
       nombre: true, apellido: true, correo: true, celular: true,
       ciudad: true, departamento: true,
       banco: true, tipoCuenta: true, cuentaBancaria: true,
+      saldoPuntos: true,
     },
   });
 

@@ -221,8 +221,8 @@ export default function TiendaBonos() {
     if (!session) return;
     fetch("/api/usuario/perfil")
       .then((r) => r.json())
-      .then((d: { saldoPuntos?: number }) => {
-        if (d.saldoPuntos !== undefined) setSaldo(d.saldoPuntos);
+      .then((d: { user?: { saldoPuntos?: number } }) => {
+        if (d.user?.saldoPuntos !== undefined) setSaldo(d.user.saldoPuntos);
       })
       .catch(() => undefined);
   }, [session]);
@@ -245,8 +245,8 @@ export default function TiendaBonos() {
       // Refrescar saldo tras compra exitosa
       fetch("/api/usuario/perfil")
         .then((r) => r.json())
-        .then((d: { saldoPuntos?: number }) => {
-          if (d.saldoPuntos !== undefined) setSaldo(d.saldoPuntos);
+        .then((d: { user?: { saldoPuntos?: number } }) => {
+          if (d.user?.saldoPuntos !== undefined) setSaldo(d.user.saldoPuntos);
         })
         .catch(() => undefined);
     }
