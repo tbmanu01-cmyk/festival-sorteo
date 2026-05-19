@@ -72,12 +72,20 @@ function ModalReserva({ caja, precio, giftCardId, giftCardValor, esSorpresa, onC
                   })}
                 </p>
               )}
-              <Link
-                href="/dashboard"
-                className="block w-full bg-[#102463] hover:bg-[#173592] text-white font-bold py-3 rounded-full transition-all"
-              >
-                Ir a mi cuenta
-              </Link>
+              <div className="flex gap-3">
+                <button
+                  onClick={onCerrar}
+                  className="flex-1 border-2 border-[#102463] text-[#102463] font-bold py-3 rounded-full transition-all hover:bg-[#102463]/5"
+                >
+                  Volver a tienda
+                </button>
+                <Link
+                  href="/dashboard"
+                  className="flex-1 text-center bg-[#102463] hover:bg-[#173592] text-white font-bold py-3 rounded-full transition-all"
+                >
+                  Ir a mi cuenta
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="text-center">
