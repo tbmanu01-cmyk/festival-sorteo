@@ -7,7 +7,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { mascararCuenta } from "@/lib/mascara";
-import { AVATAR_PRESETS, estiloPreset, esCustom } from "@/lib/avatares";
+import { AVATAR_PRESETS, esCustom, esPreset } from "@/lib/avatares";
 
 type Seccion = "personal" | "ubicacion" | "banco" | "password" | "avatar" | null;
 
@@ -305,16 +305,11 @@ export default function PaginaPerfil() {
 
           <div className="relative flex items-center gap-4">
             {/* Avatar */}
-            <div className="w-16 h-16 rounded-2xl flex-shrink-0 overflow-hidden">
-              {esCustom(datos.avatar) ? (
+            <div className="w-16 h-16 rounded-2xl flex-shrink-0 overflow-hidden bg-[#ffbd1f] flex items-center justify-center">
+              {(esPreset(datos.avatar) || esCustom(datos.avatar)) ? (
                 <img src={datos.avatar!} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
-                <div
-                  className="w-full h-full flex items-center justify-center text-2xl font-extrabold"
-                  style={estiloPreset(datos.avatar)}
-                >
-                  {iniciales}
-                </div>
+                <span className="text-2xl font-extrabold text-[#102463]">{iniciales}</span>
               )}
             </div>
             <div className="flex-1 min-w-0">
@@ -433,22 +428,17 @@ export default function PaginaPerfil() {
           <FilaSeccion
             icono="🖼️"
             titulo="Avatar"
-            subtitulo={esCustom(datos.avatar) ? "Foto personalizada" : datos.avatar ? `Estilo ${AVATAR_PRESETS.find(p => p.id === datos.avatar)?.label ?? ""}` : "Sin avatar configurado"}
+            subtitulo={esCustom(datos.avatar) ? "Foto personalizada" : datos.avatar ? `${AVATAR_PRESETS.find(p => p.id === datos.avatar)?.label ?? "Avatar prediseñado"}` : "Sin avatar configurado"}
             abierta={seccionAbierta === "avatar"}
             onToggle={() => toggleSeccion("avatar")}
           >
             {/* Preview actual */}
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
-                {esCustom(avatarPrev) ? (
+              <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm bg-[#ffbd1f] flex items-center justify-center">
+                {(esPreset(avatarPrev) || esCustom(avatarPrev)) ? (
                   <img src={avatarPrev!} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <div
-                    className="w-full h-full flex items-center justify-center text-2xl font-extrabold"
-                    style={estiloPreset(avatarPrev)}
-                  >
-                    {iniciales}
-                  </div>
+                  <span className="text-2xl font-extrabold text-[#102463]">{iniciales}</span>
                 )}
               </div>
               <div>
@@ -457,31 +447,28 @@ export default function PaginaPerfil() {
               </div>
             </div>
 
-            {/* 5 presets */}
+            {/* Avatares prediseñados */}
             <div>
-              <label className="block text-xs font-bold text-[#6b7693] uppercase tracking-wide mb-2">Estilos prediseñados</label>
-              <div className="flex gap-3 flex-wrap">
+              <label className="block text-xs font-bold text-[#6b7693] uppercase tracking-wide mb-2">Avatares prediseñados</label>
+              <div className="grid grid-cols-6 gap-2">
                 {AVATAR_PRESETS.map((preset) => (
                   <button
                     key={preset.id}
                     onClick={() => setAvatarPrev(preset.id)}
                     title={preset.label}
-                    className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-extrabold transition-all ${avatarPrev === preset.id ? "ring-4 ring-[#102463] ring-offset-2 scale-110" : "hover:scale-105"}`}
-                    style={{ background: preset.bg, color: preset.text }}
+                    className={`w-full aspect-square rounded-2xl overflow-hidden transition-all ${avatarPrev === preset.id ? "ring-4 ring-[#102463] ring-offset-2 scale-110" : "hover:scale-105 opacity-80 hover:opacity-100"}`}
                   >
-                    {iniciales}
+                    <img src={preset.id} alt={preset.label} className="w-full h-full object-cover" />
                   </button>
                 ))}
-                {/* Sin avatar */}
-                <button
-                  onClick={() => setAvatarPrev(null)}
-                  title="Sin avatar (predeterminado)"
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-extrabold transition-all border-2 border-dashed ${!avatarPrev ? "ring-4 ring-[#102463] ring-offset-2 scale-110 border-[#102463]" : "border-[#e3e7f2] hover:scale-105"}`}
-                  style={{ background: "#f7f8fc", color: "#98a2bf" }}
-                >
-                  —
-                </button>
               </div>
+              {/* Sin avatar */}
+              <button
+                onClick={() => setAvatarPrev(null)}
+                className={`mt-2 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${!avatarPrev ? "bg-[#102463] text-white border-[#102463]" : "border-[#e3e7f2] text-[#98a2bf] hover:border-[#102463] hover:text-[#102463]"}`}
+              >
+                Sin avatar (usar iniciales)
+              </button>
             </div>
 
             {/* Subir foto */}
