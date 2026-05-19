@@ -948,7 +948,7 @@ function SlotVacio({ nivel, codigoRef }: SlotVacioProps) {
 function ArbolFamilia({ familia, yo }: { familia: FamiliaRed; yo: MiembroRed }) {
   return (
     <div className="w-full overflow-x-auto pb-2">
-      <div className="min-w-[340px]">
+      <div className="min-w-[420px]">
         {/* Cabeza */}
         <div className="flex justify-center mb-1">
           <div className="flex flex-col items-center gap-1">
@@ -991,7 +991,7 @@ function ArbolFamilia({ familia, yo }: { familia: FamiliaRed; yo: MiembroRed }) 
         {/* Nivel 2 — Nietos */}
         <div className="grid grid-cols-3 gap-2">
           {familia.nietos.map((grupo, i) => (
-            <div key={i} className="flex flex-col items-center gap-1.5">
+            <div key={i} className="flex flex-row justify-center gap-1 flex-wrap">
               {grupo.map((nieto, j) => (
                 <div key={j}>
                   {nieto
