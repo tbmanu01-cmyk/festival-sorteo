@@ -19,15 +19,20 @@ export async function PATCH(
   const { prisma } = await import("@/lib/prisma");
 
   const body = await req.json();
-  const { nombre, cadena, valorFace, precio, stock, descripcion, imagen, activo } = body;
+  const { nombre, cadena, valorFace, convenioPorc, stock, descripcion, imagen, activo } = body;
+
+  const hayPrecio = valorFace !== undefined || convenioPorc !== undefined;
+  const vf = valorFace !== undefined ? Number(valorFace) : undefined;
+  const cp = convenioPorc !== undefined ? Number(convenioPorc) : undefined;
 
   const bono = await prisma.bono.update({
     where: { id },
     data: {
       ...(nombre !== undefined && { nombre }),
       ...(cadena !== undefined && { cadena }),
-      ...(valorFace !== undefined && { valorFace: Number(valorFace) }),
-      ...(precio !== undefined && { precio: Number(precio) }),
+      ...(vf !== undefined && { valorFace: vf }),
+      ...(cp !== undefined && { convenioPorc: cp }),
+      ...(hayPrecio && vf !== undefined && cp !== undefined && { precio: vf * (1 - cp / 100) }),
       ...(stock !== undefined && { stock: Number(stock) }),
       ...(descripcion !== undefined && { descripcion }),
       ...(imagen !== undefined && { imagen }),

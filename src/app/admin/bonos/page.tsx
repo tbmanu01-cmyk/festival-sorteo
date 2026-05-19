@@ -12,6 +12,7 @@ interface Bono {
   nombre: string;
   cadena: string;
   valorFace: number;
+  convenioPorc: number;
   precio: number;
   stock: number;
   descripcion: string | null;
@@ -27,7 +28,7 @@ const CAMPOS_FORM = {
   nombre: "",
   cadena: "",
   valorFace: "",
-  precio: "",
+  convenioPorc: "",
   stock: "",
   descripcion: "",
 };
@@ -49,7 +50,7 @@ function ModalBono({
           nombre: bono.nombre,
           cadena: bono.cadena,
           valorFace: String(bono.valorFace),
-          precio: String(bono.precio),
+          convenioPorc: String(bono.convenioPorc),
           stock: String(bono.stock),
           descripcion: bono.descripcion ?? "",
         }
@@ -63,7 +64,7 @@ function ModalBono({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nombre || !form.cadena || !form.valorFace || !form.precio || !form.stock) {
+    if (!form.nombre || !form.cadena || !form.valorFace || !form.convenioPorc || !form.stock) {
       setError("Completa todos los campos obligatorios.");
       return;
     }
@@ -136,18 +137,22 @@ function ModalBono({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1">Precio de venta (COP) *</label>
-              <input
-                type="number"
-                value={form.precio}
-                onChange={set("precio")}
-                placeholder="100000"
-                min={0}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#102463]"
-              />
-              {form.valorFace && form.precio && Number(form.valorFace) > 0 && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Margen: {(((Number(form.valorFace) - Number(form.precio)) / Number(form.valorFace)) * 100).toFixed(1)}%
+              <label className="block text-xs font-semibold text-gray-600 mb-1">% Convenio *</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  value={form.convenioPorc}
+                  onChange={set("convenioPorc")}
+                  placeholder="20"
+                  min={1}
+                  max={99}
+                  className="w-full px-3 py-2.5 pr-8 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#102463]"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">%</span>
+              </div>
+              {form.valorFace && form.convenioPorc && Number(form.valorFace) > 0 && Number(form.convenioPorc) > 0 && (
+                <p className="text-xs text-green-600 mt-1 font-medium">
+                  Precio de venta: ${(Number(form.valorFace) * (1 - Number(form.convenioPorc) / 100)).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
                 </p>
               )}
             </div>
@@ -177,27 +182,37 @@ function ModalBono({
           </div>
 
           {/* Distribución de cashback */}
-          {form.precio && Number(form.precio) > 0 && (
-            <div className="bg-[#102463]/5 rounded-xl p-4 space-y-1.5">
-              <p className="text-xs font-bold text-[#102463] uppercase tracking-wider mb-2">Distribución de cashback</p>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Comprador (7%)</span>
-                <span className="font-bold text-green-600">+${(Number(form.precio) * 0.07).toLocaleString("es-CO")} COP</span>
+          {form.valorFace && form.convenioPorc && Number(form.valorFace) > 0 && Number(form.convenioPorc) > 0 && (() => {
+            const vf = Number(form.valorFace);
+            const cp = Number(form.convenioPorc);
+            const margen = vf * cp / 100;
+            return (
+              <div className="bg-[#102463]/5 rounded-xl p-4 space-y-1.5">
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-xs font-bold text-[#102463] uppercase tracking-wider">Distribución del margen</p>
+                  <span className="text-xs font-bold text-[#102463] bg-[#102463]/10 px-2 py-0.5 rounded-full">
+                    Margen total: ${margen.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Comprador (35% del margen)</span>
+                  <span className="font-bold text-green-600">+${(margen * 0.35).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Nivel 1 — quien invitó (25%)</span>
+                  <span className="font-bold text-blue-600">+${(margen * 0.25).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Nivel 2 — abuelo (15%)</span>
+                  <span className="font-bold text-purple-600">+${(margen * 0.15).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</span>
+                </div>
+                <div className="flex justify-between text-sm border-t border-gray-200 pt-1.5">
+                  <span className="text-gray-500">Plataforma (25%)</span>
+                  <span className="font-semibold text-gray-700">${(margen * 0.25).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Nivel 1 — quien invitó (5%)</span>
-                <span className="font-bold text-blue-600">+${(Number(form.precio) * 0.05).toLocaleString("es-CO")} COP</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Nivel 2 — abuelo (3%)</span>
-                <span className="font-bold text-purple-600">+${(Number(form.precio) * 0.03).toLocaleString("es-CO")} COP</span>
-              </div>
-              <div className="flex justify-between text-sm border-t border-gray-200 pt-1.5">
-                <span className="text-gray-500">Plataforma (5%)</span>
-                <span className="font-semibold text-gray-700">${(Number(form.precio) * 0.05).toLocaleString("es-CO")} COP</span>
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {error && <p className="text-red-600 text-sm bg-red-50 rounded-xl px-4 py-2">{error}</p>}
 
@@ -262,7 +277,7 @@ export default function AdminBonos() {
         nombre: form.nombre,
         cadena: form.cadena,
         valorFace: Number(form.valorFace),
-        precio: Number(form.precio),
+        convenioPorc: Number(form.convenioPorc),
         stock: Number(form.stock),
         descripcion: form.descripcion || null,
       }),
@@ -388,14 +403,18 @@ export default function AdminBonos() {
 
                   <div className="px-5 py-4 space-y-3">
                     {/* Precios */}
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-3 gap-2 text-sm">
                       <div>
                         <p className="text-gray-400 text-xs">Valor bono</p>
-                        <p className="font-bold text-gray-900">${bono.valorFace.toLocaleString("es-CO")}</p>
+                        <p className="font-bold text-gray-900">${bono.valorFace.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-xs">% Convenio</p>
+                        <p className="font-bold text-[#102463]">{bono.convenioPorc}%</p>
                       </div>
                       <div>
                         <p className="text-gray-400 text-xs">Precio venta</p>
-                        <p className="font-bold text-[#102463]">${bono.precio.toLocaleString("es-CO")}</p>
+                        <p className="font-bold text-gray-700">${bono.precio.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</p>
                       </div>
                     </div>
 

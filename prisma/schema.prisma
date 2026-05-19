@@ -387,19 +387,20 @@ model AuditLog {
 }
 
 model Bono {
-  id          String   @id @default(cuid())
-  nombre      String
-  cadena      String
-  valorFace   Float
-  precio      Float
-  stock       Int      @default(0)
-  descripcion String?
-  imagen      String?
-  activo      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  nombre       String
+  cadena       String
+  valorFace    Float
+  convenioPorc Float    @default(20)
+  precio       Float
+  stock        Int      @default(0)
+  descripcion  String?
+  imagen       String?
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  compras     BonoCompra[]
+  compras      BonoCompra[]
 
   @@map("bonos")
 }

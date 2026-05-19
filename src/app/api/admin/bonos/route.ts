@@ -31,18 +31,22 @@ export async function POST(req: NextRequest) {
   const { prisma } = await import("@/lib/prisma");
 
   const body = await req.json();
-  const { nombre, cadena, valorFace, precio, stock, descripcion, imagen } = body;
+  const { nombre, cadena, valorFace, convenioPorc, stock, descripcion, imagen } = body;
 
-  if (!nombre || !cadena || !valorFace || !precio || stock === undefined) {
+  if (!nombre || !cadena || !valorFace || !convenioPorc || stock === undefined) {
     return NextResponse.json({ error: "Campos obligatorios faltantes" }, { status: 400 });
   }
+
+  const convPorc = Number(convenioPorc);
+  const precio = Number(valorFace) * (1 - convPorc / 100);
 
   const bono = await prisma.bono.create({
     data: {
       nombre,
       cadena,
       valorFace: Number(valorFace),
-      precio: Number(precio),
+      convenioPorc: convPorc,
+      precio,
       stock: Number(stock),
       descripcion: descripcion || null,
       imagen: imagen || null,

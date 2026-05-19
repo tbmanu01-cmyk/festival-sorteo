@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-const CASHBACK_COMPRADOR = 0.07;
-const CASHBACK_NIVEL1 = 0.05;
-const CASHBACK_NIVEL2 = 0.03;
+// Distribución fija del margen (convenio): 35% comprador · 25% N1 · 15% N2 · 25% plataforma
+const FRAC_COMPRADOR = 0.35;
+const FRAC_NIVEL1    = 0.25;
+const FRAC_NIVEL2    = 0.15;
 
 function generarCodigo(): string {
   return `BONO-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
@@ -59,9 +60,10 @@ export async function POST(
 
   const nivel2Id = nivel2Ref?.referidorId ?? null;
 
-  const cashbackComprador = bono.precio * CASHBACK_COMPRADOR;
-  const cashbackNivel1 = bono.precio * CASHBACK_NIVEL1;
-  const cashbackNivel2 = bono.precio * CASHBACK_NIVEL2;
+  const margen = bono.valorFace - bono.precio;
+  const cashbackComprador = margen * FRAC_COMPRADOR;
+  const cashbackNivel1    = margen * FRAC_NIVEL1;
+  const cashbackNivel2    = margen * FRAC_NIVEL2;
   const codigo = generarCodigo();
 
   await prisma.$transaction(async (tx) => {
@@ -92,7 +94,7 @@ export async function POST(
         userId: comprador.id,
         tipo: "CASHBACK_BONO",
         monto: cashbackComprador,
-        descripcion: `Cashback 7% — ${bono.nombre}`,
+        descripcion: `Cashback ${Math.round(FRAC_COMPRADOR * 100)}% margen — ${bono.nombre}`,
         referencia: codigo,
       },
     });
@@ -108,7 +110,7 @@ export async function POST(
           userId: nivel1Id,
           tipo: "CASHBACK_BONO",
           monto: cashbackNivel1,
-          descripcion: `Comisión red 5% — ${bono.nombre}`,
+          descripcion: `Comisión red ${Math.round(FRAC_NIVEL1 * 100)}% margen — ${bono.nombre}`,
           referencia: codigo,
         },
       });
@@ -125,7 +127,7 @@ export async function POST(
           userId: nivel2Id,
           tipo: "CASHBACK_BONO",
           monto: cashbackNivel2,
-          descripcion: `Comisión red 3% — ${bono.nombre}`,
+          descripcion: `Comisión red ${Math.round(FRAC_NIVEL2 * 100)}% margen — ${bono.nombre}`,
           referencia: codigo,
         },
       });
