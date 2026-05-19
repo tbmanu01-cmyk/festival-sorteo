@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { estiloPreset, esCustom } from "@/lib/avatares";
 
 const QRCodeCanvas = dynamic(
   () => import("qrcode.react").then((m) => m.QRCodeCanvas),
@@ -827,6 +828,7 @@ interface MiembroRed {
   fechaRegistro: string;
   ciudad: string;
   codigoRef: string | null;
+  avatar?: string | null;
 }
 
 interface FamiliaRed {
@@ -853,13 +855,20 @@ function fmtFecha(iso: string) {
 }
 
 function AvatarMiembro({ miembro, nivel }: { miembro: MiembroRed; nivel: "hijo" | "nieto" }) {
-  const colores = nivel === "hijo" ? "bg-[#102463] text-white" : "bg-[#ffbd1f] text-[#102463]";
   const tam = nivel === "hijo" ? "w-12 h-12 text-sm" : "w-10 h-10 text-xs";
+  const defaultStyle = nivel === "hijo"
+    ? { background: "#102463", color: "white" }
+    : { background: "#ffbd1f", color: "#102463" };
 
   return (
     <div className="flex flex-col items-center gap-1 group relative">
-      <div className={`${tam} ${colores} rounded-full flex items-center justify-center font-extrabold shadow-sm ring-2 ring-white cursor-default`}>
-        {iniciales(miembro.nombre, miembro.apellido)}
+      <div className={`${tam} rounded-full shadow-sm ring-2 ring-white cursor-default overflow-hidden flex items-center justify-center font-extrabold`}
+        style={!miembro.avatar ? defaultStyle : esCustom(miembro.avatar) ? {} : estiloPreset(miembro.avatar)}
+      >
+        {esCustom(miembro.avatar)
+          ? <img src={miembro.avatar!} alt="" className="w-full h-full object-cover" />
+          : iniciales(miembro.nombre, miembro.apellido)
+        }
       </div>
       <p className="text-[10px] text-gray-600 font-medium text-center leading-tight max-w-[56px] truncate">
         {miembro.nombre}
@@ -952,8 +961,13 @@ function ArbolFamilia({ familia, yo }: { familia: FamiliaRed; yo: MiembroRed }) 
         {/* Cabeza */}
         <div className="flex justify-center mb-1">
           <div className="flex flex-col items-center gap-1">
-            <div className="w-14 h-14 bg-gradient-to-br from-[#102463] to-[#173592] rounded-full flex items-center justify-center font-extrabold text-white text-base shadow-md ring-4 ring-[#ffbd1f]/40">
-              {iniciales(yo.nombre, yo.apellido)}
+            <div className="w-14 h-14 rounded-full shadow-md ring-4 ring-[#ffbd1f]/40 overflow-hidden flex items-center justify-center font-extrabold text-white text-base"
+              style={!yo.avatar ? { background: "linear-gradient(135deg, #102463, #173592)" } : esCustom(yo.avatar) ? {} : estiloPreset(yo.avatar)}
+            >
+              {esCustom(yo.avatar)
+                ? <img src={yo.avatar!} alt="" className="w-full h-full object-cover" />
+                : iniciales(yo.nombre, yo.apellido)
+              }
             </div>
             <p className="text-xs text-[#102463] font-bold">{yo.nombre}</p>
             <span className="text-[9px] bg-[#ffbd1f] text-[#102463] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">Tú</span>

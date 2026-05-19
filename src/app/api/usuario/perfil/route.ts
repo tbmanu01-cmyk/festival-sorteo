@@ -20,7 +20,7 @@ export async function GET() {
       nombre: true, apellido: true, correo: true, celular: true,
       ciudad: true, departamento: true,
       banco: true, tipoCuenta: true, cuentaBancaria: true,
-      saldoPuntos: true,
+      saldoPuntos: true, avatar: true,
     },
   });
 
@@ -50,6 +50,7 @@ export async function PATCH(req: NextRequest) {
   const camposPermitidos = [
     "nombre", "apellido", "correo", "celular",
     "ciudad", "departamento", "banco", "tipoCuenta", "cuentaBancaria",
+    "avatar",
   ];
 
   const data: Record<string, unknown> = {};

@@ -7,13 +7,15 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { mascararCuenta } from "@/lib/mascara";
+import { AVATAR_PRESETS, estiloPreset, esCustom } from "@/lib/avatares";
 
-type Seccion = "personal" | "ubicacion" | "banco" | "password" | null;
+type Seccion = "personal" | "ubicacion" | "banco" | "password" | "avatar" | null;
 
 interface DatosPerfil {
   nombre: string; apellido: string; correo: string; celular: string;
   ciudad: string; departamento: string;
   banco: string | null; tipoCuenta: string | null; cuentaBancaria: string | null;
+  avatar: string | null;
 }
 
 // ── Icono flecha derecha ───────────────────────────────────────────────────────
@@ -138,6 +140,10 @@ export default function PaginaPerfil() {
   const [banco, setBanco] = useState("");
   const [tipoCuenta, setTipoCuenta] = useState("");
   const [cuentaBancaria, setCuentaBancaria] = useState("");
+  // Avatar
+  const [avatarActual, setAvatarActual] = useState<string | null>(null);
+  const [avatarPrev, setAvatarPrev] = useState<string | null>(null);
+  const [guardandoAvatar, setGuardandoAvatar] = useState(false);
   // Contraseña
   const [passwordActual, setPasswordActual] = useState("");
   const [nuevaPassword, setNuevaPassword] = useState("");
@@ -157,6 +163,7 @@ export default function PaginaPerfil() {
           setCiudad(u.ciudad ?? ""); setDepartamento(u.departamento ?? "");
           setBanco(u.banco ?? ""); setTipoCuenta(u.tipoCuenta ?? "");
           setCuentaBancaria(u.cuentaBancaria ?? "");
+          setAvatarActual(u.avatar ?? null); setAvatarPrev(u.avatar ?? null);
         });
     }
   }, [status, router]);
@@ -168,6 +175,52 @@ export default function PaginaPerfil() {
   function mostrarMensaje(seccion: string, ok: boolean, texto: string) {
     setMensajes((prev) => ({ ...prev, [seccion]: { ok, texto } }));
     setTimeout(() => setMensajes((prev) => { const n = { ...prev }; delete n[seccion]; return n; }), 4000);
+  }
+
+  async function guardarAvatar() {
+    if (avatarPrev === avatarActual) return;
+    setGuardandoAvatar(true);
+    const res = await fetch("/api/usuario/perfil", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ avatar: avatarPrev }),
+    });
+    setGuardandoAvatar(false);
+    if (res.ok) {
+      setAvatarActual(avatarPrev);
+      setDatos((d) => d ? { ...d, avatar: avatarPrev } : d);
+      mostrarMensaje("avatar", true, "Avatar actualizado.");
+    } else {
+      mostrarMensaje("avatar", false, "Error al guardar el avatar.");
+    }
+  }
+
+  function manejarSubidaFoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const archivo = e.target.files?.[0];
+    if (!archivo) return;
+    if (archivo.size > 2 * 1024 * 1024) {
+      mostrarMensaje("avatar", false, "La imagen no puede superar 2 MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const src = ev.target?.result as string;
+      // Redimensionar a max 200×200 con canvas
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 200;
+        const scale = Math.min(MAX / img.width, MAX / img.height, 1);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setAvatarPrev(canvas.toDataURL("image/jpeg", 0.8));
+      };
+      img.src = src;
+    };
+    reader.readAsDataURL(archivo);
+    e.target.value = "";
   }
 
   async function guardar(seccion: Seccion) {
@@ -251,12 +304,18 @@ export default function PaginaPerfil() {
           />
 
           <div className="relative flex items-center gap-4">
-            {/* Avatar con iniciales */}
-            <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-extrabold flex-shrink-0"
-              style={{ background: "#ffbd1f", color: "#102463" }}
-            >
-              {iniciales}
+            {/* Avatar */}
+            <div className="w-16 h-16 rounded-2xl flex-shrink-0 overflow-hidden">
+              {esCustom(datos.avatar) ? (
+                <img src={datos.avatar!} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <div
+                  className="w-full h-full flex items-center justify-center text-2xl font-extrabold"
+                  style={estiloPreset(datos.avatar)}
+                >
+                  {iniciales}
+                </div>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-extrabold leading-tight tracking-tight">{nombreCompleto}</h1>
@@ -368,6 +427,93 @@ export default function PaginaPerfil() {
               </p>
             )}
             <BtnGuardar guardando={guardando} onClick={() => guardar("banco")} />
+          </FilaSeccion>
+
+          {/* Avatar */}
+          <FilaSeccion
+            icono="🖼️"
+            titulo="Avatar"
+            subtitulo={esCustom(datos.avatar) ? "Foto personalizada" : datos.avatar ? `Estilo ${AVATAR_PRESETS.find(p => p.id === datos.avatar)?.label ?? ""}` : "Sin avatar configurado"}
+            abierta={seccionAbierta === "avatar"}
+            onToggle={() => toggleSeccion("avatar")}
+          >
+            {/* Preview actual */}
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
+                {esCustom(avatarPrev) ? (
+                  <img src={avatarPrev!} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div
+                    className="w-full h-full flex items-center justify-center text-2xl font-extrabold"
+                    style={estiloPreset(avatarPrev)}
+                  >
+                    {iniciales}
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[#0e1424]">Vista previa</p>
+                <p className="text-xs text-[#98a2bf] mt-0.5">Así te verán los demás en la red</p>
+              </div>
+            </div>
+
+            {/* 5 presets */}
+            <div>
+              <label className="block text-xs font-bold text-[#6b7693] uppercase tracking-wide mb-2">Estilos prediseñados</label>
+              <div className="flex gap-3 flex-wrap">
+                {AVATAR_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => setAvatarPrev(preset.id)}
+                    title={preset.label}
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-extrabold transition-all ${avatarPrev === preset.id ? "ring-4 ring-[#102463] ring-offset-2 scale-110" : "hover:scale-105"}`}
+                    style={{ background: preset.bg, color: preset.text }}
+                  >
+                    {iniciales}
+                  </button>
+                ))}
+                {/* Sin avatar */}
+                <button
+                  onClick={() => setAvatarPrev(null)}
+                  title="Sin avatar (predeterminado)"
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-extrabold transition-all border-2 border-dashed ${!avatarPrev ? "ring-4 ring-[#102463] ring-offset-2 scale-110 border-[#102463]" : "border-[#e3e7f2] hover:scale-105"}`}
+                  style={{ background: "#f7f8fc", color: "#98a2bf" }}
+                >
+                  —
+                </button>
+              </div>
+            </div>
+
+            {/* Subir foto */}
+            <div>
+              <label className="block text-xs font-bold text-[#6b7693] uppercase tracking-wide mb-2">O sube tu foto</label>
+              <label className="flex items-center gap-3 px-4 py-3 bg-[#f7f8fc] border-2 border-dashed border-[#e3e7f2] rounded-2xl cursor-pointer hover:border-[#102463] hover:bg-[#eef4ff] transition-all">
+                <span className="text-2xl">📷</span>
+                <div>
+                  <p className="text-sm font-bold text-[#0e1424]">Elegir imagen</p>
+                  <p className="text-xs text-[#98a2bf]">JPG, PNG o WEBP · Máx. 2 MB</p>
+                </div>
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={manejarSubidaFoto} />
+              </label>
+            </div>
+
+            {mensajes.avatar && (
+              <p className={`text-xs font-bold ${mensajes.avatar.ok ? "text-[#0a8a4a]" : "text-[#c8312a]"}`}>
+                {mensajes.avatar.ok ? "✓" : "⚠"} {mensajes.avatar.texto}
+              </p>
+            )}
+
+            <button
+              onClick={guardarAvatar}
+              disabled={guardandoAvatar || avatarPrev === avatarActual}
+              className="w-full py-3.5 rounded-2xl font-extrabold text-sm text-white transition-all disabled:opacity-50"
+              style={{
+                background: (guardandoAvatar || avatarPrev === avatarActual) ? "#98a2bf" : "linear-gradient(135deg, #102463, #173592)",
+                boxShadow: (guardandoAvatar || avatarPrev === avatarActual) ? "none" : "0 8px 20px -4px rgba(16,36,99,0.45)",
+              }}
+            >
+              {guardandoAvatar ? "Guardando..." : "Guardar avatar"}
+            </button>
           </FilaSeccion>
 
           {/* Contraseña */}

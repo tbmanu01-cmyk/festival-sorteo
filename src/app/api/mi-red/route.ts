@@ -8,6 +8,7 @@ interface MiembroRed {
   apellido: string;
   fechaRegistro: string;
   ciudad: string;
+  avatar?: string | null;
 }
 
 interface Familia {
@@ -28,7 +29,7 @@ export async function GET() {
 
   const yo = await prisma.user.findUnique({
     where: { correo: session.user.email },
-    select: { id: true, nombre: true, apellido: true, ciudad: true, fechaRegistro: true, codigoRef: true },
+    select: { id: true, nombre: true, apellido: true, ciudad: true, fechaRegistro: true, codigoRef: true, avatar: true },
   });
   if (!yo) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
 
@@ -38,7 +39,7 @@ export async function GET() {
     orderBy: { fecha: "asc" },
     include: {
       referido: {
-        select: { id: true, nombre: true, apellido: true, fechaRegistro: true, ciudad: true, codigoRef: true },
+        select: { id: true, nombre: true, apellido: true, fechaRegistro: true, ciudad: true, codigoRef: true, avatar: true },
       },
     },
   });
@@ -50,6 +51,7 @@ export async function GET() {
     fechaRegistro: r.referido.fechaRegistro.toISOString(),
     ciudad: r.referido.ciudad,
     codigoRef: r.referido.codigoRef,
+    avatar: r.referido.avatar,
   }));
 
   // Para cada hijo, buscar sus referidos directos (nietos míos)
@@ -60,7 +62,7 @@ export async function GET() {
       orderBy: { fecha: "asc" },
       include: {
         referido: {
-          select: { id: true, nombre: true, apellido: true, fechaRegistro: true, ciudad: true, codigoRef: true },
+          select: { id: true, nombre: true, apellido: true, fechaRegistro: true, ciudad: true, codigoRef: true, avatar: true },
         },
       },
     });
@@ -71,6 +73,7 @@ export async function GET() {
       fechaRegistro: r.referido.fechaRegistro.toISOString(),
       ciudad: r.referido.ciudad,
       codigoRef: r.referido.codigoRef,
+      avatar: r.referido.avatar,
     }));
   }
 
@@ -133,6 +136,7 @@ export async function GET() {
       ciudad: yo.ciudad,
       fechaRegistro: yo.fechaRegistro.toISOString(),
       codigoRef: yo.codigoRef,
+      avatar: yo.avatar,
     },
     familias,
     totalFamilias: familias.length,
