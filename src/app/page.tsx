@@ -75,7 +75,7 @@ const pasos = [
   {
     numero: "01",
     titulo: "Regístrate gratis",
-    descripcion: "Crea tu cuenta con tus datos personales y bancarios. Solo toma 2 minutos.",
+    descripcion: "Crea tu cuenta en 2 minutos. Solo necesitas tus datos básicos y ya puedes empezar.",
     icono: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -84,21 +84,21 @@ const pasos = [
   },
   {
     numero: "02",
-    titulo: "Elige tu número",
-    descripcion: "Selecciona uno o más números del 0000 al 9999. Participa con una o varias membresías.",
+    titulo: "Compra tu bono",
+    descripcion: "Elige bonos de tus supermercados favoritos: Éxito, Jumbo, Carulla, D1 y más.",
     icono: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
       </svg>
     ),
   },
   {
     numero: "03",
-    titulo: "Obtén beneficios",
-    descripcion: "¡Coincide 4, 3, 2 o 1 cifra y gana!",
+    titulo: "Recibe cashback",
+    descripcion: "El dinero llega directo a tu billetera Club 10K. Úsalo para más bonos o retíralo.",
     icono: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
   },
@@ -356,7 +356,7 @@ export default async function Inicio() {
               <span style={eyebrow}>Fácil y transparente</span>
               <h2 style={sectionTitle}>¿Cómo funciona?</h2>
               <p style={sectionSub}>
-                Participar es muy fácil. En 3 simples pasos puedes estar en la lista de miembros beneficiados.
+                En 3 simples pasos empieza a ganar cashback en tus compras del supermercado.
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
@@ -450,18 +450,16 @@ export default async function Inicio() {
 
               <div style={{ position: "relative", zIndex: 1 }}>
                 <h2 style={{ fontSize: "clamp(28px,3.6vw,40px)", fontWeight: 800, letterSpacing: "-0.02em", margin: "0 0 12px" }}>
-                  ¡No te quedes sin tu número!
+                  ¡Empieza a ganar cashback hoy!
                 </h2>
                 <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 18, margin: "0 0 32px", maxWidth: 460, marginLeft: "auto", marginRight: "auto" }}>
-                  Solo quedan{" "}
-                  <strong style={{ color: "#ffbd1f" }}>{disponibles.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong>{" "}
-                  membresías disponibles. Regístrate ahora y asegura la tuya.
+                  Compra bonos de tus supermercados favoritos y recibe dinero de vuelta directo en tu billetera Club 10K.
                 </p>
                 <Link
-                  href="/registro"
+                  href="/tienda"
                   style={{ background: "#ffbd1f", color: "#102463", fontWeight: 800, fontSize: 17, padding: "16px 40px", borderRadius: 999, boxShadow: "0 8px 24px -4px rgba(255,165,0,0.50)", textDecoration: "none", display: "inline-block" }}
                 >
-                  Adquiere tu membresía — ${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
+                  Ver bonos disponibles →
                 </Link>
               </div>
             </div>
