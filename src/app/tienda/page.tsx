@@ -95,7 +95,12 @@ function ModalCompra({ bono, onCerrar, onConfirmar, cargando, resultado }: Modal
         ) : (
           <>
             <div className="text-center mb-5">
-              <div className="text-5xl mb-3">{CADENA_EMOJI[bono.cadena] ?? "🏷️"}</div>
+              <div className="w-16 h-16 rounded-2xl bg-[#102463]/5 flex items-center justify-center mx-auto mb-3 overflow-hidden">
+                {bono.imagen
+                  ? <img src={bono.imagen} alt={bono.cadena} className="w-full h-full object-contain p-2" />
+                  : <span className="text-4xl">{CADENA_EMOJI[bono.cadena] ?? "🏷️"}</span>
+                }
+              </div>
               <h3 className="text-lg font-extrabold text-[#102463] mb-1">{bono.nombre}</h3>
               <p className="text-gray-500 text-sm">{bono.cadena}</p>
             </div>
@@ -149,7 +154,12 @@ function TarjetaBono({ bono, onComprar }: { bono: Bono; onComprar: (b: Bono) => 
         className="px-5 pt-5 pb-4 flex items-center gap-3"
         style={{ background: "linear-gradient(135deg, #102463 0%, #173592 100%)" }}
       >
-        <span className="text-4xl">{CADENA_EMOJI[bono.cadena] ?? "🏷️"}</span>
+        <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
+          {bono.imagen
+            ? <img src={bono.imagen} alt={bono.cadena} className="w-full h-full object-contain p-1" />
+            : <span className="text-2xl">{CADENA_EMOJI[bono.cadena] ?? "🏷️"}</span>
+          }
+        </div>
         <div>
           <p className="text-white font-extrabold text-lg leading-tight">{bono.cadena}</p>
           <p className="text-blue-200 text-xs">{bono.stock.toLocaleString("es-CO")} disponibles</p>

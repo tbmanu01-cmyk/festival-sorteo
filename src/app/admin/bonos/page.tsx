@@ -31,6 +31,7 @@ const CAMPOS_FORM = {
   convenioPorc: "",
   stock: "",
   descripcion: "",
+  imagen: "",
 };
 
 type FormData = typeof CAMPOS_FORM;
@@ -53,6 +54,7 @@ function ModalBono({
           convenioPorc: String(bono.convenioPorc),
           stock: String(bono.stock),
           descripcion: bono.descripcion ?? "",
+          imagen: bono.imagen ?? "",
         }
       : { ...CAMPOS_FORM }
   );
@@ -179,6 +181,37 @@ function ModalBono({
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#102463] resize-none"
               />
             </div>
+
+            <div className="col-span-2">
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Logo de la cadena (URL)</label>
+              <div className="flex gap-3 items-start">
+                {/* Preview */}
+                <div className="w-14 h-14 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center bg-gray-50 flex-shrink-0 overflow-hidden">
+                  {form.imagen ? (
+                    <img
+                      src={form.imagen}
+                      alt="Logo"
+                      className="w-full h-full object-contain p-1"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ) : (
+                    <span className="text-2xl text-gray-300">🏪</span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="url"
+                    value={form.imagen}
+                    onChange={set("imagen")}
+                    placeholder="https://ejemplo.com/logo-exito.png"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#102463]"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Pega la URL de la imagen del logo. Se mostrará en la tienda y en el inicio.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Distribución de cashback */}
@@ -280,6 +313,7 @@ export default function AdminBonos() {
         convenioPorc: Number(form.convenioPorc),
         stock: Number(form.stock),
         descripcion: form.descripcion || null,
+        imagen: form.imagen || null,
       }),
     });
 
@@ -391,12 +425,20 @@ export default function AdminBonos() {
                   className={`bg-white rounded-2xl shadow-sm border transition-all ${bono.activo ? "border-gray-100" : "border-gray-200 opacity-60"}`}
                 >
                   {/* Cabecera */}
-                  <div className={`px-5 pt-4 pb-3 rounded-t-2xl flex items-center justify-between ${bono.activo ? "bg-[#102463]/5" : "bg-gray-100"}`}>
-                    <div>
-                      <p className="font-extrabold text-[#102463] text-sm">{bono.cadena}</p>
-                      <p className="text-gray-500 text-xs">{bono.nombre}</p>
+                  <div className={`px-5 pt-4 pb-3 rounded-t-2xl flex items-center justify-between gap-3 ${bono.activo ? "bg-[#102463]/5" : "bg-gray-100"}`}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+                        {bono.imagen
+                          ? <img src={bono.imagen} alt={bono.cadena} className="w-full h-full object-contain p-1" />
+                          : <span className="text-xl">{({ Éxito: "🛒", Jumbo: "🦁", Carulla: "🥩", D1: "🏪", Alkosto: "📺" } as Record<string,string>)[bono.cadena] ?? "🏷️"}</span>
+                        }
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-extrabold text-[#102463] text-sm">{bono.cadena}</p>
+                        <p className="text-gray-500 text-xs truncate">{bono.nombre}</p>
+                      </div>
                     </div>
-                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${bono.activo ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"}`}>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full flex-shrink-0 ${bono.activo ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500"}`}>
                       {bono.activo ? "Activo" : "Inactivo"}
                     </span>
                   </div>

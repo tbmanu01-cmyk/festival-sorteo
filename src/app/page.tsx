@@ -24,6 +24,7 @@ interface BonoPreview {
   valorFace: number;
   precio: number;
   stock: number;
+  imagen: string | null;
 }
 
 async function obtenerDatos() {
@@ -36,7 +37,7 @@ async function obtenerDatos() {
 
     const bonosPreview = await prisma.bono.findMany({
       where: { activo: true, stock: { gt: 0 } },
-      select: { id: true, nombre: true, cadena: true, valorFace: true, precio: true, stock: true },
+      select: { id: true, nombre: true, cadena: true, valorFace: true, precio: true, stock: true, imagen: true },
       take: 6,
     });
 
@@ -230,10 +231,17 @@ export default async function Inicio() {
                         className="block hover:scale-105 transition-transform"
                         style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 20, padding: "20px 16px", textAlign: "center", backdropFilter: "blur(8px)", textDecoration: "none", position: "relative" }}
                       >
-                        <div style={{ position: "absolute", top: 10, right: 10, background: "#ffbd1f", color: "#102463", fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 999 }}>
-                          -{descPct}%
+                        {descPct > 0 && (
+                          <div style={{ position: "absolute", top: 10, right: 10, background: "#ffbd1f", color: "#102463", fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 999 }}>
+                            -{descPct}%
+                          </div>
+                        )}
+                        <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", overflow: "hidden" }}>
+                          {bono.imagen
+                            ? <img src={bono.imagen} alt={bono.cadena} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 6 }} />
+                            : <span style={{ fontSize: 26 }}>{EMOJI[bono.cadena] ?? "🏷️"}</span>
+                          }
                         </div>
-                        <p style={{ fontSize: 32, margin: "0 0 8px" }}>{EMOJI[bono.cadena] ?? "🏷️"}</p>
                         <p style={{ fontWeight: 800, color: "white", fontSize: 14, margin: "0 0 2px", lineHeight: 1.3 }}>{bono.nombre}</p>
                         <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 11, margin: "0 0 8px" }}>{bono.cadena}</p>
                         <p style={{ fontWeight: 900, color: "#ffbd1f", fontSize: 16, margin: 0 }}>
@@ -278,7 +286,6 @@ export default async function Inicio() {
                   const descPct = Math.round(((bono.valorFace - bono.precio) / bono.valorFace) * 100);
                   const cashback = Math.round(bono.precio * 0.07);
                   const EMOJI: Record<string, string> = { Éxito: "🛒", Jumbo: "🦁", Carulla: "🥩", D1: "🏪", Alkosto: "📺" };
-                  const emoji = EMOJI[bono.cadena] ?? "🏷️";
                   return (
                     <Link
                       key={bono.id}
@@ -287,12 +294,19 @@ export default async function Inicio() {
                       style={{ background: "white", borderRadius: 18, border: "1px solid #e3e7f2", padding: "20px 16px", textDecoration: "none", boxShadow: "0 2px 8px rgba(16,36,99,0.05)", position: "relative", overflow: "hidden" }}
                     >
                       {/* Badge descuento */}
-                      <div style={{ position: "absolute", top: 12, right: 12, background: "#102463", color: "white", fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 999 }}>
-                        -{descPct}%
-                      </div>
+                      {descPct > 0 && (
+                        <div style={{ position: "absolute", top: 12, right: 12, background: "#102463", color: "white", fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 999 }}>
+                          -{descPct}%
+                        </div>
+                      )}
 
-                      {/* Emoji cadena */}
-                      <div style={{ fontSize: 36, marginBottom: 10 }}>{emoji}</div>
+                      {/* Logo o emoji */}
+                      <div style={{ width: 52, height: 52, borderRadius: 12, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10, overflow: "hidden" }}>
+                        {bono.imagen
+                          ? <img src={bono.imagen} alt={bono.cadena} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 6 }} />
+                          : <span style={{ fontSize: 28 }}>{EMOJI[bono.cadena] ?? "🏷️"}</span>
+                        }
+                      </div>
 
                       {/* Nombre y cadena */}
                       <p style={{ fontWeight: 800, color: "#102463", fontSize: 15, margin: "0 0 2px", lineHeight: 1.3 }}>{bono.nombre}</p>
