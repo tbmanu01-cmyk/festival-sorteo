@@ -110,10 +110,6 @@ function ModalCompra({ bono, onCerrar, onConfirmar, cargando, resultado }: Modal
                 <span className="text-gray-500">Valor del bono</span>
                 <span className="font-bold text-gray-900">${bono.valorFace.toLocaleString("es-CO")} COP</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Precio</span>
-                <span className="font-bold text-[#102463]">${bono.precio.toLocaleString("es-CO")} COP</span>
-              </div>
               <div className="flex justify-between text-sm border-t border-gray-200 pt-2">
                 <span className="text-green-600 font-medium">Cashback para ti (7%)</span>
                 <span className="font-bold text-green-600">+${cashbackEstimado.toLocaleString("es-CO")} COP</span>
