@@ -225,19 +225,13 @@ export default async function Inicio() {
                 <div className="hidden lg:grid grid-cols-2 gap-3">
                   {bonosPreview.slice(0, 4).map((bono) => {
                     const EMOJI: Record<string, string> = { Éxito: "🛒", Jumbo: "🦁", Carulla: "🥩", D1: "🏪", Alkosto: "📺" };
-                    const descPct = Math.round(((bono.valorFace - bono.precio) / bono.valorFace) * 100);
                     return (
                       <Link
                         key={bono.id}
                         href="/tienda"
                         className="block hover:scale-105 transition-transform"
-                        style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 20, padding: "20px 16px", textAlign: "center", backdropFilter: "blur(8px)", textDecoration: "none", position: "relative" }}
+                        style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 20, padding: "20px 16px", textAlign: "center", backdropFilter: "blur(8px)", textDecoration: "none" }}
                       >
-                        {descPct > 0 && (
-                          <div style={{ position: "absolute", top: 10, right: 10, background: "#ffbd1f", color: "#102463", fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 999 }}>
-                            -{descPct}%
-                          </div>
-                        )}
                         <div style={{ width: 48, height: 48, borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", overflow: "hidden" }}>
                           {bono.imagen
                             ? <img src={bono.imagen} alt={bono.cadena} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 6 }} />
@@ -285,7 +279,6 @@ export default async function Inicio() {
             {bonosPreview.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3 mb-7">
                 {bonosPreview.map((bono) => {
-                  const descPct = Math.round(((bono.valorFace - bono.precio) / bono.valorFace) * 100);
                   const cashback = Math.round(bono.precio * 0.07);
                   const EMOJI: Record<string, string> = { Éxito: "🛒", Jumbo: "🦁", Carulla: "🥩", D1: "🏪", Alkosto: "📺" };
                   return (
@@ -293,14 +286,8 @@ export default async function Inicio() {
                       key={bono.id}
                       href="/tienda"
                       className="block hover:scale-105 transition-transform"
-                      style={{ background: "white", borderRadius: 18, border: "1px solid #e3e7f2", padding: "20px 16px", textDecoration: "none", boxShadow: "0 2px 8px rgba(16,36,99,0.05)", position: "relative", overflow: "hidden" }}
+                      style={{ background: "white", borderRadius: 18, border: "1px solid #e3e7f2", padding: "20px 16px", textDecoration: "none", boxShadow: "0 2px 8px rgba(16,36,99,0.05)" }}
                     >
-                      {/* Badge descuento */}
-                      {descPct > 0 && (
-                        <div style={{ position: "absolute", top: 12, right: 12, background: "#102463", color: "white", fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 999 }}>
-                          -{descPct}%
-                        </div>
-                      )}
 
                       {/* Logo o emoji */}
                       <div style={{ width: 52, height: 52, borderRadius: 12, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10, overflow: "hidden" }}>
