@@ -17,8 +17,13 @@ interface Anticipada {
   cantidadGanadores: number;
 }
 
-interface CajaPreview {
-  numero: string;
+interface BonoPreview {
+  id: string;
+  nombre: string;
+  cadena: string;
+  valorFace: number;
+  precio: number;
+  stock: number;
 }
 
 async function obtenerDatos() {
@@ -29,9 +34,11 @@ async function obtenerDatos() {
       prisma.caja.count({ where: { estado: "VENDIDA" } }),
     ]);
 
-    const cajasPreview = await prisma.$queryRaw<CajaPreview[]>`
-      SELECT numero FROM cajas WHERE estado = 'DISPONIBLE' ORDER BY RANDOM() LIMIT 12
-    `;
+    const bonosPreview = await prisma.bono.findMany({
+      where: { activo: true, stock: { gt: 0 } },
+      select: { id: true, nombre: true, cadena: true, valorFace: true, precio: true, stock: true },
+      take: 6,
+    });
 
     let anticipadas: Anticipada[] = [];
     try {
@@ -47,7 +54,7 @@ async function obtenerDatos() {
       precioCaja: config?.precioCaja ?? 10_000,
       fechaSorteo: config?.fechaSorteo ? config.fechaSorteo.toISOString() : null,
       vendidas,
-      cajasPreview,
+      bonosPreview,
       anticipadas,
     };
   } catch {
@@ -55,7 +62,7 @@ async function obtenerDatos() {
       precioCaja: 10_000,
       fechaSorteo: null,
       vendidas: 0,
-      cajasPreview: [],
+      bonosPreview: [],
       anticipadas: [],
     };
   }
@@ -133,7 +140,7 @@ const pill: CSSProperties = {
 };
 
 export default async function Inicio() {
-  const { precioCaja, fechaSorteo, vendidas, cajasPreview, anticipadas } = await obtenerDatos();
+  const { precioCaja, fechaSorteo, vendidas, bonosPreview, anticipadas } = await obtenerDatos();
 
   const disponibles = TOTAL_CAJAS - vendidas;
   const pctVendido = ((vendidas / TOTAL_CAJAS) * 100).toFixed(1);
@@ -210,23 +217,31 @@ export default async function Inicio() {
                 </div>
               </div>
 
-              {/* Right: ticket preview (desktop only) */}
-              {cajasPreview.length >= 4 && (
+              {/* Right: bonos preview (desktop only) */}
+              {bonosPreview.length >= 2 && (
                 <div className="hidden lg:grid grid-cols-2 gap-3">
-                  {cajasPreview.slice(0, 4).map((caja) => (
-                    <Link
-                      key={caja.numero}
-                      href="/membresias"
-                      className="block hover:scale-105 transition-transform"
-                      style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 20, padding: "28px 16px", textAlign: "center", backdropFilter: "blur(8px)", textDecoration: "none" }}
-                    >
-                      <img src="/membresia.svg" alt="" style={{ width: 80, marginBottom: 10, display: "block", margin: "0 auto 10px" }} />
-                      <p style={{ fontWeight: 900, color: "white", fontSize: 24, letterSpacing: "0.14em", margin: "0 0 4px" }}>
-                        {caja.numero}
-                      </p>
-                      <p style={{ color: "#86efac", fontSize: 12, fontWeight: 600, margin: 0 }}>Disponible</p>
-                    </Link>
-                  ))}
+                  {bonosPreview.slice(0, 4).map((bono) => {
+                    const EMOJI: Record<string, string> = { Éxito: "🛒", Jumbo: "🦁", Carulla: "🥩", D1: "🏪", Alkosto: "📺" };
+                    const descPct = Math.round(((bono.valorFace - bono.precio) / bono.valorFace) * 100);
+                    return (
+                      <Link
+                        key={bono.id}
+                        href="/tienda"
+                        className="block hover:scale-105 transition-transform"
+                        style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 20, padding: "20px 16px", textAlign: "center", backdropFilter: "blur(8px)", textDecoration: "none", position: "relative" }}
+                      >
+                        <div style={{ position: "absolute", top: 10, right: 10, background: "#ffbd1f", color: "#102463", fontSize: 10, fontWeight: 800, padding: "2px 7px", borderRadius: 999 }}>
+                          -{descPct}%
+                        </div>
+                        <p style={{ fontSize: 32, margin: "0 0 8px" }}>{EMOJI[bono.cadena] ?? "🏷️"}</p>
+                        <p style={{ fontWeight: 800, color: "white", fontSize: 14, margin: "0 0 2px", lineHeight: 1.3 }}>{bono.nombre}</p>
+                        <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 11, margin: "0 0 8px" }}>{bono.cadena}</p>
+                        <p style={{ fontWeight: 900, color: "#ffbd1f", fontSize: 16, margin: 0 }}>
+                          ${bono.precio.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                        </p>
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -239,52 +254,83 @@ export default async function Inicio() {
         <PwaInstallBanner />
 
         {/* ═══════════════════════════════════════════════════
-            MEMBRESÍAS DISPONIBLES
+            TIENDA — BONOS DESTACADOS
         ═══════════════════════════════════════════════════ */}
         <section style={{ background: "var(--c10-ink-50)", padding: "56px 0", borderBottom: "1px solid var(--c10-ink-200)" }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 style={{ fontSize: 22, fontWeight: 800, color: "#102463", letterSpacing: "-0.02em", margin: 0 }}>
-                  Membresías disponibles
+                  Bonos con cashback
                 </h2>
                 <p style={{ color: "#6b7693", fontSize: 13, marginTop: 4, marginBottom: 0 }}>
-                  {disponibles.toLocaleString("es-CO", { maximumFractionDigits: 0 })} membresías listas para ser tuyas
+                  Compra bonos de tus supermercados favoritos y recibe cashback en tu billetera
                 </p>
               </div>
-              <Link href="/membresias" style={{ color: "#102463", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
-                Ver todas →
+              <Link href="/tienda" style={{ color: "#102463", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
+                Ver todos →
               </Link>
             </div>
 
-            {cajasPreview.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-7">
-                {cajasPreview.map((caja) => (
-                  <Link
-                    key={caja.numero}
-                    href="/membresias"
-                    className="block hover:scale-105 transition-transform"
-                    style={{ background: "rgba(209,250,229,0.55)", borderRadius: 18, border: "1px solid rgba(16,185,129,0.20)", padding: "20px 12px", textAlign: "center", boxShadow: "0 2px 8px rgba(16,36,99,0.04)", textDecoration: "none" }}
-                  >
-                    <img src="/membresia.svg" alt="" style={{ width: 72, display: "block", margin: "0 auto 10px" }} />
-                    <p style={{ fontWeight: 900, color: "#102463", fontSize: 32, letterSpacing: "0.12em", margin: 0 }}>{caja.numero}</p>
-                    <p style={{ color: "#059669", fontSize: 14, fontWeight: 600, marginTop: 6, marginBottom: 0 }}>Disponible</p>
-                    <p style={{ color: "#6b7693", fontSize: 13, marginTop: 3, marginBottom: 0 }}>${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</p>
-                  </Link>
-                ))}
+            {bonosPreview.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3 mb-7">
+                {bonosPreview.map((bono) => {
+                  const descPct = Math.round(((bono.valorFace - bono.precio) / bono.valorFace) * 100);
+                  const cashback = Math.round(bono.precio * 0.07);
+                  const EMOJI: Record<string, string> = { Éxito: "🛒", Jumbo: "🦁", Carulla: "🥩", D1: "🏪", Alkosto: "📺" };
+                  const emoji = EMOJI[bono.cadena] ?? "🏷️";
+                  return (
+                    <Link
+                      key={bono.id}
+                      href="/tienda"
+                      className="block hover:scale-105 transition-transform"
+                      style={{ background: "white", borderRadius: 18, border: "1px solid #e3e7f2", padding: "20px 16px", textDecoration: "none", boxShadow: "0 2px 8px rgba(16,36,99,0.05)", position: "relative", overflow: "hidden" }}
+                    >
+                      {/* Badge descuento */}
+                      <div style={{ position: "absolute", top: 12, right: 12, background: "#102463", color: "white", fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 999 }}>
+                        -{descPct}%
+                      </div>
+
+                      {/* Emoji cadena */}
+                      <div style={{ fontSize: 36, marginBottom: 10 }}>{emoji}</div>
+
+                      {/* Nombre y cadena */}
+                      <p style={{ fontWeight: 800, color: "#102463", fontSize: 15, margin: "0 0 2px", lineHeight: 1.3 }}>{bono.nombre}</p>
+                      <p style={{ color: "#6b7693", fontSize: 12, margin: "0 0 12px" }}>{bono.cadena}</p>
+
+                      {/* Precios */}
+                      <div style={{ marginBottom: 10 }}>
+                        <span style={{ color: "#9ca3af", fontSize: 12, textDecoration: "line-through", marginRight: 6 }}>
+                          ${bono.valorFace.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                        </span>
+                        <span style={{ color: "#102463", fontWeight: 900, fontSize: 18 }}>
+                          ${bono.precio.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+
+                      {/* Cashback pill */}
+                      <div style={{ background: "rgba(16,185,129,0.10)", borderRadius: 8, padding: "5px 10px", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <span style={{ fontSize: 12 }}>💰</span>
+                        <span style={{ color: "#059669", fontSize: 12, fontWeight: 700 }}>
+                          +${cashback.toLocaleString("es-CO", { maximumFractionDigits: 0 })} cashback
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <p style={{ textAlign: "center", color: "#6b7693", padding: "32px 0", fontSize: 14 }}>
-                Cargando membresías disponibles…
+                Próximamente bonos disponibles…
               </p>
             )}
 
             <div style={{ textAlign: "center" }}>
               <Link
-                href="/membresias"
+                href="/tienda"
                 style={{ background: "#102463", color: "white", fontWeight: 700, fontSize: 15, padding: "14px 32px", borderRadius: 999, boxShadow: "0 8px 20px -4px rgba(16,36,99,0.40)", textDecoration: "none", display: "inline-block" }}
               >
-                🛒 Ver todas las membresías
+                🏷️ Ver todos los bonos
               </Link>
             </div>
           </div>
