@@ -21,7 +21,7 @@ export async function GET() {
       orderBy: { fecha: "desc" },
       take: 20,
       include: {
-        bono: { select: { nombre: true, cadena: true } },
+        bono: { select: { nombre: true, cadena: true, valorFace: true } },
       },
     }),
     prisma.transaccion.findMany({

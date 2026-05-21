@@ -70,7 +70,7 @@ interface BonoCompraItem {
   cashbackComprador: number;
   codigoRedención: string;
   fecha: string;
-  bono: { nombre: string; cadena: string };
+  bono: { nombre: string; cadena: string; valorFace: number };
 }
 
 interface MisBonos {
@@ -1442,7 +1442,7 @@ export default function Dashboard() {
                       <p className="text-gray-400 text-xs">{new Date(compra.fecha).toLocaleDateString("es-CO", { dateStyle: "medium" })}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-gray-900">${compra.precio.toLocaleString("es-CO")}</p>
+                      <p className="text-sm font-bold text-gray-900">${compra.bono.valorFace.toLocaleString("es-CO")}</p>
                       <p className="text-xs font-semibold text-green-600">+${compra.cashbackComprador.toLocaleString("es-CO")} COP</p>
                     </div>
                   </div>
