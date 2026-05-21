@@ -277,7 +277,7 @@ export default async function Inicio() {
             </div>
 
             {bonosPreview.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-3 mb-7">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-7">
                 {bonosPreview.map((bono) => {
                   const cashback = Math.round(bono.precio * 0.07);
                   const EMOJI: Record<string, string> = { Éxito: "🛒", Jumbo: "🦁", Carulla: "🥩", D1: "🏪", Alkosto: "📺" };
@@ -285,38 +285,46 @@ export default async function Inicio() {
                     <Link
                       key={bono.id}
                       href="/tienda"
-                      className="block hover:scale-105 transition-transform"
-                      style={{ background: "white", borderRadius: 18, border: "1px solid #e3e7f2", padding: "20px 16px", textDecoration: "none", boxShadow: "0 2px 8px rgba(16,36,99,0.05)" }}
+                      className="block hover:shadow-md transition-shadow"
+                      style={{ background: "white", borderRadius: 18, border: "1px solid #e3e7f2", textDecoration: "none", boxShadow: "0 2px 8px rgba(16,36,99,0.05)", overflow: "hidden" }}
                     >
-
-                      {/* Logo o emoji */}
-                      <div style={{ width: 52, height: 52, borderRadius: 12, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 10, overflow: "hidden" }}>
-                        {bono.imagen
-                          ? <img src={bono.imagen} alt={bono.cadena} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 6 }} />
-                          : <span style={{ fontSize: 28 }}>{EMOJI[bono.cadena] ?? "🏷️"}</span>
-                        }
+                      {/* Cabecera azul — igual que TarjetaBono en tienda */}
+                      <div style={{ background: "linear-gradient(135deg, #102463 0%, #173592 100%)", padding: "16px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 44, height: 44, borderRadius: 12, background: "white", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden", boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}>
+                          {bono.imagen
+                            ? <img src={bono.imagen} alt={bono.cadena} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 5 }} />
+                            : <span style={{ fontSize: 22 }}>{EMOJI[bono.cadena] ?? "🏷️"}</span>
+                          }
+                        </div>
+                        <div>
+                          <p style={{ color: "white", fontWeight: 800, fontSize: 16, margin: 0, lineHeight: 1.2 }}>{bono.cadena}</p>
+                          <p style={{ color: "rgba(255,255,255,0.60)", fontSize: 12, margin: 0 }}>{bono.stock.toLocaleString("es-CO")} disponibles</p>
+                        </div>
                       </div>
 
-                      {/* Nombre y cadena */}
-                      <p style={{ fontWeight: 800, color: "#102463", fontSize: 15, margin: "0 0 2px", lineHeight: 1.3 }}>{bono.nombre}</p>
-                      <p style={{ color: "#6b7693", fontSize: 12, margin: "0 0 12px" }}>{bono.cadena}</p>
+                      {/* Cuerpo */}
+                      <div style={{ padding: "16px 20px" }}>
+                        <p style={{ fontWeight: 700, color: "#111827", fontSize: 14, margin: "0 0 12px", lineHeight: 1.4 }}>{bono.nombre}</p>
 
-                      {/* Precios */}
-                      <div style={{ marginBottom: 10 }}>
-                        <span style={{ color: "#9ca3af", fontSize: 12, textDecoration: "line-through", marginRight: 6 }}>
-                          ${bono.valorFace.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
-                        </span>
-                        <span style={{ color: "#102463", fontWeight: 900, fontSize: 18 }}>
-                          ${bono.precio.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
-                        </span>
-                      </div>
+                        {/* Precio */}
+                        <div style={{ background: "#f9fafb", borderRadius: 12, padding: "10px 14px", marginBottom: 12 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ color: "#6b7280", fontSize: 13 }}>Valor</span>
+                            <span style={{ fontWeight: 800, color: "#102463", fontSize: 17 }}>
+                              ${bono.valorFace.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
+                            </span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+                            <span style={{ color: "#059669", fontSize: 13, fontWeight: 600 }}>Cashback 7%</span>
+                            <span style={{ color: "#059669", fontWeight: 700, fontSize: 13 }}>
+                              +${cashback.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
+                            </span>
+                          </div>
+                        </div>
 
-                      {/* Cashback pill */}
-                      <div style={{ background: "rgba(16,185,129,0.10)", borderRadius: 8, padding: "5px 10px", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                        <span style={{ fontSize: 12 }}>💰</span>
-                        <span style={{ color: "#059669", fontSize: 12, fontWeight: 700 }}>
-                          +${cashback.toLocaleString("es-CO", { maximumFractionDigits: 0 })} cashback
-                        </span>
+                        <div style={{ background: "#ffbd1f", borderRadius: 999, padding: "9px 0", textAlign: "center", fontWeight: 800, color: "#102463", fontSize: 13 }}>
+                          Ver en tienda →
+                        </div>
                       </div>
                     </Link>
                   );
