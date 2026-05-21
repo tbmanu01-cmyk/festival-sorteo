@@ -155,61 +155,51 @@ export default async function Inicio() {
       <main className="flex-1">
 
         {/* ═══════════════════════════════════════════════════
-            HERO
+            HERO — BONOS & CASHBACK
         ═══════════════════════════════════════════════════ */}
         <section
-          className="c10-hero-wrap text-white"
+          className="text-white"
           style={{ background: "linear-gradient(135deg, #102463 0%, #173592 55%, #1e44b8 100%)", padding: "72px 0 64px" }}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style={{ position: "relative", zIndex: 1 }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
 
-              {/* Left: copy */}
+              {/* Left: copy bonos */}
               <div>
                 <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#ffbd1f", background: "rgba(255,189,31,0.12)", border: "1px solid rgba(255,189,31,0.30)", borderRadius: 999, padding: "4px 14px", marginBottom: 20 }}>
-                  Club de membresías 10K
+                  Club 10K · Bonos con cashback
                 </span>
                 <h1 style={{ fontSize: "clamp(38px,4.6vw,58px)", fontWeight: 800, lineHeight: 1.05, letterSpacing: "-0.02em", margin: "0 0 16px" }}>
-                  Tu número,{" "}
-                  <span style={{ color: "#ffbd1f" }}>tu oportunidad</span>
+                  Compra bonos y{" "}
+                  <span style={{ color: "#ffbd1f" }}>gana cashback</span>
                 </h1>
                 <p style={{ fontSize: 18, color: "rgba(255,255,255,0.85)", margin: "0 0 28px", maxWidth: 480, lineHeight: 1.65 }}>
-                  10,000 membresías numeradas. Coincide con la Lotería de Bogotá en 4, 3, 2 o 1 cifra y gana parte del recaudo.
+                  Adquiere bonos de tus supermercados favoritos y recibe dinero de vuelta directo en tu billetera. Tú y tu red ganan con cada compra.
                 </p>
 
                 {/* Stat pills */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 32 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 36 }}>
                   <div style={pill}>
-                    <span style={{ fontWeight: 800, color: "#ffbd1f" }}>{disponibles.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>{" "}
-                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>disponibles</span>
+                    <span style={{ fontWeight: 800, color: "#ffbd1f" }}>7%</span>{" "}
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>cashback directo</span>
                   </div>
                   <div style={pill}>
-                    <span style={{ fontWeight: 800, color: "#ffbd1f" }}>{pctVendido}%</span>{" "}
-                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>vendido</span>
+                    <span style={{ fontWeight: 800, color: "#ffbd1f" }}>3 niveles</span>{" "}
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>de red</span>
                   </div>
                   <div style={pill}>
-                    <span style={{ fontWeight: 800, color: "white" }}>${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>{" "}
-                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>por membresía</span>
+                    <span style={{ fontWeight: 800, color: "white" }}>Retiro</span>{" "}
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>desde $100.000</span>
                   </div>
                 </div>
-
-                {/* Countdown */}
-                {fechaSorteo && (
-                  <div style={{ marginBottom: 36 }}>
-                    <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.60)", marginBottom: 10 }}>
-                      Próximo resultado principal
-                    </p>
-                    <CountdownHero fecha={fechaSorteo} />
-                  </div>
-                )}
 
                 {/* CTAs */}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
                   <Link
-                    href="/membresias"
+                    href="/tienda"
                     style={{ background: "#ffbd1f", color: "#102463", fontWeight: 800, fontSize: 16, padding: "14px 32px", borderRadius: 999, boxShadow: "0 8px 20px -4px rgba(255,165,0,0.45)", textDecoration: "none", display: "inline-block" }}
                   >
-                    Ver membresías →
+                    Ver bonos disponibles →
                   </Link>
                   <a
                     href="#como-funciona"
@@ -225,6 +215,7 @@ export default async function Inicio() {
                 <div className="hidden lg:grid grid-cols-2 gap-3">
                   {bonosPreview.slice(0, 4).map((bono) => {
                     const EMOJI: Record<string, string> = { Éxito: "🛒", Jumbo: "🦁", Carulla: "🥩", D1: "🏪", Alkosto: "📺" };
+                    const cashback = Math.round(bono.precio * 0.07);
                     return (
                       <Link
                         key={bono.id}
@@ -238,10 +229,10 @@ export default async function Inicio() {
                             : <span style={{ fontSize: 26 }}>{EMOJI[bono.cadena] ?? "🏷️"}</span>
                           }
                         </div>
-                        <p style={{ fontWeight: 800, color: "white", fontSize: 14, margin: "0 0 2px", lineHeight: 1.3 }}>{bono.nombre}</p>
-                        <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 11, margin: "0 0 8px" }}>{bono.cadena}</p>
-                        <p style={{ fontWeight: 900, color: "#ffbd1f", fontSize: 16, margin: 0 }}>
-                          ${bono.precio.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                        <p style={{ fontWeight: 800, color: "white", fontSize: 14, margin: "0 0 2px", lineHeight: 1.3 }}>{bono.cadena}</p>
+                        <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 11, margin: "0 0 6px" }}>${bono.valorFace.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</p>
+                        <p style={{ color: "#86efac", fontSize: 12, fontWeight: 700, margin: 0 }}>
+                          +${cashback.toLocaleString("es-CO", { maximumFractionDigits: 0 })} cashback
                         </p>
                       </Link>
                     );

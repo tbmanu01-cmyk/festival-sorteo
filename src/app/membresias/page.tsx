@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import CountdownHero from "@/components/CountdownHero";
 
 type EstadoCaja = "DISPONIBLE" | "RESERVADA" | "VENDIDA";
 type Filtro = "todos" | "disponibles" | "ocupados";
@@ -313,7 +314,9 @@ function MembresiasInner() {
   const searchParams = useSearchParams();
 
   const [fechaSorteo, setFechaSorteo] = useState<string | null>(null);
+  const [fechaSorteoISO, setFechaSorteoISO] = useState<string | null>(null);
   const [precioCaja, setPrecioCaja] = useState(10_000);
+  const [vendidasTotal, setVendidasTotal] = useState(0);
   const [giftCardId, setGiftCardId] = useState<string | null>(null);
   const [giftCardValor, setGiftCardValor] = useState(0);
   const [datos, setDatos] = useState<RespuestaCajas | null>(null);
@@ -338,9 +341,13 @@ function MembresiasInner() {
   useEffect(() => {
     fetch("/api/config")
       .then((r) => r.json())
-      .then((c: { fechaSorteo?: string | null; precioCaja?: number }) => {
-        if (c.fechaSorteo) setFechaSorteo(new Date(c.fechaSorteo).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }));
+      .then((c: { fechaSorteo?: string | null; precioCaja?: number; vendidasTotal?: number }) => {
+        if (c.fechaSorteo) {
+          setFechaSorteoISO(c.fechaSorteo);
+          setFechaSorteo(new Date(c.fechaSorteo).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }));
+        }
         if (c.precioCaja) setPrecioCaja(c.precioCaja);
+        if (c.vendidasTotal !== undefined) setVendidasTotal(c.vendidasTotal);
       })
       .catch(() => undefined);
   }, []);
@@ -463,33 +470,49 @@ function MembresiasInner() {
       <Header />
 
       <main className="flex-1 bg-gray-50">
-        {fechaSorteo && (
-          <div className="bg-[#ffbd1f] text-[#102463] py-2 px-4 text-center text-sm font-bold">
-            🗓️ Fecha del resultado: {fechaSorteo}
-          </div>
-        )}
-        <div style={{ background: "linear-gradient(135deg, #102463 0%, #173592 100%)" }} className="text-white py-8 px-4">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl md:text-3xl font-extrabold mb-1">
-              Membresías disponibles
+        <section
+          className="text-white"
+          style={{ background: "linear-gradient(135deg, #102463 0%, #173592 55%, #1e44b8 100%)", padding: "56px 0 48px" }}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#ffbd1f", background: "rgba(255,189,31,0.12)", border: "1px solid rgba(255,189,31,0.30)", borderRadius: 999, padding: "4px 14px", marginBottom: 16 }}>
+              Club de membresías 10K
+            </span>
+            <h1 style={{ fontSize: "clamp(32px,4vw,52px)", fontWeight: 800, lineHeight: 1.08, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
+              Tu número,{" "}
+              <span style={{ color: "#ffbd1f" }}>tu oportunidad</span>
             </h1>
-            <p className="text-blue-200 text-sm">
-              Elige tu número del 0000 al 9999 — ${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP por membresía
+            <p style={{ fontSize: 17, color: "rgba(255,255,255,0.85)", margin: "0 0 24px", maxWidth: 480, lineHeight: 1.65 }}>
+              10,000 membresías numeradas. Coincide con la Lotería de Bogotá en 4, 3, 2 o 1 cifra y gana parte del recaudo.
             </p>
-            {datos && (
-              <div className="flex gap-4 mt-4 text-sm">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-green-400 inline-block" />
-                  <span className="text-blue-100">
-                    {datos.total === 100
-                      ? `${disponibles} membresías disponibles en esta página`
-                      : `${datos.total.toLocaleString("es-CO", { maximumFractionDigits: 0 })} resultados`}
-                  </span>
-                </span>
+
+            {/* Pills de stats */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: fechaSorteoISO ? 24 : 0 }}>
+              <div style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "8px 18px", backdropFilter: "blur(8px)" }}>
+                <span style={{ fontWeight: 800, color: "#ffbd1f" }}>{(10000 - vendidasTotal).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>{" "}
+                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>disponibles</span>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "8px 18px", backdropFilter: "blur(8px)" }}>
+                <span style={{ fontWeight: 800, color: "#ffbd1f" }}>{((vendidasTotal / 10000) * 100).toFixed(1)}%</span>{" "}
+                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>vendido</span>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "8px 18px", backdropFilter: "blur(8px)" }}>
+                <span style={{ fontWeight: 800, color: "white" }}>${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>{" "}
+                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>por membresía</span>
+              </div>
+            </div>
+
+            {/* Countdown */}
+            {fechaSorteoISO && (
+              <div style={{ marginTop: 20 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.60)", marginBottom: 10 }}>
+                  Próximo resultado principal
+                </p>
+                <CountdownHero fecha={fechaSorteoISO} />
               </div>
             )}
           </div>
-        </div>
+        </section>
 
         {giftCardId && (
           <div className="bg-green-600 text-white px-4 py-3 text-sm font-semibold text-center flex items-center justify-center gap-2">

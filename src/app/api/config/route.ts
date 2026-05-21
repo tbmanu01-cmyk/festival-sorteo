@@ -12,9 +12,12 @@ const DEFAULTS = {
 export async function GET() {
   try {
     const { prisma } = await import("@/lib/prisma");
-    const config = await prisma.config.findUnique({ where: { id: "singleton" } });
-    return NextResponse.json(config ?? DEFAULTS);
+    const [config, vendidasTotal] = await Promise.all([
+      prisma.config.findUnique({ where: { id: "singleton" } }),
+      prisma.caja.count({ where: { estado: "VENDIDA" } }),
+    ]);
+    return NextResponse.json({ ...(config ?? DEFAULTS), vendidasTotal });
   } catch {
-    return NextResponse.json(DEFAULTS);
+    return NextResponse.json({ ...DEFAULTS, vendidasTotal: 0 });
   }
 }
