@@ -3,6 +3,7 @@ import { Nunito } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import SwRegister from "@/components/SwRegister";
+import NavMobile from "@/components/NavMobile";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -57,7 +58,10 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className="min-h-full flex flex-col antialiased bg-gray-50">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <NavMobile />
+        </Providers>
         <SwRegister />
       </body>
     </html>
