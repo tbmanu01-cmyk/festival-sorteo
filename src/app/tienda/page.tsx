@@ -238,6 +238,9 @@ export default function TiendaBonos() {
   }, [session]);
 
   const cadenas = ["todas", ...Array.from(new Set(bonos.map((b) => b.cadena)))];
+  const logosPorCadena = Object.fromEntries(
+    bonos.filter((b) => b.imagen).map((b) => [b.cadena, b.imagen as string])
+  );
   const bonosFiltrados =
     cadenaFiltro === "todas" ? bonos : bonos.filter((b) => b.cadena === cadenaFiltro);
 
@@ -329,7 +332,15 @@ export default function TiendaBonos() {
                       : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
                   }`}
                 >
-                  {c === "todas" ? "Todas las cadenas" : `${CADENA_EMOJI[c] ?? ""} ${c}`}
+                  {c === "todas" ? "Todas las cadenas" : (
+                    <span className="flex items-center gap-1.5">
+                      {logosPorCadena[c]
+                        ? <img src={logosPorCadena[c]} alt={c} className="w-4 h-4 object-contain rounded-sm" />
+                        : <span>{CADENA_EMOJI[c] ?? ""}</span>
+                      }
+                      {c}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

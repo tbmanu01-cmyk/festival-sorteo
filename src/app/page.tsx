@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
+
+export const dynamic = "force-dynamic";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CountdownAnticipada from "@/components/CountdownAnticipada";
