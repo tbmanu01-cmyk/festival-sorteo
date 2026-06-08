@@ -36,8 +36,20 @@ export async function POST(req: NextRequest) {
 
       const montoFinal = retiro.montoNeto ?? retiro.monto;
 
+      // Si no hubo OTP, deducir saldo ahora
+      if (!retiro.confirmado) {
+        const deducido = await prisma.user.updateMany({
+          where: { id: retiro.userId, saldoPuntos: { gte: retiro.monto } },
+          data: { saldoPuntos: { decrement: retiro.monto } },
+        });
+        if (deducido.count === 0) {
+          resultados.push({ id, ok: false, nombre: `${retiro.user.nombre} ${retiro.user.apellido}`, monto: retiro.monto, mensaje: "Saldo insuficiente." });
+          continue;
+        }
+      }
+
       await prisma.$transaction([
-        prisma.retiro.update({ where: { id }, data: { estado: "PAGADO" } }),
+        prisma.retiro.update({ where: { id }, data: { estado: "PAGADO", confirmado: true } }),
         prisma.transaccion.create({
           data: {
             userId: retiro.userId,

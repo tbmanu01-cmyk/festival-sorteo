@@ -30,6 +30,7 @@ interface Retiro {
   id: string; monto: number; montoNeto: number | null; estado: string;
   cuentaDestino: string; fecha: string; preAprobadoEn: string | null;
   retencion: number | null; porcentajeRetencion: number | null; notaRetencion: string | null;
+  confirmado: boolean;
   user: { nombre: string; apellido: string; correo: string; celular: string; banco: string | null };
 }
 
@@ -437,9 +438,12 @@ function TablaRetiros() {
                     <p className="text-gray-400 text-xs mt-0.5">{r.user.banco} · {r.cuentaDestino}</p>
                     <p className="text-xs text-gray-400 mt-0.5">{new Date(r.fecha).toLocaleString("es-CO")}</p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-end gap-1.5">
                     <span className="text-lg font-extrabold text-gray-500">${fmt(r.monto)}</span>
-                    <span className="text-xs bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg font-medium">En revisión</span>
+                    {r.confirmado
+                      ? <span className="text-xs bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg font-medium">En revisión</span>
+                      : <span className="text-xs bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-medium">⏳ Esperando OTP</span>
+                    }
                   </div>
                 </div>
               </div>

@@ -41,8 +41,19 @@ export async function PATCH(
   if (accion === "aprobar") {
     const montoFinal = retiro.montoNeto ?? retiro.monto;
 
+    // Si el usuario no verificó OTP, el saldo todavía no fue deducido — hacerlo ahora
+    if (!retiro.confirmado) {
+      const deducido = await prisma.user.updateMany({
+        where: { id: retiro.userId, saldoPuntos: { gte: retiro.monto } },
+        data: { saldoPuntos: { decrement: retiro.monto } },
+      });
+      if (deducido.count === 0) {
+        return NextResponse.json({ mensaje: "Saldo insuficiente. No se puede aprobar." }, { status: 422 });
+      }
+    }
+
     await prisma.$transaction([
-      prisma.retiro.update({ where: { id }, data: { estado: "PAGADO" } }),
+      prisma.retiro.update({ where: { id }, data: { estado: "PAGADO", confirmado: true } }),
       prisma.transaccion.create({
         data: {
           userId: retiro.userId,
