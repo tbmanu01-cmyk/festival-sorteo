@@ -232,7 +232,7 @@ export default async function Inicio() {
                         <p style={{ fontWeight: 800, color: "white", fontSize: 14, margin: "0 0 2px", lineHeight: 1.3 }}>{bono.cadena}</p>
                         <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 11, margin: "0 0 6px" }}>${bono.valorFace.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</p>
                         <p style={{ color: "#86efac", fontSize: 12, fontWeight: 700, margin: 0 }}>
-                          +${cashback.toLocaleString("es-CO", { maximumFractionDigits: 0 })} cashback
+                          Cashback 7%
                         </p>
                       </Link>
                     );
