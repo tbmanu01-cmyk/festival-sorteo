@@ -111,11 +111,13 @@ model User {
 }
 
 model Referido {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   referidorId String
-  referidoId  String   @unique
-  fecha       DateTime @default(now())
-  compro      Boolean  @default(false)
+  referidoId  String    @unique
+  fecha       DateTime  @default(now())
+  compro      Boolean   @default(false)
+  slotToken   String?   @unique
+  slotExpiry  DateTime?
 
   referidor   User     @relation("Referidor", fields: [referidorId], references: [id])
   referido    User     @relation("Referido", fields: [referidoId], references: [id])

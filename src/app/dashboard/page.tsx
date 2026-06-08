@@ -853,6 +853,8 @@ interface MiembroRed {
   ciudad: string;
   codigoRef: string | null;
   avatar?: string | null;
+  refId: string;
+  compro: boolean;
 }
 
 interface FamiliaRed {
@@ -879,30 +881,120 @@ function fmtFecha(iso: string) {
 }
 
 function AvatarMiembro({ miembro, nivel }: { miembro: MiembroRed; nivel: "hijo" | "nieto" }) {
-  const tam = nivel === "hijo" ? "w-12 h-12 text-sm" : "w-10 h-10 text-xs";
-  const defaultBg = nivel === "hijo" ? "#102463" : "#ffbd1f";
+  const [mostrando, setMostrando] = useState(false);
+  const [link, setLink]           = useState<string | null>(null);
+  const [copiado, setCopiado]     = useState(false);
+  const [cargando, setCargando]   = useState(false);
+  const [error, setError]         = useState("");
+
+  const tam        = nivel === "hijo" ? "w-12 h-12 text-sm" : "w-10 h-10 text-xs";
+  const defaultBg  = nivel === "hijo" ? "#102463" : "#ffbd1f";
   const defaultColor = nivel === "hijo" ? "white" : "#102463";
   const tieneImagen = esPreset(miembro.avatar) || esCustom(miembro.avatar);
+
+  async function solicitarReemplazo() {
+    setCargando(true);
+    setError("");
+    try {
+      const res = await fetch("/api/red/solicitar-reemplazo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ referidoId: miembro.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setError(json.mensaje ?? "Error al generar el link."); return; }
+      setLink(json.link);
+    } catch { setError("Error de red."); }
+    finally { setCargando(false); }
+  }
+
+  function copiar() {
+    if (!link) return;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiado(true);
+      setTimeout(() => { setCopiado(false); setMostrando(false); setLink(null); }, 2000);
+    });
+  }
 
   return (
     <div className="flex flex-col items-center gap-1 group relative">
       <div
-        className={`${tam} rounded-full shadow-sm ring-2 ring-white cursor-default overflow-hidden flex items-center justify-center font-extrabold`}
-        style={tieneImagen ? {} : { background: defaultBg, color: defaultColor }}
+        className={`${tam} rounded-full shadow-sm ring-2 ${miembro.compro ? "ring-white" : "ring-amber-300"} cursor-default overflow-hidden flex items-center justify-center font-extrabold relative`}
+        style={tieneImagen ? {} : { background: miembro.compro ? defaultBg : "#9ca3af", color: "white" }}
       >
         {tieneImagen
           ? <img src={miembro.avatar!} alt="" className="w-full h-full object-cover" />
           : iniciales(miembro.nombre, miembro.apellido)
         }
       </div>
-      <p className="text-[10px] text-gray-600 font-medium text-center leading-tight max-w-[56px] truncate">
+      <p className={`text-[10px] font-medium text-center leading-tight max-w-[56px] truncate ${miembro.compro ? "text-gray-600" : "text-amber-600"}`}>
         {miembro.nombre}
       </p>
-      {/* Tooltip limpio */}
+
+      {/* Tooltip con opción de reemplazar para no-compradores */}
       <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[11px] rounded-xl px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl whitespace-nowrap">
         <p className="font-bold">{miembro.nombre} {miembro.apellido}</p>
         <p className="text-gray-400 text-[10px] mt-0.5">Desde {fmtFecha(miembro.fechaRegistro)}</p>
+        {!miembro.compro && <p className="text-amber-400 text-[10px] mt-0.5 font-semibold">Sin compra aún</p>}
       </div>
+
+      {/* Botón reemplazar para slots sin compra */}
+      {!miembro.compro && (
+        <button
+          onClick={() => { setMostrando(true); setLink(null); setError(""); }}
+          className="text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-1.5 py-0.5 hover:bg-amber-100 transition-colors pointer-events-auto -mt-0.5"
+        >
+          reemplazar
+        </button>
+      )}
+
+      {/* Modal de reemplazo */}
+      {mostrando && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+          onClick={() => { setMostrando(false); setLink(null); setError(""); }}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Reemplazar slot</p>
+            <p className="text-sm text-gray-700 font-semibold mb-1">{miembro.nombre} {miembro.apellido}</p>
+            <p className="text-xs text-gray-500 mb-4">
+              Este miembro aún no ha realizado una compra. Puedes generar un link especial para que otra persona ocupe su lugar.
+            </p>
+            {error && <p className="text-xs text-red-500 font-medium mb-3">{error}</p>}
+            {!link ? (
+              <button
+                onClick={solicitarReemplazo}
+                disabled={cargando}
+                className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white font-bold py-2.5 rounded-full text-sm transition-all"
+              >
+                {cargando ? "Generando..." : "Generar link de reemplazo"}
+              </button>
+            ) : (
+              <>
+                <div className="bg-gray-50 rounded-xl px-3 py-2 mb-3 border border-gray-200">
+                  <p className="text-[11px] font-mono text-gray-600 break-all leading-relaxed">{link}</p>
+                </div>
+                <p className="text-[10px] text-gray-400 text-center mb-3">Válido por 72 horas</p>
+                {copiado ? (
+                  <div className="w-full bg-green-100 text-green-700 font-bold py-2.5 rounded-full text-sm text-center">
+                    ✓ ¡Copiado!
+                  </div>
+                ) : (
+                  <button
+                    onClick={copiar}
+                    className="w-full bg-[#102463] hover:bg-[#173592] text-white font-bold py-2.5 rounded-full text-sm transition-all"
+                  >
+                    Copiar link
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

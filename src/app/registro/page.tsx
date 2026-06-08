@@ -96,7 +96,8 @@ function CampoSelect({
 function FormularioRegistro() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const refCode = searchParams.get("ref") ?? "";
+  const refCode   = searchParams.get("ref")  ?? "";
+  const slotToken = searchParams.get("slot") ?? "";
 
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
@@ -126,7 +127,11 @@ function FormularioRegistro() {
       const res = await fetch("/api/auth/registro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, refCode: refCode || undefined }),
+        body: JSON.stringify({
+          ...data,
+          refCode:   refCode   || undefined,
+          slotToken: slotToken || undefined,
+        }),
       });
 
       let json: Record<string, unknown> = {};
@@ -170,7 +175,15 @@ function FormularioRegistro() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="px-8 py-6 space-y-6">
-            {refCode && (
+            {slotToken && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-center gap-2">
+                <span className="text-lg">🔗</span>
+                <p className="text-blue-800 text-sm font-medium">
+                  Tienes un <span className="font-extrabold">slot reservado</span> en la red de alguien — ¡bienvenido!
+                </p>
+              </div>
+            )}
+            {!slotToken && refCode && (
               <div className="bg-[#102463]/5 border border-[#1B4F8A]/20 rounded-lg px-4 py-3 flex items-center gap-2">
                 <span className="text-lg">🎁</span>
                 <p className="text-[#102463] text-sm font-medium">

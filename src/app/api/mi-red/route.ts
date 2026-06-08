@@ -52,6 +52,8 @@ export async function GET() {
     ciudad: r.referido.ciudad,
     codigoRef: r.referido.codigoRef,
     avatar: r.referido.avatar,
+    refId: r.id,
+    compro: r.compro,
   }));
 
   // Para cada hijo, buscar sus referidos directos (nietos míos)
@@ -74,6 +76,8 @@ export async function GET() {
       ciudad: r.referido.ciudad,
       codigoRef: r.referido.codigoRef,
       avatar: r.referido.avatar,
+      refId: r.id,
+      compro: r.compro,
     }));
   }
 
