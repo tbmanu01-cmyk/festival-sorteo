@@ -6,7 +6,11 @@ import { crearNotificacion } from "@/lib/notificaciones";
 import { checkRateLimit } from "@/lib/rateLimit";
 
 const MONTO_MINIMO = 100_000;
-const EXPIRY_HORAS = 24;
+const EXPIRY_MIN = 15;
+
+function generarCodigo(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -35,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   const userId = (session.user as unknown as { id: string }).id;
 
-  // Rate limit: máx 3 solicitudes de retiro por usuario cada 15 minutos
+  // Rate limit: máx 3 solicitudes por usuario cada 15 minutos
   const rl = checkRateLimit(`retiro:${userId}`, 3, 15 * 60 * 1000);
   if (!rl.allowed) {
     return NextResponse.json(
@@ -71,17 +75,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ mensaje: "Saldo insuficiente." }, { status: 422 });
   }
 
-  // Verificar que no tenga otro retiro pendiente de confirmación
-  const tokenPendiente = await prisma.retiro.findFirst({
-    where: {
-      userId,
-      confirmado: false,
-      confirmacionExpiry: { gt: new Date() },
-    },
+  // Solo un retiro pendiente de verificación a la vez
+  const pendiente = await prisma.retiro.findFirst({
+    where: { userId, confirmado: false, confirmacionExpiry: { gt: new Date() } },
   });
-  if (tokenPendiente) {
+  if (pendiente) {
     return NextResponse.json(
-      { mensaje: "Ya tienes una solicitud pendiente de confirmación. Revisa tu correo." },
+      { mensaje: "Ya tienes un retiro pendiente de verificación. Ingresa el código que te enviamos.", retiroId: pendiente.id },
       { status: 409 }
     );
   }
@@ -89,18 +89,17 @@ export async function POST(req: NextRequest) {
   const cuentaDestino = [usuario.banco, usuario.tipoCuenta, usuario.cuentaBancaria]
     .filter(Boolean).join(" — ");
 
-  const token = crypto.randomUUID();
-  const expiry = new Date(Date.now() + EXPIRY_HORAS * 60 * 60 * 1000);
+  const codigo = generarCodigo();
+  const expiry = new Date(Date.now() + EXPIRY_MIN * 60 * 1000);
 
-  // Crear retiro sin descontar saldo aún — el descuento ocurre al confirmar
-  await prisma.retiro.create({
+  const retiro = await prisma.retiro.create({
     data: {
       userId,
       monto,
       cuentaDestino,
       estado: "PENDIENTE",
       confirmado: false,
-      confirmacionToken: token,
+      confirmacionToken: codigo,
       confirmacionExpiry: expiry,
     },
   });
@@ -108,35 +107,24 @@ export async function POST(req: NextRequest) {
   await registrarAuditoria({
     userId,
     accion: "RETIRO_SOLICITADO",
-    detalle: `Monto: $${monto.toLocaleString("es-CO")} COP — pendiente confirmación`,
+    detalle: `Monto: $${monto.toLocaleString("es-CO")} COP — esperando código de verificación`,
     ip,
   });
 
-  // Enviar email de confirmación
-  const baseUrl = process.env.NEXTAUTH_URL ?? "https://tienda10k.com";
-  const enlace = `${baseUrl}/api/retiros/confirmar?token=${token}`;
-
-  import("@/lib/email").then(({ enviarConfirmacionRetiro }) =>
-    enviarConfirmacionRetiro({
+  // Enviar código por email
+  import("@/lib/email").then(({ enviarCodigoRetiro }) =>
+    enviarCodigoRetiro({
       correo: usuario.correo,
       nombre: usuario.nombre,
       monto,
-      enlace,
-      expiraEn: EXPIRY_HORAS,
-    }).catch((err) => console.error("Email confirmación retiro error:", err))
+      codigo,
+      expiraMin: EXPIRY_MIN,
+    }).catch((err) => console.error("Email código retiro error:", err))
   );
 
-  // Notificar admins (retiro pendiente de confirmación)
-  Promise.resolve().then(async () => {
-    await crearNotificacion(prisma, {
-      tipo: "RETIRO",
-      titulo: "Solicitud de retiro (pendiente confirmación)",
-      cuerpo: `${usuario.nombre} solicitó un retiro de $${monto.toLocaleString("es-CO")} COP. Esperando confirmación por correo.`,
-      paraAdmins: true,
-    });
-  }).catch(() => undefined);
-
   return NextResponse.json({
-    mensaje: "Solicitud creada. Te enviamos un correo para confirmarla. Tienes 24 horas.",
+    ok: true,
+    retiroId: retiro.id,
+    mensaje: `Te enviamos un código de 6 dígitos a ${usuario.correo}. Tienes ${EXPIRY_MIN} minutos para ingresarlo.`,
   });
 }

@@ -232,7 +232,7 @@ model Retiro {
   retencionDetalle    Json?
 
   confirmado          Boolean   @default(false)
-  confirmacionToken   String?   @unique
+  confirmacionToken   String?
   confirmacionExpiry  DateTime?
 
   user                User         @relation(fields: [userId], references: [id])

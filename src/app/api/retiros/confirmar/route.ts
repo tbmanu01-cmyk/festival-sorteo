@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const { prisma } = await import("@/lib/prisma");
 
-  const retiro = await prisma.retiro.findUnique({
+  const retiro = await prisma.retiro.findFirst({
     where: { confirmacionToken: token },
     include: { user: { select: { id: true, saldoPuntos: true, nombre: true } } },
   });

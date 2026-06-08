@@ -634,6 +634,23 @@ export default function AdminPanel() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [tab, setTab] = useState<Tab>("stats");
+  const [descargandoBackup, setDescargandoBackup] = useState(false);
+
+  async function descargarBackup() {
+    setDescargandoBackup(true);
+    try {
+      const res = await fetch("/api/admin/backup");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `backup-club10k-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDescargandoBackup(false);
+    }
+  }
   const [ultimaActualizacion, setUltimaActualizacion] = useState<Date | null>(null);
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -867,6 +884,20 @@ export default function AdminPanel() {
                   </div>
                   <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
                 </Link>
+                <button
+                  onClick={descargarBackup}
+                  disabled={descargandoBackup}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-green-50 transition-colors group disabled:opacity-50 text-left"
+                >
+                  <span className="text-xl">💾</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">
+                      {descargandoBackup ? "Generando..." : "Backup ahora"}
+                    </p>
+                    <p className="text-[10px] text-gray-400">Descarga JSON con todos los datos</p>
+                  </div>
+                  <span className="ml-auto text-green-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs">↓</span>
+                </button>
               </div>
             </div>
           </div>

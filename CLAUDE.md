@@ -153,6 +153,17 @@ Panel con 4 tabs que centraliza todos los tipos de sorteo:
 
 **Regla crítica de imports Prisma:** usar `const { prisma } = await import("@/lib/prisma")` (named export). `const { default: prisma }` devuelve `undefined` y rompe las rutas silenciosamente.
 
+### UX / Frontend — Mejoras (20 mayo 2026)
+- ✅ `NavMobile` — barra flotante en móvil (`md:hidden`), 4 botones: Inicio / Mi cuenta / Tienda / Membresías. Solo visible si autenticado, oculta en `/admin`. Botones `w-16 h-16`, pill azul semitransparente con blur. Componente en `src/components/NavMobile.tsx`, importado en `layout.tsx` dentro de `<Providers>`. Footer tiene `mb-20 md:mb-0` para no taparse.
+- ✅ Logo de cadena en bonos — campo URL en form admin (con preview en tiempo real). Se muestra en: tarjeta tienda, modal de compra, filtros de cadena, homepage preview, tarjeta admin. Fallback a emoji si no hay logo. El campo `imagen` ya existía en el schema.
+- ✅ Precio interno oculto — `precio` (valor con descuento) NUNCA se muestra al público. Solo `valorFace` en tienda, homepage y dashboard. El descuento es información interna de la empresa. `/api/mis-bonos` ahora devuelve `bono.valorFace`.
+- ✅ Homepage dinámica — `export const dynamic = "force-dynamic"` en `page.tsx` para que logos y datos se reflejen sin redeploy.
+- ✅ Hero inicio → bonos: "Compra bonos y gana cashback", pills: 7% cashback · 3 niveles · Retiro desde $100k. CTA → `/tienda`.
+- ✅ Hero membresías: banner completo con stats en tiempo real (disponibles, % vendido, precio, countdown). `/api/config` ahora incluye `vendidasTotal`.
+- ✅ Sección "¿Cómo funciona?" actualizada: Regístrate → Compra tu bono → Recibe cashback.
+- ✅ Vista previa bonos en inicio: 6 cards con estilo igual a tienda (barra azul, logo, stock, cashback). Grid `1/2/3` columnas.
+- ✅ CTA final inicio: "¡Empieza a ganar cashback hoy!" → `/tienda`.
+
 ### Modelos en BD (Prisma)
 User, Caja, Sorteo, Premio, Retiro, Transaccion, Config,
 SorteoAnticipado, Referido, Cupon, GiftCard, GranSorteo, SorteoPrevioGran, AuditLog,

@@ -18,6 +18,8 @@ export async function POST(
       return NextResponse.json({ mensaje: "Número inválido." }, { status: 400 });
     }
 
+    const userId = (session.user as unknown as { id: string }).id;
+
     // Rate limit: máx 15 compras de membresías por usuario cada 15 minutos
     const rl = checkRateLimit(`caja-compra:${userId}`, 15, 15 * 60 * 1000);
     if (!rl.allowed) {
@@ -30,7 +32,6 @@ export async function POST(
     const body = await req.json().catch(() => ({})) as { giftCardId?: string };
 
     const { prisma } = await import("@/lib/prisma");
-    const userId = (session.user as unknown as { id: string }).id;
 
     // Precio dinámico desde Config
     const config = await prisma.config.findUnique({ where: { id: "singleton" } });

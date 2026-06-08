@@ -224,32 +224,37 @@ export async function enviarRetiroRechazado(opts: {
   });
 }
 
-// ── Confirmación de retiro ────────────────────────────────────────────────
+// ── Código de verificación de retiro ─────────────────────────────────────
 
-export async function enviarConfirmacionRetiro(opts: {
+export async function enviarCodigoRetiro(opts: {
   correo: string;
   nombre: string;
   monto: number;
-  enlace: string;
-  expiraEn: number;
+  codigo: string;
+  expiraMin: number;
 }) {
-  const { correo, nombre, monto, enlace, expiraEn } = opts;
+  const { correo, nombre, monto, codigo, expiraMin } = opts;
+  const digitos = codigo.split("").map(d =>
+    `<span style="display:inline-block;width:44px;height:56px;line-height:56px;text-align:center;background:#f0f4ff;border:2px solid #c7d2fe;border-radius:10px;font-size:28px;font-weight:900;color:#1B4F8A;margin:0 4px;">${d}</span>`
+  ).join("");
+
   const cuerpo = `
-    <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">Confirma tu retiro 🔐</h2>
-    <p style="margin:0 0 20px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, recibimos tu solicitud de retiro. Para procesarla necesitas confirmarla haciendo clic en el botón.</p>
+    <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">Código de verificación 🔐</h2>
+    <p style="margin:0 0 20px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, ingresa este código en la app para confirmar tu retiro.</p>
     <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;margin-bottom:24px;">
-      ${fila("Monto solicitado", `<span style="font-size:22px;font-weight:900;color:#16a34a;">$${monto.toLocaleString("es-CO")} COP</span>`)}
-      ${fila("Válido por", `${expiraEn} horas`)}
+      ${fila("Monto", `<strong style="color:#16a34a;font-size:18px;">$${monto.toLocaleString("es-CO")} COP</strong>`)}
+      ${fila("Expira en", `${expiraMin} minutos`)}
     </table>
-    <a href="${enlace}" style="display:block;background:#16a34a;color:white;text-decoration:none;text-align:center;font-weight:900;font-size:16px;padding:16px 32px;border-radius:12px;margin-bottom:20px;">
-      ✅ Confirmar retiro
-    </a>
-    <p style="margin:0;color:#999;font-size:13px;line-height:1.6;">Si no solicitaste este retiro, <strong>ignora este correo</strong> y tu saldo permanecerá intacto. El enlace expirará automáticamente en ${expiraEn} horas.</p>
+    <div style="text-align:center;padding:24px 0;">
+      <p style="margin:0 0 12px;color:#888;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Tu código</p>
+      <div>${digitos}</div>
+    </div>
+    <p style="margin:16px 0 0;color:#999;font-size:13px;line-height:1.6;text-align:center;">Si no solicitaste este retiro, <strong>ignora este correo</strong>. Tu saldo está seguro.</p>
   `;
   await crearTransporter().sendMail({
     from: FROM,
     to: correo,
-    subject: "Confirma tu solicitud de retiro — Club 10K",
-    html: base(cuerpo, "#16a34a"),
+    subject: `${codigo} es tu código de retiro — Club 10K`,
+    html: base(cuerpo, "#1B4F8A"),
   });
 }

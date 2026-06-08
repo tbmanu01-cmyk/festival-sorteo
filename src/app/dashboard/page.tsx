@@ -311,7 +311,10 @@ function ModalRetiro({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const [paso, setPaso] = useState<"monto" | "codigo">("monto");
   const [monto, setMonto] = useState("");
+  const [retiroId, setRetiroId] = useState<string | null>(null);
+  const [codigo, setCodigo] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -327,6 +330,26 @@ function ModalRetiro({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ monto: montoNum }),
     });
+    const json = await res.json() as { mensaje: string; retiroId?: string };
+    setEnviando(false);
+    if (json.retiroId) {
+      setRetiroId(json.retiroId);
+      setPaso("codigo");
+      if (!res.ok) setError(json.mensaje); // 409: muestra el mensaje pero avanza al código
+    } else {
+      setError(json.mensaje);
+    }
+  }
+
+  async function verificar() {
+    if (!retiroId || codigo.length !== 6) return;
+    setEnviando(true);
+    setError(null);
+    const res = await fetch("/api/retiros/verificar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ retiroId, codigo }),
+    });
     const json = await res.json() as { mensaje: string };
     setEnviando(false);
     if (res.ok) {
@@ -340,84 +363,84 @@ function ModalRetiro({
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-bold text-gray-900">Solicitar retiro</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-          >
-            ×
-          </button>
+          <h2 className="text-lg font-bold text-gray-900">
+            {paso === "monto" ? "Solicitar retiro" : "Verificar retiro"}
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
         </div>
 
-        {!tieneCuenta ? (
-          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-sm text-orange-700">
-            No tienes una cuenta bancaria registrada. Contacta al administrador
-            del administrador para agregar tu cuenta antes de solicitar el retiro.
-          </div>
+        {paso === "monto" ? (
+          !tieneCuenta ? (
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-sm text-orange-700">
+              No tienes una cuenta bancaria registrada. Actualiza tu perfil antes de solicitar un retiro.
+            </div>
+          ) : (
+            <>
+              <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">Cuenta de destino</p>
+                <p className="font-semibold text-gray-900">{banco}</p>
+                <p className="text-sm text-gray-600">{tipoCuenta} — {cuentaBancaria}</p>
+              </div>
+
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Monto a retirar (COP)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none">$</span>
+                  <input
+                    type="number" min={100000} max={saldo} step={1000}
+                    value={monto} onChange={(e) => setMonto(e.target.value)}
+                    placeholder="100000"
+                    className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-1.5">
+                  Disponible: <span className="font-semibold text-green-600">${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span> · Mínimo $100.000
+                </p>
+              </div>
+
+              {error && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 mb-4">{error}</div>}
+
+              <div className="flex gap-3">
+                <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm">Cancelar</button>
+                <button onClick={solicitar} disabled={!montoValido || enviando}
+                  className="flex-1 py-2.5 rounded-xl bg-[#1B4F8A] hover:bg-[#1a5fa8] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold text-sm transition-colors">
+                  {enviando ? "Enviando..." : "Continuar →"}
+                </button>
+              </div>
+            </>
+          )
         ) : (
           <>
-            <div className="bg-gray-50 rounded-xl p-4 mb-4">
-              <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">
-                Cuenta de destino
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-2xl mx-auto mb-3">🔐</div>
+              <p className="text-gray-700 text-sm">
+                Enviamos un código de <strong>6 dígitos</strong> a tu correo registrado.
+                Ingrésalo abajo para confirmar el retiro.
               </p>
-              <p className="font-semibold text-gray-900">{banco}</p>
-              <p className="text-sm text-gray-600">
-                {tipoCuenta} — {cuentaBancaria}
-              </p>
+              <p className="text-xs text-gray-400 mt-1">Expira en 15 minutos</p>
             </div>
 
             <div className="mb-5">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Monto a retirar (COP)
-              </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none">
-                  $
-                </span>
-                <input
-                  type="number"
-                  min={100000}
-                  max={saldo}
-                  step={1000}
-                  value={monto}
-                  onChange={(e) => setMonto(e.target.value)}
-                  placeholder="100000"
-                  className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
-                />
-              </div>
-              <p className="text-xs text-gray-400 mt-1.5">
-                Saldo disponible:{" "}
-                <span className="font-semibold text-green-600">
-                  ${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
-                </span>
-                {" · "}Mínimo: $100.000
-              </p>
-              {monto && montoNum > saldo && (
-                <p className="text-xs text-red-500 mt-1">
-                  El monto supera tu saldo disponible.
-                </p>
-              )}
+              <label className="block text-sm font-medium text-gray-700 mb-2 text-center">Código de verificación</label>
+              <input
+                type="text" inputMode="numeric" maxLength={6}
+                value={codigo} onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="000000"
+                className="w-full text-center text-3xl font-extrabold tracking-[0.3em] py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#1B4F8A] transition-colors"
+                autoFocus
+              />
             </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 mb-4">
-                {error}
-              </div>
-            )}
+            {error && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 mb-4">{error}</div>}
 
             <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors"
-              >
-                Cancelar
+              <button onClick={() => { setPaso("monto"); setCodigo(""); setError(null); }}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm">
+                ← Volver
               </button>
-              <button
-                onClick={solicitar}
-                disabled={!montoValido || enviando}
-                className="flex-1 py-2.5 rounded-xl bg-[#1B4F8A] hover:bg-[#1a5fa8] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold text-sm transition-colors"
-              >
-                {enviando ? "Enviando..." : "Solicitar retiro"}
+              <button onClick={verificar} disabled={codigo.length !== 6 || enviando}
+                className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold text-sm transition-colors">
+                {enviando ? "Verificando..." : "Confirmar retiro"}
               </button>
             </div>
           </>
