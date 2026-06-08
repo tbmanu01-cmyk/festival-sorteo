@@ -32,15 +32,6 @@ export default function Header() {
             </Link>
             {session ? (
               <>
-                <Link href="/membresias" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
-                  Membresías
-                </Link>
-                <Link href="/ranking" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
-                  Ranking
-                </Link>
-                <Link href="/probabilidades" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
-                  Probabilidades
-                </Link>
                 <Link
                   href="/dashboard"
                   className="text-blue-200 hover:text-white text-sm font-medium transition-colors"
@@ -119,15 +110,6 @@ export default function Header() {
             </Link>
             {session ? (
               <>
-                <Link href="/membresias" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
-                  Membresías
-                </Link>
-                <Link href="/ranking" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
-                  Ranking
-                </Link>
-                <Link href="/probabilidades" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
-                  Probabilidades
-                </Link>
                 <Link href="/dashboard" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
                   Mi cuenta
                 </Link>
