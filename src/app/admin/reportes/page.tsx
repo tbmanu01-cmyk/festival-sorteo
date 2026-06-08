@@ -54,7 +54,18 @@ interface UsuarioReporte {
   _count: { cajas: number };
 }
 
-type Tab = "ventas" | "sorteo" | "usuarios";
+type Tab = "ventas" | "sorteo" | "usuarios" | "retiros";
+
+interface RetiroHistorial {
+  id: string;
+  monto: number;
+  montoNeto: number | null;
+  retencion: number | null;
+  estado: string;
+  cuentaDestino: string;
+  fecha: string;
+  user: { nombre: string; apellido: string; correo: string; celular: string; banco: string | null };
+}
 
 const NOMBRE_CAT: Record<string, string> = {
   CUATRO_CIFRAS: "4 cifras",
@@ -630,12 +641,177 @@ function ReporteUsuarios() {
   );
 }
 
+// ── Reporte de retiros ────────────────────────────────────────────────────
+
+const ESTADO_RETIRO: Record<string, { label: string; cls: string }> = {
+  PAGADO:    { label: "Pagado",    cls: "bg-green-100 text-green-700" },
+  APROBADO:  { label: "Aprobado",  cls: "bg-blue-100 text-blue-700" },
+  RECHAZADO: { label: "Rechazado", cls: "bg-red-100 text-red-700" },
+};
+
+function ReporteRetiros() {
+  const [datos, setDatos] = useState<{ retiros: RetiroHistorial[]; totalPagado: number } | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [filtroEstado, setFiltroEstado] = useState<string>("TODOS");
+
+  useEffect(() => {
+    fetch("/api/admin/reportes/retiros")
+      .then((r) => r.json())
+      .then(setDatos)
+      .finally(() => setCargando(false));
+  }, []);
+
+  const fmt = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 0 });
+
+  const retirosFiltrados = datos?.retiros.filter(
+    (r) => filtroEstado === "TODOS" || r.estado === filtroEstado
+  ) ?? [];
+
+  function exportarCSV() {
+    if (!datos) return;
+    descargarCSV(
+      "reporte_retiros",
+      ["#", "Nombre", "Correo", "Celular", "Banco", "Cuenta destino", "Monto bruto", "Retención", "Monto neto", "Estado", "Fecha"],
+      retirosFiltrados.map((r, i) => [
+        i + 1,
+        `${r.user.nombre} ${r.user.apellido}`,
+        r.user.correo, r.user.celular,
+        r.user.banco ?? "—",
+        r.cuentaDestino,
+        r.monto, r.retencion ?? 0, r.montoNeto ?? r.monto,
+        r.estado,
+        new Date(r.fecha).toLocaleString("es-CO"),
+      ])
+    );
+  }
+
+  function exportarPDF() {
+    if (!datos) return;
+    const filas = retirosFiltrados.map((r, i) => `<tr>
+      <td>${i + 1}</td>
+      <td><strong>${r.user.nombre} ${r.user.apellido}</strong><br><small>${r.user.correo}</small></td>
+      <td>${r.cuentaDestino}</td>
+      <td>$${fmt(r.monto)}</td>
+      <td style="color:#dc2626">${r.retencion ? `−$${fmt(r.retencion)}` : "—"}</td>
+      <td style="color:#16a34a;font-weight:700">$${fmt(r.montoNeto ?? r.monto)}</td>
+      <td>${r.estado}</td>
+      <td>${new Date(r.fecha).toLocaleDateString("es-CO")}</td>
+    </tr>`).join("");
+    abrirPDF(
+      "Historial de Retiros",
+      `Total pagado: $${fmt(datos.totalPagado)} COP · ${retirosFiltrados.length} registros`,
+      `<table><thead><tr><th>#</th><th>Usuario</th><th>Cuenta destino</th><th>Monto</th><th>Retención</th><th>Neto</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>${filas}</tbody></table>`
+    );
+  }
+
+  if (cargando) return <div className="py-20 text-center text-gray-400">Cargando retiros...</div>;
+  if (!datos) return null;
+
+  const totalPagado   = datos.retiros.filter((r) => r.estado === "PAGADO").length;
+  const totalRechazado = datos.retiros.filter((r) => r.estado === "RECHAZADO").length;
+
+  return (
+    <div>
+      {/* Stats rápidas */}
+      <div className="grid grid-cols-3 gap-4 mb-5">
+        {[
+          { label: "Total pagados",   valor: `${totalPagado}`,                        sub: `$${fmt(datos.totalPagado)} COP`, color: "text-green-600" },
+          { label: "Rechazados",      valor: `${totalRechazado}`,                     sub: "saldo devuelto",                 color: "text-red-500" },
+          { label: "Total histórico", valor: `${datos.retiros.length}`,               sub: "todos los estados",              color: "text-[#1B4F8A]" },
+        ].map(({ label, valor, sub, color }) => (
+          <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <p className="text-xs text-gray-400 mb-1">{label}</p>
+            <p className={`text-2xl font-extrabold ${color}`}>{valor}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Filtro + exportar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div className="flex gap-2">
+          {["TODOS", "PAGADO", "RECHAZADO"].map((e) => (
+            <button
+              key={e}
+              onClick={() => setFiltroEstado(e)}
+              className={`px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors ${
+                filtroEstado === e
+                  ? "bg-[#1B4F8A] text-white"
+                  : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {e === "TODOS" ? "Todos" : e === "PAGADO" ? "Pagados" : "Rechazados"}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button onClick={exportarCSV} className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+            ↓ Excel / CSV
+          </button>
+          <button onClick={exportarPDF} className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+            ↓ PDF
+          </button>
+        </div>
+      </div>
+
+      {/* Tabla */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-[#1B4F8A] text-white text-left">
+                <th className="px-4 py-3 font-semibold">#</th>
+                <th className="px-4 py-3 font-semibold">Usuario</th>
+                <th className="px-4 py-3 font-semibold">Cuenta destino</th>
+                <th className="px-4 py-3 font-semibold">Monto bruto</th>
+                <th className="px-4 py-3 font-semibold">Retención</th>
+                <th className="px-4 py-3 font-semibold">Neto pagado</th>
+                <th className="px-4 py-3 font-semibold">Estado</th>
+                <th className="px-4 py-3 font-semibold">Fecha</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {retirosFiltrados.length === 0 ? (
+                <tr><td colSpan={8} className="py-16 text-center text-gray-400">No hay registros.</td></tr>
+              ) : retirosFiltrados.map((r, i) => {
+                const info = ESTADO_RETIRO[r.estado] ?? { label: r.estado, cls: "bg-gray-100 text-gray-600" };
+                return (
+                  <tr key={r.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 text-gray-400 text-xs">{i + 1}</td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{r.user.nombre} {r.user.apellido}</p>
+                      <p className="text-gray-400 text-xs">{r.user.correo} · {r.user.celular}</p>
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{r.cuentaDestino}</td>
+                    <td className="px-4 py-3 font-semibold text-gray-700">${fmt(r.monto)}</td>
+                    <td className="px-4 py-3 text-red-500 text-xs font-medium">
+                      {r.retencion ? `−$${fmt(r.retencion)}` : <span className="text-gray-300">—</span>}
+                    </td>
+                    <td className="px-4 py-3 font-extrabold text-green-600">${fmt(r.montoNeto ?? r.monto)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${info.cls}`}>{info.label}</span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                      {new Date(r.fecha).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Página principal ───────────────────────────────────────────────────────
 
 const TABS: { id: Tab; label: string; icono: string }[] = [
   { id: "ventas",   label: "Ventas",   icono: "📦" },
   { id: "sorteo",   label: "Sorteo",   icono: "🎰" },
   { id: "usuarios", label: "Usuarios", icono: "👥" },
+  { id: "retiros",  label: "Retiros",  icono: "💸" },
 ];
 
 export default function PaginaReportes() {
@@ -686,6 +862,7 @@ export default function PaginaReportes() {
           {tab === "ventas"   && <ReporteVentas />}
           {tab === "sorteo"   && <ReporteSorteo />}
           {tab === "usuarios" && <ReporteUsuarios />}
+          {tab === "retiros"  && <ReporteRetiros />}
 
         </div>
       </main>
