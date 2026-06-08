@@ -37,9 +37,9 @@ export async function GET() {
     const referidorIds = [...new Set(relaciones.map((r) => r.referidorId))];
     const referidoIds  = [...new Set(relaciones.map((r) => r.referidoId))];
 
-    // ── Datos de usuarios referidores ─────────────────────────────────────
+    // ── Datos de usuarios referidores (excluir admin) ─────────────────────
     const usuarios = await prisma.user.findMany({
-      where: { id: { in: referidorIds } },
+      where: { id: { in: referidorIds }, rol: { not: "ADMIN" } },
       select: { id: true, nombre: true, apellido: true, correo: true, fechaRegistro: true },
     });
 

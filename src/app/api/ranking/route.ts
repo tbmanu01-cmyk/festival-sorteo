@@ -14,6 +14,7 @@ export async function GET() {
     SELECT u.nombre, u.apellido, u.ciudad, COUNT(c.id) AS "totalCajas"
     FROM users u
     JOIN cajas c ON c."userId" = u.id AND c.estado = 'VENDIDA'
+    WHERE u.rol != 'ADMIN'::"Rol"
     GROUP BY u.id, u.nombre, u.apellido, u.ciudad
     ORDER BY "totalCajas" DESC
     LIMIT 20

@@ -10,9 +10,11 @@ export async function GET(req: NextRequest) {
   const pagina = Math.max(1, Number(req.nextUrl.searchParams.get("pagina") ?? 1));
   const limite = 50;
 
+  const filtroBase = { estado: { in: ["VENDIDA" as const, "RESERVADA" as const] }, user: { rol: "USER" as const } };
+
   const [cajas, total] = await Promise.all([
     prisma.caja.findMany({
-      where: { estado: { in: ["VENDIDA", "RESERVADA"] } },
+      where: filtroBase,
       include: {
         user: { select: { nombre: true, apellido: true, correo: true, celular: true } },
       },
@@ -20,7 +22,7 @@ export async function GET(req: NextRequest) {
       skip: (pagina - 1) * limite,
       take: limite,
     }),
-    prisma.caja.count({ where: { estado: { in: ["VENDIDA", "RESERVADA"] } } }),
+    prisma.caja.count({ where: filtroBase }),
   ]);
 
   return NextResponse.json({ cajas, total, pagina, totalPaginas: Math.ceil(total / limite) });

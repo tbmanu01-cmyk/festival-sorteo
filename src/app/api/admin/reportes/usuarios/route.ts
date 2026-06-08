@@ -9,6 +9,7 @@ export async function GET() {
   const { prisma } = await import("@/lib/prisma");
 
   const usuarios = await prisma.user.findMany({
+    where: { rol: "USER" },
     select: {
       nombre: true,
       apellido: true,
