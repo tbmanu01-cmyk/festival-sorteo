@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function POST(
   req: NextRequest,
@@ -15,6 +16,15 @@ export async function POST(
     const { numero } = await params;
     if (!/^\d{4}$/.test(numero)) {
       return NextResponse.json({ mensaje: "Número inválido." }, { status: 400 });
+    }
+
+    // Rate limit: máx 15 compras de membresías por usuario cada 15 minutos
+    const rl = checkRateLimit(`caja-compra:${userId}`, 15, 15 * 60 * 1000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { mensaje: `Demasiadas solicitudes. Intenta en ${rl.retryAfter} segundos.` },
+        { status: 429 }
+      );
     }
 
     const body = await req.json().catch(() => ({})) as { giftCardId?: string };

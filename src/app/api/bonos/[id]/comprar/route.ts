@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 // Distribución fija del margen (convenio): 35% comprador · 25% N1 · 15% N2 · 25% plataforma
 const FRAC_COMPRADOR = 0.35;
@@ -18,6 +19,16 @@ export async function POST(
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
+
+  // Rate limit: máx 10 compras de bonos por usuario cada hora
+  const emailKey = session.user.email;
+  const rl = checkRateLimit(`bono-compra:${emailKey}`, 10, 60 * 60 * 1000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: `Demasiadas compras. Intenta en ${rl.retryAfter} segundos.` },
+      { status: 429 }
+    );
   }
 
   const { id: bonoId } = await params;
@@ -67,12 +78,13 @@ export async function POST(
   const codigo = generarCodigo();
 
   await prisma.$transaction(async (tx) => {
-    // Descontar precio solo si tiene saldo suficiente; si no, queda como pago pendiente (Wompi futuro)
+    // Descontar precio atómicamente — el WHERE saldoPuntos >= precio previene race conditions
     if (pagoConSaldo) {
-      await tx.user.update({
-        where: { id: comprador.id },
+      const deducido = await tx.user.updateMany({
+        where: { id: comprador.id, saldoPuntos: { gte: bono.precio } },
         data: { saldoPuntos: { decrement: bono.precio } },
       });
+      if (deducido.count === 0) throw new Error("Saldo insuficiente al momento de procesar");
       await tx.transaccion.create({
         data: {
           userId: comprador.id,

@@ -10,14 +10,14 @@ export async function GET() {
 
   const [preAprobados, pendientes] = await Promise.all([
     prisma.retiro.findMany({
-      where: { estado: "PRE_APROBADO" },
+      where: { estado: "PRE_APROBADO", confirmado: true },
       include: {
         user: { select: { nombre: true, apellido: true, correo: true, celular: true, banco: true } },
       },
       orderBy: { preAprobadoEn: "asc" },
     }),
     prisma.retiro.findMany({
-      where: { estado: "PENDIENTE" },
+      where: { estado: "PENDIENTE", confirmado: true },
       include: {
         user: { select: { nombre: true, apellido: true, correo: true, celular: true, banco: true } },
       },

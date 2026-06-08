@@ -231,6 +231,10 @@ model Retiro {
   motivoRechazo       String?
   retencionDetalle    Json?
 
+  confirmado          Boolean   @default(false)
+  confirmacionToken   String?   @unique
+  confirmacionExpiry  DateTime?
+
   user                User         @relation(fields: [userId], references: [id])
 
   @@map("retiros")

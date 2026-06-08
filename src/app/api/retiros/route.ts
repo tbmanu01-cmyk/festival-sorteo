@@ -3,8 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { obtenerIP, registrarAuditoria } from "@/lib/auditoria";
 import { crearNotificacion } from "@/lib/notificaciones";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const MONTO_MINIMO = 100_000;
+const EXPIRY_HORAS = 24;
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -17,7 +19,7 @@ export async function GET() {
 
   const retiros = await prisma.retiro.findMany({
     where: { userId },
-    select: { id: true, monto: true, estado: true, fecha: true, cuentaDestino: true },
+    select: { id: true, monto: true, estado: true, fecha: true, cuentaDestino: true, confirmado: true },
     orderBy: { fecha: "desc" },
   });
 
@@ -31,9 +33,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ mensaje: "No autenticado." }, { status: 401 });
   }
 
-  const { prisma } = await import("@/lib/prisma");
   const userId = (session.user as unknown as { id: string }).id;
 
+  // Rate limit: máx 3 solicitudes de retiro por usuario cada 15 minutos
+  const rl = checkRateLimit(`retiro:${userId}`, 3, 15 * 60 * 1000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { mensaje: `Demasiadas solicitudes. Intenta en ${rl.retryAfter} segundos.` },
+      { status: 429 }
+    );
+  }
+
+  const { prisma } = await import("@/lib/prisma");
   const body = await req.json() as { monto?: unknown };
   const monto = Number(body.monto);
 
@@ -46,15 +57,13 @@ export async function POST(req: NextRequest) {
 
   const usuario = await prisma.user.findUnique({
     where: { id: userId },
-    select: { saldoPuntos: true, cuentaBancaria: true, banco: true, tipoCuenta: true },
+    select: { saldoPuntos: true, cuentaBancaria: true, banco: true, tipoCuenta: true, nombre: true, correo: true },
   });
 
-  if (!usuario) {
-    return NextResponse.json({ mensaje: "Usuario no encontrado." }, { status: 404 });
-  }
+  if (!usuario) return NextResponse.json({ mensaje: "Usuario no encontrado." }, { status: 404 });
   if (!usuario.cuentaBancaria || !usuario.banco) {
     return NextResponse.json(
-      { mensaje: "No tienes una cuenta bancaria registrada. Contacta al administrador." },
+      { mensaje: "No tienes una cuenta bancaria registrada. Actualiza tu perfil." },
       { status: 422 }
     );
   }
@@ -62,48 +71,72 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ mensaje: "Saldo insuficiente." }, { status: 422 });
   }
 
-  const cuentaDestino = [usuario.banco, usuario.tipoCuenta, usuario.cuentaBancaria]
-    .filter(Boolean)
-    .join(" — ");
+  // Verificar que no tenga otro retiro pendiente de confirmación
+  const tokenPendiente = await prisma.retiro.findFirst({
+    where: {
+      userId,
+      confirmado: false,
+      confirmacionExpiry: { gt: new Date() },
+    },
+  });
+  if (tokenPendiente) {
+    return NextResponse.json(
+      { mensaje: "Ya tienes una solicitud pendiente de confirmación. Revisa tu correo." },
+      { status: 409 }
+    );
+  }
 
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: userId },
-      data: { saldoPuntos: { decrement: monto } },
-    }),
-    prisma.retiro.create({
-      data: { userId, monto, cuentaDestino, estado: "PENDIENTE" },
-    }),
-    prisma.transaccion.create({
-      data: {
-        userId,
-        tipo: "RETIRO",
-        monto: -monto,
-        descripcion: `Solicitud de retiro — $${monto.toLocaleString("es-CO")}`,
-      },
-    }),
-  ]);
+  const cuentaDestino = [usuario.banco, usuario.tipoCuenta, usuario.cuentaBancaria]
+    .filter(Boolean).join(" — ");
+
+  const token = crypto.randomUUID();
+  const expiry = new Date(Date.now() + EXPIRY_HORAS * 60 * 60 * 1000);
+
+  // Crear retiro sin descontar saldo aún — el descuento ocurre al confirmar
+  await prisma.retiro.create({
+    data: {
+      userId,
+      monto,
+      cuentaDestino,
+      estado: "PENDIENTE",
+      confirmado: false,
+      confirmacionToken: token,
+      confirmacionExpiry: expiry,
+    },
+  });
 
   await registrarAuditoria({
     userId,
     accion: "RETIRO_SOLICITADO",
-    detalle: `Monto: $${monto.toLocaleString("es-CO")} COP`,
+    detalle: `Monto: $${monto.toLocaleString("es-CO")} COP — pendiente confirmación`,
     ip,
   });
 
-  // Notificar a admins/asistentes de la nueva solicitud
+  // Enviar email de confirmación
+  const baseUrl = process.env.NEXTAUTH_URL ?? "https://tienda10k.com";
+  const enlace = `${baseUrl}/api/retiros/confirmar?token=${token}`;
+
+  import("@/lib/email").then(({ enviarConfirmacionRetiro }) =>
+    enviarConfirmacionRetiro({
+      correo: usuario.correo,
+      nombre: usuario.nombre,
+      monto,
+      enlace,
+      expiraEn: EXPIRY_HORAS,
+    }).catch((err) => console.error("Email confirmación retiro error:", err))
+  );
+
+  // Notificar admins (retiro pendiente de confirmación)
   Promise.resolve().then(async () => {
-    const u = await prisma.user.findUnique({ where: { id: userId }, select: { nombre: true, apellido: true } });
-    const nombre = u ? `${u.nombre} ${u.apellido}` : "Un usuario";
     await crearNotificacion(prisma, {
       tipo: "RETIRO",
-      titulo: "Nueva solicitud de retiro",
-      cuerpo: `${nombre} solicitó un retiro de $${monto.toLocaleString("es-CO")} COP.`,
+      titulo: "Solicitud de retiro (pendiente confirmación)",
+      cuerpo: `${usuario.nombre} solicitó un retiro de $${monto.toLocaleString("es-CO")} COP. Esperando confirmación por correo.`,
       paraAdmins: true,
     });
   }).catch(() => undefined);
 
   return NextResponse.json({
-    mensaje: "Solicitud enviada. El administrador la procesará pronto.",
+    mensaje: "Solicitud creada. Te enviamos un correo para confirmarla. Tienes 24 horas.",
   });
 }

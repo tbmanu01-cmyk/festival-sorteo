@@ -223,3 +223,33 @@ export async function enviarRetiroRechazado(opts: {
     html: base(cuerpo, "#dc2626"),
   });
 }
+
+// ── Confirmación de retiro ────────────────────────────────────────────────
+
+export async function enviarConfirmacionRetiro(opts: {
+  correo: string;
+  nombre: string;
+  monto: number;
+  enlace: string;
+  expiraEn: number;
+}) {
+  const { correo, nombre, monto, enlace, expiraEn } = opts;
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">Confirma tu retiro 🔐</h2>
+    <p style="margin:0 0 20px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, recibimos tu solicitud de retiro. Para procesarla necesitas confirmarla haciendo clic en el botón.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;margin-bottom:24px;">
+      ${fila("Monto solicitado", `<span style="font-size:22px;font-weight:900;color:#16a34a;">$${monto.toLocaleString("es-CO")} COP</span>`)}
+      ${fila("Válido por", `${expiraEn} horas`)}
+    </table>
+    <a href="${enlace}" style="display:block;background:#16a34a;color:white;text-decoration:none;text-align:center;font-weight:900;font-size:16px;padding:16px 32px;border-radius:12px;margin-bottom:20px;">
+      ✅ Confirmar retiro
+    </a>
+    <p style="margin:0;color:#999;font-size:13px;line-height:1.6;">Si no solicitaste este retiro, <strong>ignora este correo</strong> y tu saldo permanecerá intacto. El enlace expirará automáticamente en ${expiraEn} horas.</p>
+  `;
+  await crearTransporter().sendMail({
+    from: FROM,
+    to: correo,
+    subject: "Confirma tu solicitud de retiro — Club 10K",
+    html: base(cuerpo, "#16a34a"),
+  });
+}
