@@ -176,11 +176,8 @@ function TarjetaBono({ bono, onComprar }: { bono: Bono; onComprar: (b: Bono) => 
               ${bono.valorFace.toLocaleString("es-CO")} COP
             </span>
           </div>
-          <div className="flex justify-between items-center">
+          <div>
             <span className="text-green-600 text-sm font-medium">Cashback 7%</span>
-            <span className="font-bold text-green-600 text-sm">
-              +${cashback.toLocaleString("es-CO")} COP
-            </span>
           </div>
         </div>
 

@@ -305,11 +305,8 @@ export default async function Inicio() {
                               ${bono.valorFace.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
                             </span>
                           </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
-                            <span style={{ color: "#059669", fontSize: 13, fontWeight: 600 }}>Cashback 7%</span>
-                            <span style={{ color: "#059669", fontWeight: 700, fontSize: 13 }}>
-                              +${cashback.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
-                            </span>
+                          <div style={{ marginTop: 4 }}>
+                            <span style={{ color: "#059669", fontSize: 13, fontWeight: 700 }}>Cashback 7%</span>
                           </div>
                         </div>
 
