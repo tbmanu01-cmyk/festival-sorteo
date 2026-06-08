@@ -1189,18 +1189,32 @@ function SeccionRed() {
           </span>
         </h2>
         {datos.totalFamilias > 1 && (
-          <div className="flex gap-1">
-            {datos.familias.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setFamiliaActiva(i)}
-                className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                  i === familiaActiva ? "bg-[#102463] text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                }`}
-              >
-                F{i + 1}
-              </button>
-            ))}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setFamiliaActiva((i) => Math.max(0, i - 1))}
+              disabled={familiaActiva === 0}
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-30 transition-all font-bold text-base leading-none"
+            >
+              ‹
+            </button>
+            <select
+              value={familiaActiva}
+              onChange={(e) => setFamiliaActiva(Number(e.target.value))}
+              className="text-xs font-bold text-[#102463] bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#102463]/30 cursor-pointer"
+            >
+              {datos.familias.map((f, i) => (
+                <option key={i} value={i}>
+                  Familia {i + 1} {f.completa ? "✓" : `· ${f.totalMiembros}/12`}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => setFamiliaActiva((i) => Math.min(datos.totalFamilias - 1, i + 1))}
+              disabled={familiaActiva === datos.totalFamilias - 1}
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-30 transition-all font-bold text-base leading-none"
+            >
+              ›
+            </button>
           </div>
         )}
       </div>
