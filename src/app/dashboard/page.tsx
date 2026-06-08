@@ -1262,38 +1262,36 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Stats + saldo */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
-              <p className="text-2xl font-extrabold text-[#1B4F8A]">{cajas.length}</p>
-              <p className="text-gray-400 text-xs mt-0.5">Membresías</p>
-              {cajas.length >= 10 && (
-                <span className="inline-block mt-1 text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">⭐ VIP</span>
+          {/* Saldo + retiro */}
+          <div
+            className="rounded-2xl p-5 flex items-center justify-between gap-4 transition-all"
+            style={
+              saldo >= 100_000
+                ? { background: "linear-gradient(135deg,#16a34a,#15803d)", boxShadow: "0 4px 20px rgba(22,163,74,0.28)" }
+                : { background: "white", border: "1px solid #e5e7eb" }
+            }
+          >
+            <div>
+              <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${saldo >= 100_000 ? "text-green-200" : "text-gray-400"}`}>
+                Saldo disponible
+              </p>
+              <p className={`text-3xl font-extrabold leading-none ${saldo >= 100_000 ? "text-white" : "text-green-600"}`}>
+                ${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                <span className={`text-sm font-medium ml-1 ${saldo >= 100_000 ? "text-green-200" : "text-gray-400"}`}>COP</span>
+              </p>
+              {saldo < 100_000 && (
+                <p className="text-xs text-gray-400 mt-1">Mínimo $100.000 para retirar</p>
               )}
             </div>
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
-              <p className="text-2xl font-extrabold text-green-600">
-                ${(saldo / 1000).toFixed(0)}K
-              </p>
-              <p className="text-gray-400 text-xs mt-0.5">Saldo COP</p>
-            </div>
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
-              <p className="text-2xl font-extrabold text-[#F5A623]">{premios.length}</p>
-              <p className="text-gray-400 text-xs mt-0.5">Premios</p>
-            </div>
+            {saldo >= 100_000 && (
+              <button
+                onClick={() => setModalRetiro(true)}
+                className="flex-shrink-0 bg-white text-green-700 font-extrabold text-sm px-5 py-3 rounded-xl shadow hover:bg-green-50 active:scale-95 transition-all whitespace-nowrap"
+              >
+                💸 Solicitar retiro
+              </button>
+            )}
           </div>
-
-          {/* Retiro — solo cuando aplica */}
-          {saldo >= 100_000 && (
-            <button
-              onClick={() => setModalRetiro(true)}
-              className="w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-sm font-bold transition-all hover:opacity-90 active:scale-[0.99]"
-              style={{ background: "linear-gradient(90deg,#16a34a,#15803d)", color: "white" }}
-            >
-              <span>💸 Saldo disponible — ${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</span>
-              <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-extrabold">Retirar →</span>
-            </button>
-          )}
 
           {/* Accesos rápidos */}
           <div className="grid grid-cols-3 gap-3">
