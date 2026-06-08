@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { registroSchema } from "@/lib/validaciones";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 function generarCodigoRef(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXY23456789";
@@ -8,6 +9,16 @@ function generarCodigoRef(): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit: máx 5 registros por IP cada hora
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const rl = checkRateLimit(`registro:${ip}`, 5, 60 * 60 * 1000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { mensaje: "Demasiados registros desde esta red. Intenta más tarde." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const refCode = typeof body.refCode === "string" ? body.refCode.trim().toUpperCase() : null;
 

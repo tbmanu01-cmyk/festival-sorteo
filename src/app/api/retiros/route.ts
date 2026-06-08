@@ -86,6 +86,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Límite: máx 1 retiro confirmado cada 24 horas
+  const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const retiroReciente = await prisma.retiro.findFirst({
+    where: { userId, confirmado: true, fecha: { gte: hace24h } },
+  });
+  if (retiroReciente) {
+    return NextResponse.json(
+      { mensaje: "Ya realizaste un retiro en las últimas 24 horas. Intenta mañana." },
+      { status: 429 }
+    );
+  }
+
   const cuentaDestino = [usuario.banco, usuario.tipoCuenta, usuario.cuentaBancaria]
     .filter(Boolean).join(" — ");
 

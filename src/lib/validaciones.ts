@@ -1,9 +1,15 @@
 import { z } from "zod";
 
+// Elimina etiquetas HTML y caracteres de control de campos de texto libre
+const textoSeguro = (min: number, msg: string) =>
+  z.string()
+    .transform((v) => v.replace(/<[^>]*>/g, "").replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim())
+    .pipe(z.string().min(min, msg));
+
 export const registroSchema = z
   .object({
-    nombre: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-    apellido: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
+    nombre:   textoSeguro(2, "El nombre debe tener al menos 2 caracteres"),
+    apellido: textoSeguro(2, "El apellido debe tener al menos 2 caracteres"),
     documento: z.string().min(6, "El documento debe tener al menos 6 caracteres"),
     correo: z.string().email("Correo electrónico inválido"),
     celular: z
