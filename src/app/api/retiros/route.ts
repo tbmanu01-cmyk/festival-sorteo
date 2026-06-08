@@ -61,10 +61,16 @@ export async function POST(req: NextRequest) {
 
   const usuario = await prisma.user.findUnique({
     where: { id: userId },
-    select: { saldoPuntos: true, cuentaBancaria: true, banco: true, tipoCuenta: true, nombre: true, correo: true },
+    select: { saldoPuntos: true, cuentaBancaria: true, banco: true, tipoCuenta: true, nombre: true, correo: true, confirmado: true },
   });
 
   if (!usuario) return NextResponse.json({ mensaje: "Usuario no encontrado." }, { status: 404 });
+  if (!usuario.confirmado) {
+    return NextResponse.json(
+      { mensaje: "Debes verificar tu correo electrónico antes de solicitar un retiro.", codigo: "EMAIL_NO_VERIFICADO" },
+      { status: 403 }
+    );
+  }
   if (!usuario.cuentaBancaria || !usuario.banco) {
     return NextResponse.json(
       { mensaje: "No tienes una cuenta bancaria registrada. Actualiza tu perfil." },

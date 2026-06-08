@@ -33,6 +33,15 @@ export async function POST(
 
     const { prisma } = await import("@/lib/prisma");
 
+    // Verificar correo confirmado
+    const usuarioCheck = await prisma.user.findUnique({ where: { id: userId }, select: { confirmado: true } });
+    if (!usuarioCheck?.confirmado) {
+      return NextResponse.json(
+        { mensaje: "Debes verificar tu correo electrónico antes de comprar una membresía.", codigo: "EMAIL_NO_VERIFICADO" },
+        { status: 403 }
+      );
+    }
+
     // Precio dinámico desde Config
     const config = await prisma.config.findUnique({ where: { id: "singleton" } });
     const precioCaja = config?.precioCaja ?? 10_000;

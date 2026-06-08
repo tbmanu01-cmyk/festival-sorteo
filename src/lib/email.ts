@@ -216,6 +216,34 @@ export async function enviarRetiroRechazado(opts: {
   });
 }
 
+// ── Verificación de correo al registrarse ────────────────────────────────
+
+export async function enviarVerificacionCorreo(opts: {
+  correo: string;
+  nombre: string;
+  enlace: string;
+}) {
+  const { correo, nombre, enlace } = opts;
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">Confirma tu correo 📧</h2>
+    <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, ya casi terminas. Haz clic en el botón para activar tu cuenta.</p>
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${enlace}" style="display:inline-block;background:#1B4F8A;color:#ffffff;font-weight:700;font-size:16px;padding:16px 40px;border-radius:999px;text-decoration:none;letter-spacing:0.3px;">
+        ✅ Verificar mi correo
+      </a>
+    </div>
+    <p style="margin:0;color:#999;font-size:13px;line-height:1.6;text-align:center;">
+      Este enlace es válido por <strong>24 horas</strong>.<br>
+      Si no creaste esta cuenta, ignora este correo.
+    </p>`;
+  await resend().emails.send({
+    from: FROM,
+    to: correo,
+    subject: "Verifica tu correo para activar tu cuenta — Club 10K",
+    html: base(cuerpo),
+  });
+}
+
 // ── Código de verificación de retiro ─────────────────────────────────────
 
 export async function enviarCodigoRetiro(opts: {

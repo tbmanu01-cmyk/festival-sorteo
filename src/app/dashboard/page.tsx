@@ -62,6 +62,7 @@ interface MisCajas {
   tipoCuenta: string | null;
   cuentaBancaria: string | null;
   anticipadasGanadas: AnticipadaGanada[];
+  confirmado: boolean;
 }
 
 interface BonoCompraItem {
@@ -1181,6 +1182,8 @@ export default function Dashboard() {
     texto: string;
   } | null>(null);
   const [modalRetiro, setModalRetiro] = useState(false);
+  const [reenviando, setReenviando] = useState(false);
+  const [mensajeVerify, setMensajeVerify] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -1251,6 +1254,7 @@ export default function Dashboard() {
   const retiros = datos?.retiros ?? [];
   const saldo = datos?.saldoPuntos ?? 0;
   const anticipadasGanadas = datos?.anticipadasGanadas ?? [];
+  const confirmado = datos?.confirmado ?? true; // true = no mostrar banner si aún cargando
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -1258,6 +1262,34 @@ export default function Dashboard() {
 
       <main className="flex-1 bg-gray-50 py-8">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+        {/* Banner verificación de correo */}
+        {!confirmado && (
+          <div className="bg-amber-50 border border-amber-300 rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex-1">
+              <p className="font-bold text-amber-800 text-sm">📧 Verifica tu correo electrónico</p>
+              <p className="text-amber-700 text-xs mt-0.5">
+                Hasta que verifiques no podrás comprar membresías, bonos ni solicitar retiros.
+                Revisa tu bandeja de entrada (y spam).
+              </p>
+              {mensajeVerify && <p className="text-xs font-semibold text-green-700 mt-1">{mensajeVerify}</p>}
+            </div>
+            <button
+              onClick={async () => {
+                setReenviando(true);
+                setMensajeVerify(null);
+                const res = await fetch("/api/auth/reenviar-verificacion", { method: "POST" });
+                const j = await res.json() as { mensaje: string };
+                setMensajeVerify(j.mensaje);
+                setReenviando(false);
+              }}
+              disabled={reenviando}
+              className="flex-shrink-0 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold text-xs px-4 py-2 rounded-xl transition-colors"
+            >
+              {reenviando ? "Enviando..." : "Reenviar correo"}
+            </button>
+          </div>
+        )}
 
           {/* Bienvenida */}
           <div

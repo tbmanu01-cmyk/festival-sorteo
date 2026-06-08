@@ -43,7 +43,7 @@ export async function GET() {
     }),
     prisma.user.findUnique({
       where: { id: userId },
-      select: { nombre: true, saldoPuntos: true, banco: true, tipoCuenta: true, cuentaBancaria: true },
+      select: { nombre: true, saldoPuntos: true, banco: true, tipoCuenta: true, cuentaBancaria: true, confirmado: true },
     }),
     prisma.sorteoAnticipado.findMany({
       where: { estado: "EJECUTADO" },
@@ -88,6 +88,7 @@ export async function GET() {
     banco: usuario?.banco ?? null,
     tipoCuenta: usuario?.tipoCuenta ?? null,
     cuentaBancaria: usuario?.cuentaBancaria ?? null,
+    confirmado: usuario?.confirmado ?? false,
     anticipadasGanadas,
   });
 }

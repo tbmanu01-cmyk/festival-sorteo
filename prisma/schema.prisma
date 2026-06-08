@@ -88,6 +88,8 @@ model User {
   resetSolicitadoEn  DateTime?
   loginIntentos      Int           @default(0)
   bloqueadoHasta     DateTime?
+  verifyToken        String?       @unique
+  verifyTokenExpiry  DateTime?
 
   cajas           Caja[]
   transacciones   Transaccion[]

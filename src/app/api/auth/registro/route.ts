@@ -91,7 +91,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ mensaje: "Cuenta creada exitosamente" }, { status: 201 });
+    // Enviar correo de verificación
+    const verifyToken  = crypto.randomUUID();
+    const verifyExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await (await import("@/lib/prisma")).prisma.user.update({
+      where: { id: nuevoId },
+      data: { verifyToken, verifyTokenExpiry: verifyExpiry },
+    });
+    const base   = process.env.NEXTAUTH_URL ?? "https://tienda10k.com";
+    const enlace = `${base}/api/auth/verificar-correo?token=${verifyToken}`;
+    import("@/lib/email").then(({ enviarVerificacionCorreo }) =>
+      enviarVerificacionCorreo({ correo, nombre, enlace }).catch(console.error)
+    );
+
+    return NextResponse.json({ mensaje: "Cuenta creada exitosamente. Revisa tu correo para verificar tu cuenta." }, { status: 201 });
   } catch (error) {
     console.error("Error en registro:", error);
     return NextResponse.json({ mensaje: "Error interno del servidor" }, { status: 500 });

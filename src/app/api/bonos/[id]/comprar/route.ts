@@ -38,7 +38,7 @@ export async function POST(
     prisma.bono.findUnique({ where: { id: bonoId } }),
     prisma.user.findUnique({
       where: { correo: session.user.email },
-      select: { id: true, saldoPuntos: true },
+      select: { id: true, saldoPuntos: true, confirmado: true },
     }),
   ]);
 
@@ -47,6 +47,9 @@ export async function POST(
   }
   if (!comprador) {
     return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
+  }
+  if (!comprador.confirmado) {
+    return NextResponse.json({ error: "Debes verificar tu correo antes de comprar.", codigo: "EMAIL_NO_VERIFICADO" }, { status: 403 });
   }
   if (bono.stock <= 0) {
     return NextResponse.json({ error: "Sin stock disponible" }, { status: 400 });
