@@ -1262,79 +1262,53 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Saldo + stats */}
-          <div className="grid grid-cols-3 gap-4">
-
-            {/* Saldo — ocupa 2 columnas, con retiro integrado */}
-            <div
-              className="col-span-2 rounded-2xl p-5 flex flex-col justify-between transition-all"
-              style={
-                saldo >= 100_000
-                  ? { background: "linear-gradient(135deg,#16a34a 0%,#15803d 100%)", boxShadow: "0 4px 24px rgba(22,163,74,0.28)" }
-                  : { background: "white", border: "1px solid #f3f4f6", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }
-              }
-            >
-              <div>
-                <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${saldo >= 100_000 ? "text-green-200" : "text-gray-400"}`}>
-                  Saldo disponible
-                </p>
-                <p className={`text-4xl font-extrabold leading-none ${saldo >= 100_000 ? "text-white" : "text-green-600"}`}>
-                  ${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
-                  <span className={`text-sm font-semibold ml-1 ${saldo >= 100_000 ? "text-green-200" : "text-gray-400"}`}>COP</span>
-                </p>
-              </div>
-              {saldo >= 100_000 ? (
-                <button
-                  onClick={() => setModalRetiro(true)}
-                  className="mt-5 w-full bg-white text-green-700 font-extrabold py-3 rounded-xl text-sm shadow hover:bg-green-50 active:scale-95 transition-all"
-                >
-                  💸 Solicitar retiro →
-                </button>
-              ) : (
-                <p className="mt-3 text-xs text-gray-400">Necesitas $100.000 para solicitar un retiro</p>
+          {/* Stats + saldo */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+              <p className="text-2xl font-extrabold text-[#1B4F8A]">{cajas.length}</p>
+              <p className="text-gray-400 text-xs mt-0.5">Membresías</p>
+              {cajas.length >= 10 && (
+                <span className="inline-block mt-1 text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">⭐ VIP</span>
               )}
             </div>
-
-            {/* Stats secundarias apiladas */}
-            <div className="flex flex-col gap-4">
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center flex-1 flex flex-col items-center justify-center">
-                <span className="text-xl">📦</span>
-                <p className="text-2xl font-extrabold mt-1 text-[#1B4F8A]">{cajas.length}</p>
-                <p className="text-gray-400 text-xs mt-0.5">Membresías</p>
-                {cajas.length >= 10 && (
-                  <span className="inline-block mt-1 text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">⭐ VIP</span>
-                )}
-              </div>
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center flex-1 flex flex-col items-center justify-center">
-                <span className="text-xl">🎖️</span>
-                <p className="text-2xl font-extrabold mt-1 text-[#F5A623]">{premios.length}</p>
-                <p className="text-gray-400 text-xs mt-0.5">Premios</p>
-              </div>
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+              <p className="text-2xl font-extrabold text-green-600">
+                ${(saldo / 1000).toFixed(0)}K
+              </p>
+              <p className="text-gray-400 text-xs mt-0.5">Saldo COP</p>
+            </div>
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 text-center">
+              <p className="text-2xl font-extrabold text-[#F5A623]">{premios.length}</p>
+              <p className="text-gray-400 text-xs mt-0.5">Premios</p>
             </div>
           </div>
+
+          {/* Retiro — solo cuando aplica */}
+          {saldo >= 100_000 && (
+            <button
+              onClick={() => setModalRetiro(true)}
+              className="w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-sm font-bold transition-all hover:opacity-90 active:scale-[0.99]"
+              style={{ background: "linear-gradient(90deg,#16a34a,#15803d)", color: "white" }}
+            >
+              <span>💸 Saldo disponible — ${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</span>
+              <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-extrabold">Retirar →</span>
+            </button>
+          )}
 
           {/* Accesos rápidos */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { href: "/membresias", icon: "🎟️", label: "Membresías", sub: "Compra tu número", grad: "135deg,#102463,#173592", hover: "hover:border-[#102463]/30" },
-              { href: "/ranking",    icon: "🏆",  label: "Ranking",    sub: "Top del club",    grad: "135deg,#7c3aed,#a855f7", hover: "hover:border-purple-200" },
-              { href: "/probabilidades", icon: "📊", label: "Probabilidades", sub: "Tus chances de ganar", grad: "135deg,#d97706,#ffbd1f", hover: "hover:border-yellow-200" },
-            ].map(({ href, icon, label, sub, grad, hover }) => (
+              { href: "/membresias",     icon: "🎟️", label: "Membresías",     color: "#102463" },
+              { href: "/ranking",        icon: "🏆",  label: "Ranking",        color: "#7c3aed" },
+              { href: "/probabilidades", icon: "📊",  label: "Probabilidades", color: "#d97706" },
+            ].map(({ href, icon, label, color }) => (
               <Link
                 key={href}
                 href={href}
-                className={`group bg-white rounded-2xl p-4 shadow-sm border border-gray-100 ${hover} hover:shadow-md transition-all flex flex-col items-center text-center gap-2`}
+                className="bg-white rounded-2xl py-3 px-2 shadow-sm border border-gray-100 hover:shadow-md transition-all flex flex-col items-center gap-1 text-center"
               >
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center text-lg transition-transform group-hover:scale-110"
-                  style={{ background: `linear-gradient(${grad})` }}
-                >
-                  {icon}
-                </div>
-                <div>
-                  <p className="font-extrabold text-[#102463] text-sm leading-tight">{label}</p>
-                  <p className="text-gray-400 text-xs mt-0.5">{sub}</p>
-                </div>
+                <span className="text-2xl">{icon}</span>
+                <span className="text-xs font-bold text-gray-700">{label}</span>
               </Link>
             ))}
           </div>
