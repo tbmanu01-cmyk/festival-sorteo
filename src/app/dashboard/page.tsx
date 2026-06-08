@@ -865,11 +865,18 @@ interface FamiliaRed {
   completa: boolean;
 }
 
+interface ResumenAdmin {
+  hijosDirectos: number;
+  totalUsuariosRed: number;
+}
+
 interface DatosRed {
   yo: MiembroRed;
   familias: FamiliaRed[];
   totalFamilias: number;
   totalMiembros: number;
+  esAdmin?: boolean;
+  resumenAdmin?: ResumenAdmin;
 }
 
 function iniciales(nombre: string, apellido: string) {
@@ -1170,6 +1177,35 @@ function SeccionRed() {
           <p className="text-3xl mb-2">🌱</p>
           <p className="font-bold text-white mb-1">Tu red está vacía</p>
           <p className="text-white/60 text-sm">Comparte tu código para empezar a construir tu primera familia.</p>
+        </div>
+      </section>
+    );
+  }
+
+  // ── Vista especial para el admin ──────────────────────────────────────────
+  if (datos.esAdmin && datos.resumenAdmin) {
+    const r = datos.resumenAdmin;
+    return (
+      <section className="space-y-3">
+        <div className="rounded-2xl p-5 text-white" style={{ background: "linear-gradient(135deg,#102463,#1a4a9e)" }}>
+          <p className="text-xs font-bold uppercase tracking-widest text-white/50 mb-4">Red maestra — Administrador</p>
+          <div className="grid grid-cols-2 gap-4 mb-5">
+            <div>
+              <p className="text-4xl font-extrabold leading-none">{r.totalUsuariosRed.toLocaleString("es-CO")}</p>
+              <p className="text-sm text-white/60 mt-1">usuarios en la plataforma</p>
+            </div>
+            <div className="text-right">
+              <p className="text-4xl font-extrabold leading-none text-[#ffbd1f]">{r.hijosDirectos.toLocaleString("es-CO")}</p>
+              <p className="text-sm text-white/60 mt-1">hijos directos</p>
+            </div>
+          </div>
+          <p className="text-xs text-white/40 mb-3">Como administrador eres la raíz de toda la red. Cada usuario independiente queda bajo tu cuenta.</p>
+          <a
+            href="/admin/red-multinivel"
+            className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white font-bold text-sm px-4 py-2.5 rounded-full transition-all"
+          >
+            Ver red completa →
+          </a>
         </div>
       </section>
     );

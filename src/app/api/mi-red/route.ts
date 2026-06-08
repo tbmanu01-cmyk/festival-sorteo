@@ -29,9 +29,37 @@ export async function GET() {
 
   const yo = await prisma.user.findUnique({
     where: { correo: session.user.email },
-    select: { id: true, nombre: true, apellido: true, ciudad: true, fechaRegistro: true, codigoRef: true, avatar: true },
+    select: { id: true, nombre: true, apellido: true, ciudad: true, fechaRegistro: true, codigoRef: true, avatar: true, rol: true },
   });
   if (!yo) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
+
+  // Admin: devolver resumen global sin el árbol pesado (evita N+1 con miles de referidos)
+  if (yo.rol === "ADMIN") {
+    const [{ directos }] = await prisma.$queryRaw<{ directos: bigint }[]>`
+      SELECT COUNT(*) AS directos FROM referidos WHERE "referidorId" = ${yo.id}
+    `;
+    const [{ totalRed }] = await prisma.$queryRaw<{ totalRed: bigint }[]>`
+      SELECT COUNT(DISTINCT r2."referidoId") AS "totalRed"
+      FROM referidos r1
+      JOIN referidos r2 ON r2."referidorId" = r1."referidoId"
+      WHERE r1."referidorId" = ${yo.id}
+    `;
+    const [{ totalUsuarios }] = await prisma.$queryRaw<{ totalUsuarios: bigint }[]>`
+      SELECT COUNT(*) AS "totalUsuarios" FROM users WHERE rol = 'USER'::"Rol"
+    `;
+    return NextResponse.json({
+      yo: { id: yo.id, nombre: yo.nombre, apellido: yo.apellido, ciudad: yo.ciudad,
+            fechaRegistro: yo.fechaRegistro.toISOString(), codigoRef: yo.codigoRef, avatar: yo.avatar },
+      esAdmin: true,
+      familias: [],
+      totalFamilias: 0,
+      totalMiembros: Number(directos),
+      resumenAdmin: {
+        hijosDirectos: Number(directos),
+        totalUsuariosRed: Number(totalUsuarios),
+      },
+    });
+  }
 
   // Todos mis referidos directos (nivel 1), ordenados por fecha de registro
   const referidosDirectos = await prisma.referido.findMany({

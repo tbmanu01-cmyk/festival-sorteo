@@ -77,6 +77,9 @@ export async function POST(req: NextRequest) {
       )
     `;
 
+    // Obtener admin para auto-asignación de usuarios sin código
+    const adminUser = await prisma.user.findFirst({ where: { rol: "ADMIN" }, select: { id: true } });
+
     // Slot replacement: link new user into an existing reserved slot
     if (slotToken) {
       const ahora = new Date();
@@ -124,9 +127,25 @@ export async function POST(req: NextRequest) {
               VALUES (${refId}, ${referidor.id}, ${nuevoId}, NOW(), false)
               ON CONFLICT ("referidoId") DO NOTHING
             `;
+          } else if (adminUser) {
+            // Árbol del referidor lleno o familia incompleta → cae bajo el admin
+            const refId = crypto.randomUUID();
+            await prisma.$executeRaw`
+              INSERT INTO referidos (id, "referidorId", "referidoId", fecha, compro)
+              VALUES (${refId}, ${adminUser.id}, ${nuevoId}, NOW(), false)
+              ON CONFLICT ("referidoId") DO NOTHING
+            `;
           }
         }
       }
+    } else if (adminUser) {
+      // Sin código de referido → hijo directo del admin
+      const refId = crypto.randomUUID();
+      await prisma.$executeRaw`
+        INSERT INTO referidos (id, "referidorId", "referidoId", fecha, compro)
+        VALUES (${refId}, ${adminUser.id}, ${nuevoId}, NOW(), false)
+        ON CONFLICT ("referidoId") DO NOTHING
+      `;
     }
 
     // Enviar correo de verificación
