@@ -1299,8 +1299,8 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Accesos rápidos — Membresías y Probabilidades */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Accesos rápidos — Membresías, Ranking y Probabilidades */}
+          <div className="grid grid-cols-3 gap-4">
             <Link
               href="/membresias"
               className="group flex items-center gap-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:border-[#102463]/30 hover:shadow-md transition-all"
@@ -1316,6 +1316,25 @@ export default function Dashboard() {
                 <p className="text-gray-400 text-xs mt-0.5">Compra o busca tu número</p>
               </div>
               <svg className="w-4 h-4 text-gray-300 ml-auto group-hover:text-[#102463] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+
+            <Link
+              href="/ranking"
+              className="group flex items-center gap-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:border-purple-300 hover:shadow-md transition-all"
+            >
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-xl flex-shrink-0 transition-transform group-hover:scale-110"
+                style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}
+              >
+                🏆
+              </div>
+              <div>
+                <p className="font-extrabold text-[#102463] text-base leading-tight">Ranking</p>
+                <p className="text-gray-400 text-xs mt-0.5">Top compradores del club</p>
+              </div>
+              <svg className="w-4 h-4 text-gray-300 ml-auto group-hover:text-purple-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>

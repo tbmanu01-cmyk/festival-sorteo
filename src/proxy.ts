@@ -31,5 +31,6 @@ export const config = {
     "/asistente/:path*",
     "/membresias",
     "/probabilidades",
+    "/ranking",
   ],
 };
