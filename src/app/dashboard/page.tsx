@@ -1276,20 +1276,12 @@ export default function Dashboard() {
             </div>
 
             {/* Saldo — con botón de retiro si hay saldo */}
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
+            <div className={`rounded-xl p-4 shadow-sm border text-center flex flex-col items-center justify-center transition-all ${saldo >= 100_000 ? "bg-green-50 border-green-200" : "bg-white border-gray-100"}`}>
               <span className="text-2xl">💰</span>
-              <p className="text-xl font-extrabold mt-1 text-green-600">
+              <p className={`text-xl font-extrabold mt-1 ${saldo >= 100_000 ? "text-green-600" : "text-green-600"}`}>
                 ${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
               </p>
               <p className="text-gray-500 text-xs mt-0.5">Saldo disponible</p>
-              {saldo >= 100_000 && (
-                <button
-                  onClick={() => setModalRetiro(true)}
-                  className="mt-2 text-xs font-semibold text-[#1B4F8A] hover:underline"
-                >
-                  Solicitar retiro →
-                </button>
-              )}
             </div>
 
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
@@ -1298,6 +1290,30 @@ export default function Dashboard() {
               <p className="text-gray-500 text-xs mt-0.5">Beneficios ganados</p>
             </div>
           </div>
+
+          {/* Banner de retiro — solo cuando saldo >= $100.000 */}
+          {saldo >= 100_000 && (
+            <button
+              onClick={() => setModalRetiro(true)}
+              className="w-full text-left rounded-2xl p-5 flex items-center justify-between gap-4 transition-all hover:scale-[1.01] active:scale-100"
+              style={{ background: "linear-gradient(135deg, #16a34a 0%, #15803d 60%, #14532d 100%)", boxShadow: "0 4px 20px rgba(22,163,74,0.35)" }}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl flex-shrink-0">
+                  💸
+                </div>
+                <div>
+                  <p className="text-white font-extrabold text-base leading-tight">¡Tienes saldo disponible para retirar!</p>
+                  <p className="text-green-200 text-sm mt-0.5">
+                    ${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP · Mínimo $100.000
+                  </p>
+                </div>
+              </div>
+              <div className="flex-shrink-0 bg-white text-green-700 font-extrabold text-sm px-5 py-2.5 rounded-full shadow-md whitespace-nowrap">
+                Solicitar retiro →
+              </div>
+            </button>
+          )}
 
           {/* Accesos rápidos — Membresías, Ranking y Probabilidades */}
           <div className="grid grid-cols-3 gap-4">
