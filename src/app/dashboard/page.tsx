@@ -1156,9 +1156,8 @@ function SeccionRed() {
   if (cargando) {
     return (
       <section>
-        <h2 className="text-lg font-bold text-gray-900 mb-3">Mi red multinivel</h2>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 flex justify-center">
-          <div className="w-8 h-8 border-2 border-[#102463] border-t-transparent rounded-full animate-spin" />
+        <div className="rounded-2xl p-6 flex justify-center" style={{ background: "linear-gradient(135deg,#102463,#173592)" }}>
+          <div className="w-8 h-8 border-2 border-white/40 border-t-white rounded-full animate-spin" />
         </div>
       </section>
     );
@@ -1167,107 +1166,136 @@ function SeccionRed() {
   if (!datos || datos.totalMiembros === 0) {
     return (
       <section>
-        <h2 className="text-lg font-bold text-gray-900 mb-3">Mi red multinivel</h2>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-          <p className="text-4xl mb-3">🌱</p>
-          <p className="font-semibold text-gray-700 mb-1">Tu red está vacía</p>
-          <p className="text-gray-400 text-sm">Comparte tu código de referido para empezar a construir tu familia.</p>
+        <div className="rounded-2xl p-6 text-center" style={{ background: "linear-gradient(135deg,#102463,#173592)" }}>
+          <p className="text-3xl mb-2">🌱</p>
+          <p className="font-bold text-white mb-1">Tu red está vacía</p>
+          <p className="text-white/60 text-sm">Comparte tu código para empezar a construir tu primera familia.</p>
         </div>
       </section>
     );
   }
 
   const familia = datos.familias[familiaActiva];
+  const familiasCompletas = datos.familias.filter((f) => f.completa).length;
+  const pctRed = Math.round((datos.totalMiembros / (datos.totalFamilias * 12)) * 100);
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold text-gray-900">
-          Mi red
-          <span className="ml-2 text-sm font-normal text-gray-500">
-            {datos.totalMiembros} {datos.totalMiembros === 1 ? "miembro" : "miembros"}
-          </span>
-        </h2>
-        {datos.totalFamilias > 1 && (
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setFamiliaActiva((i) => Math.max(0, i - 1))}
-              disabled={familiaActiva === 0}
-              className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-30 transition-all font-bold text-base leading-none"
-            >
-              ‹
-            </button>
+    <section className="space-y-3">
+
+      {/* ── Banner de estadísticas globales ───────────────────────────────── */}
+      <div className="rounded-2xl p-5 text-white" style={{ background: "linear-gradient(135deg,#102463,#1a4a9e)" }}>
+        <p className="text-xs font-bold uppercase tracking-widest text-white/50 mb-3">Mi red multinivel</p>
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <div>
+            <p className="text-3xl font-extrabold leading-none">{datos.totalMiembros}</p>
+            <p className="text-[11px] text-white/60 mt-1">miembros</p>
+          </div>
+          <div className="text-center">
+            <p className="text-3xl font-extrabold leading-none">{datos.totalFamilias}</p>
+            <p className="text-[11px] text-white/60 mt-1">familias</p>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-extrabold leading-none text-[#ffbd1f]">{familiasCompletas}</p>
+            <p className="text-[11px] text-white/60 mt-1">completas</p>
+          </div>
+        </div>
+        {/* Barra de progreso global */}
+        <div>
+          <div className="flex justify-between text-[10px] text-white/50 mb-1.5">
+            <span>Progreso total de la red</span>
+            <span>{pctRed}%</span>
+          </div>
+          <div className="w-full bg-white/10 rounded-full h-2">
+            <div
+              className="h-2 rounded-full transition-all"
+              style={{ width: `${pctRed}%`, background: "linear-gradient(90deg,#ffbd1f,#f59e0b)" }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tarjeta de familia con navegador ──────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+        {/* Cabecera del navegador */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-gray-50/60">
+          <button
+            onClick={() => setFamiliaActiva((i) => Math.max(0, i - 1))}
+            disabled={familiaActiva === 0}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-30 transition-all font-bold text-lg leading-none shadow-sm"
+          >
+            ‹
+          </button>
+
+          <div className="flex-1 min-w-0">
             <select
               value={familiaActiva}
               onChange={(e) => setFamiliaActiva(Number(e.target.value))}
-              className="text-xs font-bold text-[#102463] bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#102463]/30 cursor-pointer"
+              className="w-full text-sm font-extrabold text-[#102463] bg-transparent border-none focus:outline-none cursor-pointer appearance-none"
             >
               {datos.familias.map((f, i) => (
                 <option key={i} value={i}>
-                  Familia {i + 1} {f.completa ? "✓" : `· ${f.totalMiembros}/12`}
+                  Familia {i + 1} de {datos.totalFamilias}{f.completa ? " ✓" : ` · ${f.totalMiembros}/12 slots`}
                 </option>
               ))}
             </select>
-            <button
-              onClick={() => setFamiliaActiva((i) => Math.min(datos.totalFamilias - 1, i + 1))}
-              disabled={familiaActiva === datos.totalFamilias - 1}
-              className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-30 transition-all font-bold text-base leading-none"
-            >
-              ›
-            </button>
+            {/* Barra de progreso de esta familia */}
+            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1.5">
+              <div
+                className={`h-1.5 rounded-full transition-all ${familia.completa ? "bg-green-500" : "bg-[#102463]"}`}
+                style={{ width: `${(familia.totalMiembros / 12) * 100}%` }}
+              />
+            </div>
           </div>
-        )}
-      </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        {/* Stats */}
-        <div className="flex items-center gap-3 mb-5 pb-4 border-b border-gray-100">
-          <div className="flex-1 text-center">
-            <p className="text-xl font-extrabold text-[#102463]">{familia.totalMiembros}<span className="text-sm text-gray-300">/12</span></p>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider">slots</p>
+          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${familia.completa ? "bg-green-100 text-green-700" : "bg-[#102463]/10 text-[#102463]"}`}>
+            {familia.completa ? "✓ Completa" : `${familia.totalMiembros}/12`}
+          </span>
+
+          <button
+            onClick={() => setFamiliaActiva((i) => Math.min(datos.totalFamilias - 1, i + 1))}
+            disabled={familiaActiva === datos.totalFamilias - 1}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-30 transition-all font-bold text-lg leading-none shadow-sm"
+          >
+            ›
+          </button>
+        </div>
+
+        {/* Mini stats de la familia */}
+        <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100">
+          <div className="py-3 text-center">
+            <p className="text-lg font-extrabold text-[#102463]">{familia.hijos.filter(Boolean).length}<span className="text-xs text-gray-300 font-normal">/3</span></p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">nivel 1</p>
           </div>
-          <div className="flex-1 text-center">
-            <p className="text-xl font-extrabold text-[#102463]">{familia.hijos.filter(Boolean).length}</p>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider">hijos</p>
+          <div className="py-3 text-center">
+            <p className="text-lg font-extrabold text-[#102463]">{familia.nietos.flat().filter(Boolean).length}<span className="text-xs text-gray-300 font-normal">/9</span></p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">nivel 2</p>
           </div>
-          <div className="flex-1 text-center">
-            <p className="text-xl font-extrabold text-[#102463]">{familia.nietos.flat().filter(Boolean).length}</p>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider">nietos</p>
-          </div>
-          <div className="flex-1 text-center">
-            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${familia.completa ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-              {familia.completa ? "✓ Completa" : "En curso"}
-            </span>
+          <div className="py-3 text-center">
+            <p className="text-lg font-extrabold text-[#102463]">{familia.totalMiembros}<span className="text-xs text-gray-300 font-normal">/12</span></p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">total</p>
           </div>
         </div>
 
         {/* Leyenda */}
-        <div className="flex gap-3 justify-center mb-4 text-[10px] text-gray-400 flex-wrap">
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#102463] inline-block" /> Nivel 1</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-[#ffbd1f] inline-block" /> Nivel 2</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-gray-200 inline-block" /> Libre (toca para compartir link)</span>
+        <div className="flex gap-4 justify-center pt-4 px-4 text-[10px] text-gray-400">
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#102463] inline-block" />Nivel 1</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#ffbd1f] inline-block" />Nivel 2</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-gray-200 inline-block" />Libre</span>
         </div>
 
-        <ArbolFamilia familia={familia} yo={datos.yo} />
+        {/* Árbol */}
+        <div className="p-5 pt-3">
+          <ArbolFamilia familia={familia} yo={datos.yo} />
+        </div>
 
-        {/* Barra de progreso */}
-        <div className="mt-5 pt-4 border-t border-gray-100">
-          <div className="flex justify-between text-xs text-gray-400 mb-1.5">
-            <span>Familia {familia.numero}</span>
-            <span>{familia.totalMiembros}/12 slots llenos</span>
-          </div>
-          <div className="w-full bg-gray-100 rounded-full h-1.5">
-            <div
-              className="bg-[#102463] h-1.5 rounded-full transition-all"
-              style={{ width: `${(familia.totalMiembros / 12) * 100}%` }}
-            />
-          </div>
-          {familia.completa && datos.totalFamilias > familiaActiva + 1 && (
-            <p className="text-xs text-green-600 font-semibold mt-2 text-center">
-              ✓ Familia completa — Familia {familiaActiva + 2} abierta
+        {familia.completa && datos.totalFamilias > familiaActiva + 1 && (
+          <div className="mx-4 mb-4 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-center">
+            <p className="text-xs text-green-700 font-bold">
+              ✓ Familia {familiaActiva + 1} completa — Familia {familiaActiva + 2} abierta
             </p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </section>
   );
