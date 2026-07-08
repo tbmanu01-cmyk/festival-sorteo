@@ -157,6 +157,39 @@ export async function POST(
       }
     }).catch((err) => console.error("Referidos post-compra error:", err));
 
+    // Compras propias: emitir gift cards según total de membresías compradas por el mismo usuario
+    Promise.resolve().then(async () => {
+      if (!(config?.giftCardActivo ?? true)) return;
+
+      const totalPropias = await prisma.caja.count({
+        where: { userId, estado: "VENDIDA" },
+      });
+
+      const mpgc = config?.membresiasPorGiftCard ?? 5;
+      const debeHaber = Math.floor(totalPropias / mpgc);
+      if (debeHaber === 0) return;
+
+      // Gift cards ya emitidas por compras propias (evita duplicar)
+      const yaEmitidas = await prisma.giftCard.count({
+        where: { propietarioId: userId, nota: { contains: "compras propias" } },
+      });
+
+      const porEmitir = debeHaber - yaEmitidas;
+      if (porEmitir <= 0) return;
+
+      for (let i = 0; i < porEmitir; i++) {
+        const gcCodigo = `GC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+        await prisma.giftCard.create({
+          data: {
+            codigo: gcCodigo,
+            valor: precioCaja,
+            propietarioId: userId,
+            nota: "Premio por compras propias",
+          },
+        });
+      }
+    }).catch((err) => console.error("Compras propias post-compra error:", err));
+
     return NextResponse.json({
       mensaje: `¡Membresía ${numero} comprada exitosamente!`,
       caja: cajaActualizada,

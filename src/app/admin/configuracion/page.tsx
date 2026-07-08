@@ -236,9 +236,10 @@ export default function PaginaConfiguracion() {
 
             {/* ── Membresías por gift card ──────────────────────────────── */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="font-bold text-gray-800 mb-1">Membresías por gift card de referidos</h2>
+              <h2 className="font-bold text-gray-800 mb-1">Membresías por gift card</h2>
               <p className="text-xs text-gray-400 mb-4">
                 Cada vez que tus referidos acumulen esta cantidad de membresías compradas, recibes una gift card automática.
+                También aplica a tus propias compras: si tú mismo acumulas esta cantidad de membresías, también recibes una.
               </p>
               <div className="flex items-center gap-4">
                 <input
