@@ -86,8 +86,9 @@ export default function Inicio() {
       .catch(() => undefined);
   }, []);
 
+  const tienda: Boton = { href: "/tienda", label: "Tienda", sub: "Bonos con cashback", icono: ICONO_TIENDA, proximamente: !tiendaActiva };
+
   const botones: Boton[] = [
-    { href: "/tienda", label: "Tienda", sub: "Bonos con cashback", icono: ICONO_TIENDA, proximamente: !tiendaActiva },
     { href: "/membresias", label: "Membresías", sub: "Cajas del sorteo", icono: ICONO_MEMBRESIAS },
   ];
 
@@ -96,6 +97,7 @@ export default function Inicio() {
       { href: "/dashboard", label: "Mi cuenta", sub: "Billetera y red", icono: ICONO_CUENTA },
       { href: "/dashboard/perfil", label: "Perfil", sub: "Tus datos", icono: ICONO_PERFIL },
       { href: "/ranking", label: "Ranking", sub: "Ganadores", icono: ICONO_RANKING },
+      tienda,
     );
     if (rol === "ADMIN") {
       botones.push({ href: "/admin", label: "Administrar", sub: "Panel admin", icono: ICONO_ADMIN });
@@ -105,6 +107,7 @@ export default function Inicio() {
   } else {
     botones.push(
       { href: "/ranking", label: "Ranking", sub: "Ganadores", icono: ICONO_RANKING },
+      tienda,
       { href: "/login", label: "Iniciar sesión", sub: "Ya tengo cuenta", icono: ICONO_LOGIN },
       { href: "/registro", label: "Registrarme", sub: "Crear cuenta gratis", icono: ICONO_REGISTRO },
     );
