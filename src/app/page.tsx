@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
 
@@ -9,6 +10,7 @@ interface Boton {
   label: string;
   sub: string;
   icono: React.ReactNode;
+  proximamente?: boolean;
 }
 
 const ICONO_TIENDA = (
@@ -75,9 +77,17 @@ const ICONO_REGISTRO = (
 export default function Inicio() {
   const { data: session, status } = useSession();
   const rol = (session?.user as { rol?: string } | undefined)?.rol;
+  const [tiendaActiva, setTiendaActiva] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((d: { tiendaActiva?: boolean }) => setTiendaActiva(d.tiendaActiva ?? true))
+      .catch(() => undefined);
+  }, []);
 
   const botones: Boton[] = [
-    { href: "/tienda", label: "Tienda", sub: "Bonos con cashback", icono: ICONO_TIENDA },
+    { href: "/tienda", label: "Tienda", sub: "Bonos con cashback", icono: ICONO_TIENDA, proximamente: !tiendaActiva },
     { href: "/membresias", label: "Membresías", sub: "Cajas del sorteo", icono: ICONO_MEMBRESIAS },
   ];
 
@@ -114,26 +124,58 @@ export default function Inicio() {
         className="flex-1 grid grid-cols-1 sm:grid-cols-3"
         style={{ gridAutoRows: "1fr", gap: 10, padding: "0 10px 10px", minHeight: 0 }}
       >
-        {botones.map((b) => (
-          <Link
-            key={b.href}
-            href={b.href}
-            className="flex flex-row sm:flex-col items-center justify-start sm:justify-center text-left sm:text-center hover:scale-[1.02] active:scale-[0.97] transition-transform"
-            style={{
-              background: "linear-gradient(135deg, #102463 0%, #173592 100%)",
-              borderRadius: 24,
-              textDecoration: "none",
-              boxShadow: "0 8px 20px -6px rgba(16,36,99,0.35)",
-              padding: "0 22px",
-            }}
-          >
-            <div className="mr-4 mb-0 sm:mr-0 sm:mb-2" style={{ color: "#ffbd1f", flexShrink: 0 }}>{b.icono}</div>
-            <div className="flex flex-col sm:items-center">
-              <span style={{ color: "white", fontWeight: 800, fontSize: 17, lineHeight: 1.2 }}>{b.label}</span>
-              <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, marginTop: 4 }}>{b.sub}</span>
-            </div>
-          </Link>
-        ))}
+        {botones.map((b) => {
+          const contenido = (
+            <>
+              <div className="mr-4 mb-0 sm:mr-0 sm:mb-2" style={{ color: b.proximamente ? "rgba(255,255,255,0.45)" : "#ffbd1f", flexShrink: 0 }}>{b.icono}</div>
+              <div className="flex flex-col sm:items-center">
+                <span style={{ color: "white", fontWeight: 800, fontSize: 17, lineHeight: 1.2 }}>{b.label}</span>
+                <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, marginTop: 4 }}>{b.sub}</span>
+              </div>
+            </>
+          );
+
+          if (b.proximamente) {
+            return (
+              <div
+                key={b.href}
+                aria-disabled="true"
+                className="relative flex flex-row sm:flex-col items-center justify-start sm:justify-center text-left sm:text-center cursor-not-allowed"
+                style={{
+                  background: "linear-gradient(135deg, #6b7693 0%, #8894ac 100%)",
+                  borderRadius: 24,
+                  boxShadow: "0 8px 20px -6px rgba(16,36,99,0.20)",
+                  padding: "0 22px",
+                }}
+              >
+                <span
+                  className="absolute top-2 right-2 sm:top-3 sm:right-3 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider"
+                  style={{ background: "#ffbd1f", color: "#102463" }}
+                >
+                  Próximamente
+                </span>
+                {contenido}
+              </div>
+            );
+          }
+
+          return (
+            <Link
+              key={b.href}
+              href={b.href}
+              className="flex flex-row sm:flex-col items-center justify-start sm:justify-center text-left sm:text-center hover:scale-[1.02] active:scale-[0.97] transition-transform"
+              style={{
+                background: "linear-gradient(135deg, #102463 0%, #173592 100%)",
+                borderRadius: 24,
+                textDecoration: "none",
+                boxShadow: "0 8px 20px -6px rgba(16,36,99,0.35)",
+                padding: "0 22px",
+              }}
+            >
+              {contenido}
+            </Link>
+          );
+        })}
       </main>
     </div>
   );

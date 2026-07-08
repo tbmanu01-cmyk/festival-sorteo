@@ -48,7 +48,7 @@ export async function enviarComprobante(opts: {
     <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">¡Compra exitosa! 🎉</h2>
     <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, tu número ha sido registrado.</p>
     <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;">
-      ${fila("Número de caja", `<span style="font-size:28px;color:#1B4F8A;font-weight:900;">#${numeroCaja}</span>`)}
+      ${fila("Membresía", `<span style="font-size:28px;color:#1B4F8A;font-weight:900;">#${numeroCaja}</span>`)}
       ${fila("Referencia", `<code style="font-size:12px;color:#888;">${idCompra}</code>`)}
       ${fila("Fecha", fecha.toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }))}
       ${fila("Valor pagado", `$${precio.toLocaleString("es-CO")} COP`)}
@@ -60,7 +60,7 @@ export async function enviarComprobante(opts: {
   await resend().emails.send({
     from: FROM,
     to: correo,
-    subject: `¡Compra exitosa! Caja #${numeroCaja} — Club 10K`,
+    subject: `¡Membresía activada! #${numeroCaja} — Club 10K`,
     html: base(cuerpo),
   });
 }
@@ -99,6 +99,36 @@ export async function enviarPremio(opts: {
     to: correo,
     subject: `¡Ganaste $${monto.toLocaleString("es-CO")} en Club 10K! 🏆`,
     html: base(cuerpo, "#1B4F8A"),
+  });
+}
+
+export async function enviarPremioGiftCard(opts: {
+  correo: string;
+  nombre: string;
+  codigoGiftCard: string;
+  valorGiftCard: number;
+  numeroGanador: string;
+}) {
+  const { correo, nombre, codigoGiftCard, valorGiftCard, numeroGanador } = opts;
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#16a34a;font-size:22px;">¡Ganaste una membresía gratis! 🎁</h2>
+    <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, ¡tu cifra coincidió!</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;">
+      ${fila("Número ganador del sorteo", `<span style="font-size:24px;font-weight:900;color:#1B4F8A;">${numeroGanador}</span>`)}
+      ${fila("Categoría", NOMBRE_CATEGORIA["UNA_CIFRA"])}
+      ${fila("Tu regalo", `<span style="font-size:18px;font-weight:900;color:#16a34a;">Gift Card $${valorGiftCard.toLocaleString("es-CO")} COP</span>`)}
+      ${fila("Código gift card", `<span style="font-family:monospace;font-size:20px;font-weight:900;color:#102463;letter-spacing:2px;">${codigoGiftCard}</span>`)}
+    </table>
+    <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
+      Esto te da una <strong>segunda oportunidad</strong> en el siguiente sorteo.
+      Puedes usar tu gift card al comprar tu próxima membresía en
+      <strong>Mi cuenta → Membresías</strong>. ¡Buena suerte la próxima vez! 🍀
+    </p>`;
+  await resend().emails.send({
+    from: FROM,
+    to: correo,
+    subject: `¡Ganaste una membresía gratis en Club 10K! 🎁`,
+    html: base(cuerpo, "#16a34a"),
   });
 }
 
@@ -276,5 +306,84 @@ export async function enviarCodigoRetiro(opts: {
     to: correo,
     subject: `${codigo} es tu código de retiro — Club 10K`,
     html: base(cuerpo, "#1B4F8A"),
+  });
+}
+
+// ── Pagos manuales ────────────────────────────────────────────────────────
+
+export async function enviarComprobanteRecibido(opts: {
+  correo: string;
+  nombre: string;
+  numeroCaja: string;
+  referencia: string;
+  monto: number;
+}) {
+  const { correo, nombre, numeroCaja, referencia, monto } = opts;
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">¡Comprobante recibido! 📎</h2>
+    <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, recibimos tu comprobante de pago. Lo revisaremos y te notificaremos pronto.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;">
+      ${fila("Membresía solicitada", `<span style="font-size:22px;font-weight:900;color:#1B4F8A;">#${numeroCaja}</span>`)}
+      ${fila("Referencia de pago", `<code style="font-size:12px;color:#888;">${referencia}</code>`)}
+      ${fila("Valor", `$${monto.toLocaleString("es-CO")} COP`)}
+    </table>
+    <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
+      Nuestro equipo revisará tu pago en las próximas horas. Recibirás otro correo cuando sea aprobado. 🙏
+    </p>`;
+  await resend().emails.send({
+    from: FROM,
+    to: correo,
+    subject: "Comprobante recibido — Club 10K",
+    html: base(cuerpo),
+  });
+}
+
+export async function enviarPagoManualAprobado(opts: {
+  correo: string;
+  nombre: string;
+  numeroCaja: string;
+  referencia: string;
+  monto: number;
+}) {
+  const { correo, nombre, numeroCaja, referencia, monto } = opts;
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#16a34a;font-size:22px;">¡Pago aprobado! 🎉</h2>
+    <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, tu pago fue verificado y tu membresía ya está activa.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;">
+      ${fila("Membresía activada", `<span style="font-size:28px;font-weight:900;color:#1B4F8A;">#${numeroCaja}</span>`)}
+      ${fila("Referencia", `<code style="font-size:12px;color:#888;">${referencia}</code>`)}
+      ${fila("Valor pagado", `$${monto.toLocaleString("es-CO")} COP`)}
+    </table>
+    <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
+      ¡Ya estás participando en el sorteo! Guarda tu número y mucha suerte. 🍀
+    </p>`;
+  await resend().emails.send({
+    from: FROM,
+    to: correo,
+    subject: "¡Tu membresía fue aprobada! — Club 10K",
+    html: base(cuerpo, "#16a34a"),
+  });
+}
+
+export async function enviarPagoManualRechazado(opts: {
+  correo: string;
+  nombre: string;
+  numeroCaja: string;
+  motivo?: string;
+}) {
+  const { correo, nombre, numeroCaja, motivo } = opts;
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#dc2626;font-size:22px;">Pago no aprobado</h2>
+    <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, no pudimos verificar tu pago para la membresía <strong>#${numeroCaja}</strong>.</p>
+    ${motivo ? `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px 20px;margin-bottom:20px;color:#991b1b;font-size:14px;"><strong>Motivo:</strong> ${motivo}</div>` : ""}
+    <p style="margin:0;color:#555;font-size:14px;line-height:1.6;">
+      Si crees que es un error, contacta a nuestro equipo de soporte y comparte tu comprobante.<br>
+      Puedes intentar nuevamente desde <a href="https://tienda10k.com/membresias" style="color:#1B4F8A;font-weight:600;">tienda10k.com/membresias</a>
+    </p>`;
+  await resend().emails.send({
+    from: FROM,
+    to: correo,
+    subject: "Pago no aprobado — Club 10K",
+    html: base(cuerpo, "#dc2626"),
   });
 }

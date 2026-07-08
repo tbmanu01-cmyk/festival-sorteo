@@ -30,6 +30,10 @@ export async function PUT(req: NextRequest) {
     membresiasPorGiftCard?: number;
     giftCardActivo?: boolean;
     fechaSorteo?: string | null;
+    qrPagoUrl?: string;
+    brebKey?: string;
+    datosBancarios?: string;
+    tiendaActiva?: boolean;
   };
 
   const { pct4Cifras, pct3Cifras, pct2Cifras, pct1Cifra, margenGanancia } = body;

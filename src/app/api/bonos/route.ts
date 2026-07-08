@@ -5,6 +5,11 @@ import { authOptions } from "@/lib/auth";
 export async function GET() {
   const { prisma } = await import("@/lib/prisma");
 
+  const config = await prisma.config.findUnique({ where: { id: "singleton" } });
+  if (config && !config.tiendaActiva) {
+    return NextResponse.json({ bonos: [], tiendaActiva: false });
+  }
+
   const bonos = await prisma.bono.findMany({
     where: { activo: true },
     orderBy: { cadena: "asc" },

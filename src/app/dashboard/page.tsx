@@ -465,9 +465,11 @@ interface GiftCardItem {
 function SelectorGiftCards({
   cards,
   onAccion,
+  cuentaConfirmada,
 }: {
   cards: GiftCardItem[];
   onAccion: (id: string, accion: "retirar" | "regalar" | "usar") => void;
+  cuentaConfirmada: boolean;
 }) {
   const [idx, setIdx] = useState(0);
   const gc = cards[idx];
@@ -520,12 +522,14 @@ function SelectorGiftCards({
           >
             🎟️ Usar en membresía
           </button>
-          <button
-            onClick={() => onAccion(gc.id, "retirar")}
-            className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors text-left"
-          >
-            💰 Añadir a saldo
-          </button>
+          {cuentaConfirmada && (
+            <button
+              onClick={() => onAccion(gc.id, "retirar")}
+              className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors text-left"
+            >
+              💰 Añadir a saldo
+            </button>
+          )}
           <button
             onClick={() => onAccion(gc.id, "regalar")}
             className="w-full border-2 border-[#102463] text-[#102463] hover:bg-[#102463]/5 text-xs font-bold py-2 px-3 rounded-xl transition-colors text-left"
@@ -621,7 +625,7 @@ interface DatosReferidosAPI {
   progreso: number;
 }
 
-function SeccionReferidos() {
+function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
   const router = useRouter();
   const [datos, setDatos] = useState<DatosReferidosAPI | null>(null);
   const [giftCards, setGiftCards] = useState<GiftCardItem[]>([]);
@@ -799,7 +803,7 @@ function SeccionReferidos() {
 
           {/* Gift cards disponibles */}
           {!cargando && gcDisponibles.length > 0 && (
-            <SelectorGiftCards cards={gcDisponibles} onAccion={manejarAccion} />
+            <SelectorGiftCards cards={gcDisponibles} onAccion={manejarAccion} cuentaConfirmada={cuentaConfirmada} />
           )}
 
           {/* Sin gift cards */}
@@ -1617,7 +1621,7 @@ export default function Dashboard() {
           )}
 
           {/* Sección de referidos */}
-          <SeccionReferidos />
+          <SeccionReferidos cuentaConfirmada={confirmado} />
 
           {/* Árbol de familias multinivel */}
           <SeccionRed />
@@ -1726,7 +1730,11 @@ export default function Dashboard() {
               <h2 className="text-lg font-bold text-gray-900 mb-3">Beneficios ganados 🏆</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 {premios.map((p, i) => (
-                  <div key={i} className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-4">
+                  <div key={i} className={`border rounded-xl p-4 flex items-center gap-4 ${
+                    p.categoria === "UNA_CIFRA"
+                      ? "bg-green-50 border-green-200"
+                      : "bg-yellow-50 border-yellow-200"
+                  }`}>
                     <div className="text-3xl">
                       {p.categoria === "CUATRO_CIFRAS" ? "🏆"
                         : p.categoria === "TRES_CIFRAS" ? "🥈"
@@ -1740,14 +1748,22 @@ export default function Dashboard() {
                           : p.categoria === "DOS_CIFRAS" ? "2 cifras"
                           : "1 cifra"}
                       </p>
-                      <p className="text-[#F5A623] font-extrabold text-lg">
-                        ${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
-                      </p>
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        p.pagado ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
-                      }`}>
-                        {p.pagado ? "Pagado" : "Pendiente de pago"}
-                      </span>
+                      {p.categoria === "UNA_CIFRA" ? (
+                        <p className="text-green-700 font-extrabold text-base">
+                          🎫 Membresía gratis (gift card)
+                        </p>
+                      ) : (
+                        <p className="text-[#F5A623] font-extrabold text-lg">
+                          ${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                        </p>
+                      )}
+                      {p.categoria !== "UNA_CIFRA" && (
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          p.pagado ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                        }`}>
+                          {p.pagado ? "Pagado" : "Pendiente de pago"}
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}

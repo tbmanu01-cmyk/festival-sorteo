@@ -35,6 +35,13 @@ const nextConfig = {
           },
         ],
       },
+      // ── Logos e imágenes clave (no cachear en CDN para que los cambios sean inmediatos)
+      {
+        source: "/:file(logo\\.png|logo-icon\\.png|favicon\\.ico|og-image\\.png|apple-touch-icon\\.png)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
       // ── Archivos PWA ────────────────────────────────────────────────────
       {
         source: "/sw.js",

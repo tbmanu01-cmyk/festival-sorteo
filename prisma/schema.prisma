@@ -62,6 +62,12 @@ enum TipoTransaccion {
   CASHBACK_BONO
 }
 
+enum EstadoPagoManual {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
 model User {
   id              String        @id @default(cuid())
   nombre          String
@@ -106,6 +112,8 @@ model User {
   bonoCompras        BonoCompra[]
   bonoComisionesN1   BonoCompra[] @relation("BonoNivel1")
   bonoComisionesN2   BonoCompra[] @relation("BonoNivel2")
+  pagosManuals       PagoManual[] @relation("PagoUsuario")
+  pagosAprobados     PagoManual[] @relation("PagoAprobador")
 
   @@map("users")
 }
@@ -257,6 +265,10 @@ model Config {
   giftCardActivo         Boolean   @default(true)
   fechaSorteo            DateTime?
   updatedAt        DateTime  @updatedAt
+  qrPagoUrl        String?   @default("")
+  brebKey          String?   @default("")
+  datosBancarios   String?   @default("")
+  tiendaActiva     Boolean   @default(true)
 
   @@map("config")
 }
@@ -411,6 +423,29 @@ model Bono {
   compras      BonoCompra[]
 
   @@map("bonos")
+}
+
+model PagoManual {
+  id             String           @id @default(cuid())
+  referencia     String           @unique
+  usuarioId      String
+  numeroCaja     String
+  monto          Float
+  nombrePagador  String
+  refBancaria    String
+  comprobanteUrl String?
+  notas          String?
+  estado         EstadoPagoManual @default(PENDIENTE)
+  motivoRechazo  String?
+  aprobadoPorId  String?
+  aprobadoEn     DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  usuario    User  @relation("PagoUsuario",   fields: [usuarioId],    references: [id])
+  aprobadoPor User? @relation("PagoAprobador", fields: [aprobadoPorId], references: [id])
+
+  @@map("pagos_manuales")
 }
 
 model BonoCompra {

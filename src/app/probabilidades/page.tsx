@@ -73,7 +73,7 @@ export default function PaginaProbabilidades() {
     { icono: "🏆", label: "4 cifras exactas",    w: W4, prize: P4, nota: `${N_SORTEOS_4C} ganadores (1 por sorteo)` },
     { icono: "🥈", label: "3 últimas cifras",    w: W3, prize: P3, nota: "~9 ganadores exclusivos" },
     { icono: "🥉", label: "2 últimas cifras",    w: W2, prize: P2, nota: "~90 ganadores exclusivos" },
-    { icono: "🎁", label: "1 última cifra",      w: W1, prize: P1, nota: "~900 ganadores exclusivos" },
+    { icono: "🎫", label: "1 última cifra",      w: W1, prize: P1, nota: "~900 ganadores · gift card = 1 membresía", giftCard: true },
   ];
 
   return (
@@ -164,8 +164,11 @@ export default function PaginaProbabilidades() {
                           <td className="px-6 py-4 text-center font-semibold text-gray-700">
                             {oneIn(p)}
                           </td>
-                          <td className="px-6 py-4 text-right font-extrabold text-[#F5A623] text-lg">
-                            ${fmt(row.prize)}
+                          <td className="px-6 py-4 text-right font-extrabold text-lg">
+                            {(row as { giftCard?: boolean }).giftCard
+                              ? <span className="text-green-600 text-sm">🎫 Membresía gratis</span>
+                              : <span className="text-[#F5A623]">${fmt(row.prize)}</span>
+                            }
                           </td>
                         </tr>
                       );

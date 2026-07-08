@@ -73,14 +73,15 @@ export async function PATCH(
     });
 
     if (usuario) {
-      import("@/lib/email").then(({ enviarRetiroAprobado }) =>
-        enviarRetiroAprobado({
+      try {
+        const { enviarRetiroAprobado } = await import("@/lib/email");
+        await enviarRetiroAprobado({
           correo: usuario.correo,
           nombre: usuario.nombre,
           monto: montoFinal,
           cuentaDestino: retiro.cuentaDestino,
-        }).catch((err) => console.error("Email retiro aprobado:", err))
-      );
+        });
+      } catch (err) { console.error("Email retiro aprobado:", err); }
       crearNotificacion(prisma, {
         tipo: "RETIRO",
         titulo: "¡Retiro aprobado para consignación! 💸",
@@ -108,13 +109,14 @@ export async function PATCH(
     });
 
     if (usuario) {
-      import("@/lib/email").then(({ enviarRetiroRechazado }) =>
-        enviarRetiroRechazado({
+      try {
+        const { enviarRetiroRechazado } = await import("@/lib/email");
+        await enviarRetiroRechazado({
           correo: usuario.correo,
           nombre: usuario.nombre,
           monto: retiro.monto,
-        }).catch((err) => console.error("Email retiro rechazado:", err))
-      );
+        });
+      } catch (err) { console.error("Email retiro rechazado:", err); }
       crearNotificacion(prisma, {
         tipo: "RETIRO",
         titulo: "Solicitud de retiro rechazada",

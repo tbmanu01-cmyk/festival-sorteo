@@ -202,6 +202,7 @@ export default function TiendaBonos() {
   const [cargando, setCargando] = useState(true);
   const [saldo, setSaldo] = useState(0);
   const [cadenaFiltro, setCadenaFiltro] = useState<string>("todas");
+  const [tiendaActiva, setTiendaActiva] = useState<boolean | null>(null);
 
   const [bonoSeleccionado, setBonoSeleccionado] = useState<Bono | null>(null);
   const [comprando, setComprando] = useState(false);
@@ -213,12 +214,20 @@ export default function TiendaBonos() {
   } | null>(null);
 
   useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((d: { tiendaActiva?: boolean }) => setTiendaActiva(d.tiendaActiva ?? true))
+      .catch(() => setTiendaActiva(true));
+  }, []);
+
+  useEffect(() => {
+    if (tiendaActiva !== true) return;
     fetch("/api/bonos")
       .then((r) => r.json())
       .then((d: { bonos: Bono[] }) => setBonos(d.bonos))
       .catch(() => undefined)
       .finally(() => setCargando(false));
-  }, []);
+  }, [tiendaActiva]);
 
   useEffect(() => {
     if (!session) return;
@@ -281,6 +290,57 @@ export default function TiendaBonos() {
       setComprando(false);
     }
   };
+
+  if (tiendaActiva === null) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1" />
+        <Footer />
+      </div>
+    );
+  }
+
+  if (tiendaActiva === false) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center px-4" style={{ background: "var(--c10-ink-50)" }}>
+          <div className="text-center max-w-md">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5"
+              style={{ background: "linear-gradient(135deg, #102463 0%, #173592 100%)" }}
+            >
+              <svg className="w-9 h-9" fill="none" stroke="#ffbd1f" viewBox="0 0 24 24" strokeWidth={1.6}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M16 10a4 4 0 0 1-8 0" />
+              </svg>
+            </div>
+            <span
+              className="inline-block text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3"
+              style={{ background: "rgba(255,189,31,0.15)", color: "#f0a500" }}
+            >
+              Próximamente
+            </span>
+            <h1 className="text-2xl font-extrabold mb-2" style={{ color: "#102463" }}>
+              Tienda de bonos
+            </h1>
+            <p className="text-gray-500 text-sm mb-6">
+              Estamos preparando esta sección. Muy pronto podrás comprar bonos de tus supermercados favoritos y ganar cashback.
+            </p>
+            <Link
+              href="/"
+              className="inline-block font-bold px-6 py-3 rounded-full transition-colors"
+              style={{ background: "#102463", color: "white" }}
+            >
+              Volver al inicio
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

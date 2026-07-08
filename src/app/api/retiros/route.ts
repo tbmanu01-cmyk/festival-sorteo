@@ -129,16 +129,19 @@ export async function POST(req: NextRequest) {
     ip,
   });
 
-  // Enviar código por email
-  import("@/lib/email").then(({ enviarCodigoRetiro }) =>
-    enviarCodigoRetiro({
+  // Enviar código por email (await obligatorio en serverless — fire-and-forget no llega a ejecutarse)
+  try {
+    const { enviarCodigoRetiro } = await import("@/lib/email");
+    await enviarCodigoRetiro({
       correo: usuario.correo,
       nombre: usuario.nombre,
       monto,
       codigo,
       expiraMin: EXPIRY_MIN,
-    }).catch((err) => console.error("Email código retiro error:", err))
-  );
+    });
+  } catch (err) {
+    console.error("Email código retiro error:", err);
+  }
 
   return NextResponse.json({
     ok: true,

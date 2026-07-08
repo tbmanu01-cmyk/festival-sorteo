@@ -7,6 +7,10 @@ const DEFAULTS = {
   pct3Cifras: 0.15,
   pct2Cifras: 0.10,
   fechaSorteo: null as string | null,
+  qrPagoUrl: "",
+  brebKey: "",
+  datosBancarios: "",
+  tiendaActiva: true,
 };
 
 export async function GET() {

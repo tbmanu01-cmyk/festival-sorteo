@@ -131,8 +131,13 @@ export async function POST(req: NextRequest) {
 
     // ── Montos ────────────────────────────────────────────────────────────
 
-    // Premio de 4 cifras: el fondo total de 4c se divide en N partes iguales (una por sorteo)
-    const monto4PerWinner = (totalRecaudo * PCT_4) / N;
+    // Premio 4 cifras: distribución ponderada 2:1 — el último sorteo (gran ganador)
+    // recibe el doble que cada sorteo previo.
+    // Peso total = (N-1)×1 + 1×2 = N+1
+    const fondo4 = totalRecaudo * PCT_4;
+    const monto4Early = N > 1 ? fondo4 / (N + 1)       : fondo4; // sorteos previos
+    const monto4Last  = N > 1 ? (2 * fondo4) / (N + 1) : fondo4; // gran ganador (último)
+
     const monto3 = g3.length > 0 ? (totalRecaudo * PCT_3) / g3.length : 0;
     const monto2 = g2.length > 0 ? (totalRecaudo * PCT_2) / g2.length : 0;
     const monto1 = g1.length > 0 ? (totalRecaudo * PCT_1) / g1.length : 0;
@@ -155,11 +160,11 @@ export async function POST(req: NextRequest) {
       });
 
       const premiosData = [
-        ...all4Winners.map((c) => ({
+        ...all4Winners.map((c, i) => ({
           sorteoId: nuevoSorteo.id,
           userId: c.userId!,
           categoria: "CUATRO_CIFRAS" as const,
-          monto: monto4PerWinner,
+          monto: i === all4Winners.length - 1 ? monto4Last : monto4Early,
           numeroCaja: c.numero,
         })),
         ...g3.map((c) => ({
@@ -189,9 +194,12 @@ export async function POST(req: NextRequest) {
         await tx.premio.createMany({ data: premiosData });
       }
 
-      // Acreditar saldo
+      // UNA_CIFRA → gift card (segunda oportunidad); demás categorías → saldo
+      const unaCifraUserIds = new Set(g1.map((c) => c.userId!));
+
       const saldosPorUsuario = new Map<string, number>();
       for (const p of premiosData) {
+        if (unaCifraUserIds.has(p.userId) && p.categoria === "UNA_CIFRA") continue;
         saldosPorUsuario.set(p.userId, (saldosPorUsuario.get(p.userId) ?? 0) + p.monto);
       }
       for (const [userId, monto] of saldosPorUsuario) {
@@ -206,6 +214,19 @@ export async function POST(req: NextRequest) {
             monto,
             descripcion: `Premio sorteo — números ganadores: ${numerosGanadores.join(", ")}`,
             referencia: nuevoSorteo.id,
+          },
+        });
+      }
+
+      // Gift cards para ganadores de 1 cifra (una por membresía ganadora)
+      for (const c of g1) {
+        const gcCodigo = `GC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+        await tx.giftCard.create({
+          data: {
+            codigo: gcCodigo,
+            valor: PRECIO_CAJA,
+            propietarioId: c.userId!,
+            nota: `Premio 1 cifra sorteo ${nuevoSorteo.id} — membresía #${c.numero}`,
           },
         });
       }
@@ -225,15 +246,41 @@ export async function POST(req: NextRequest) {
 
     // Emails a ganadores — fire and forget
     if (sorteoCompleto?.premios) {
-      import("@/lib/email").then(({ enviarPremio }) => {
+      import("@/lib/email").then(async ({ enviarPremio, enviarPremioGiftCard }) => {
+        // Recuperar gift cards recién emitidas para los de 1 cifra
+        const gcPor1Cifra = new Map<string, { codigo: string; valor: number }>();
+        for (const p of sorteoCompleto.premios.filter((p) => p.categoria === "UNA_CIFRA")) {
+          const gc = await prisma.giftCard.findFirst({
+            where: {
+              propietarioId: p.userId,
+              nota: { contains: sorteo.id },
+            },
+            orderBy: { creadaEn: "desc" },
+          });
+          if (gc) gcPor1Cifra.set(p.userId, { codigo: gc.codigo, valor: gc.valor });
+        }
+
         for (const p of sorteoCompleto.premios) {
-          enviarPremio({
-            correo: p.user.correo,
-            nombre: p.user.nombre,
-            categoria: p.categoria,
-            monto: p.monto,
-            numeroGanador: ultimoNumero,
-          }).catch((err) => console.error("Email premio error:", err));
+          if (p.categoria === "UNA_CIFRA") {
+            const gc = gcPor1Cifra.get(p.userId);
+            if (gc) {
+              enviarPremioGiftCard({
+                correo: p.user.correo,
+                nombre: p.user.nombre,
+                codigoGiftCard: gc.codigo,
+                valorGiftCard: gc.valor,
+                numeroGanador: ultimoNumero,
+              }).catch((err) => console.error("Email gift card 1 cifra error:", err));
+            }
+          } else {
+            enviarPremio({
+              correo: p.user.correo,
+              nombre: p.user.nombre,
+              categoria: p.categoria,
+              monto: p.monto,
+              numeroGanador: ultimoNumero,
+            }).catch((err) => console.error("Email premio error:", err));
+          }
         }
       });
     }
@@ -251,7 +298,8 @@ export async function POST(req: NextRequest) {
         ganadores3: g3.length,
         ganadores2: g2.length,
         ganadores1: g1.length,
-        monto4: monto4PerWinner,
+        monto4Early,
+        monto4Last,
         monto3,
         monto2,
         monto1,

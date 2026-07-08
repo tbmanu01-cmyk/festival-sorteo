@@ -12,7 +12,7 @@ export default function Footer() {
               <img src="/logo.png" alt="Club 10K" style={{ height: 40, width: "auto" }} />
             </div>
             <p className="text-sm leading-relaxed">
-              Elige tu número del 0000 al 9999 y obtén increíbles beneficios.
+              Compra bonos y gana cashback.
             </p>
           </div>
 
@@ -23,8 +23,6 @@ export default function Footer() {
               <li><Link href="/" className="hover:text-white transition-colors">Inicio</Link></li>
               <li><Link href="/#como-funciona" className="hover:text-white transition-colors">¿Cómo funciona?</Link></li>
               <li><Link href="/#premios" className="hover:text-white transition-colors">Beneficios</Link></li>
-              <li><Link href="/ranking" className="hover:text-white transition-colors">Ranking</Link></li>
-              <li><Link href="/probabilidades" className="hover:text-white transition-colors">Probabilidades</Link></li>
               <li><Link href="/registro" className="hover:text-white transition-colors">Registrarse</Link></li>
               <li><Link href="/login" className="hover:text-white transition-colors">Iniciar sesión</Link></li>
             </ul>
@@ -37,10 +35,6 @@ export default function Footer() {
               <li><Link href="/terminos" className="hover:text-white transition-colors">Términos y condiciones</Link></li>
               <li><Link href="/privacidad" className="hover:text-white transition-colors">Política de privacidad</Link></li>
             </ul>
-            <p className="text-xs mt-4" style={{ color: "rgba(255,255,255,0.40)" }}>
-              Evento solidario sin ánimo de lucro.
-              <br />Colombia &mdash; {new Date().getFullYear()}
-            </p>
           </div>
         </div>
 

@@ -34,6 +34,11 @@ export async function POST(
   const { id: bonoId } = await params;
   const { prisma } = await import("@/lib/prisma");
 
+  const config = await prisma.config.findUnique({ where: { id: "singleton" } });
+  if (config && !config.tiendaActiva) {
+    return NextResponse.json({ error: "La tienda de bonos no está disponible por el momento." }, { status: 403 });
+  }
+
   const [bono, comprador] = await Promise.all([
     prisma.bono.findUnique({ where: { id: bonoId } }),
     prisma.user.findUnique({

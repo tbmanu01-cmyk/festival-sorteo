@@ -157,13 +157,12 @@ function ModalReserva({ caja, precio, giftCardId, giftCardValor, esSorpresa, onC
               >
                 Cancelar
               </button>
-              <button
-                onClick={() => onConfirmar(caja.numero)}
-                disabled={cargando}
-                className="flex-1 bg-[#ffbd1f] hover:bg-yellow-300 disabled:bg-gray-300 text-[#102463] font-bold py-3 rounded-full transition-all shadow-md"
+              <a
+                href={`/membresias/pagar?numero=${caja.numero}`}
+                className="flex-1 bg-[#ffbd1f] hover:bg-yellow-300 text-[#102463] font-bold py-3 rounded-full transition-all shadow-md text-center"
               >
-                {cargando ? "Reservando..." : "Reservar"}
-              </button>
+                Pagar con transferencia
+              </a>
             </div>
 
             <p className="text-center text-gray-400 text-xs mt-4">

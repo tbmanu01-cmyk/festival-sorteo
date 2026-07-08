@@ -12,20 +12,20 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Club 10K | 10,000 membresías numeradas",
+  title: "Club 10K | Compra bonos y gana cashback",
   description:
-    "Elige tu número del 0000 al 9999 y obtén increíbles beneficios en Club 10K.",
-  keywords: "club 10k, membresías numeradas, Colombia, selección especial",
+    "Compra bonos de supermercado con descuento y gana cashback en Club 10K.",
+  keywords: "club 10k, bonos supermercado, cashback, Colombia",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Club 10K | 10,000 membresías numeradas",
+    title: "Club 10K | Compra bonos y gana cashback",
     description:
-      "Elige tu número del 0000 al 9999 y obtén increíbles beneficios en Club 10K.",
-    url: "https://club-10k.vercel.app",
+      "Compra bonos de supermercado con descuento y gana cashback en Club 10K.",
+    url: "https://tienda10k.com",
     siteName: "Club 10K",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     locale: "es_CO",
@@ -33,9 +33,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Club 10K | 10,000 membresías numeradas",
+    title: "Club 10K | Compra bonos y gana cashback",
     description:
-      "Elige tu número del 0000 al 9999 y obtén increíbles beneficios en Club 10K.",
+      "Compra bonos de supermercado con descuento y gana cashback en Club 10K.",
     images: ["/og-image.png"],
   },
   appleWebApp: {

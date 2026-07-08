@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SubirImagen from "@/components/SubirImagen";
 
 interface Config {
   precioCaja:            number;
@@ -16,7 +17,11 @@ interface Config {
   ganadores4Cifras:      number;
   membresiasPorGiftCard: number;
   giftCardActivo:        boolean;
+  tiendaActiva:          boolean;
   fechaSorteo:           string | null;
+  qrPagoUrl:             string | null;
+  brebKey:               string | null;
+  datosBancarios:        string | null;
 }
 
 function pct(v: number) { return +(v * 100).toFixed(2); }
@@ -47,7 +52,11 @@ export default function PaginaConfiguracion() {
   const [n4,          setN4]          = useState(4);
   const [mpgc,          setMpgc]          = useState(5);
   const [gcActivo,      setGcActivo]      = useState(true);
+  const [tiendaActiva,  setTiendaActiva]  = useState(true);
   const [fechaSorteo,   setFechaSorteo]   = useState("");
+  const [qrPagoUrl,     setQrPagoUrl]     = useState("");
+  const [brebKey,       setBrebKey]       = useState("");
+  const [datosBancarios, setDatosBancarios] = useState("");
 
   // Validaciones en tiempo real
   const sumaPremios = pct4 + pct3 + pct2 + pct1;
@@ -69,9 +78,13 @@ export default function PaginaConfiguracion() {
         setN4(c.ganadores4Cifras ?? 4);
         setMpgc(c.membresiasPorGiftCard ?? 5);
         setGcActivo(c.giftCardActivo ?? true);
+        setTiendaActiva(c.tiendaActiva ?? true);
         setFechaSorteo(
           c.fechaSorteo ? new Date(c.fechaSorteo).toISOString().slice(0, 16) : ""
         );
+        setQrPagoUrl(c.qrPagoUrl ?? "");
+        setBrebKey(c.brebKey ?? "");
+        setDatosBancarios(c.datosBancarios ?? "");
       })
       .finally(() => setCargando(false));
   }, []);
@@ -95,7 +108,11 @@ export default function PaginaConfiguracion() {
           ganadores4Cifras:      n4,
           membresiasPorGiftCard: mpgc,
           giftCardActivo:        gcActivo,
+          tiendaActiva:          tiendaActiva,
           fechaSorteo:           fechaSorteo || null,
+          qrPagoUrl:             qrPagoUrl || "",
+          brebKey:               brebKey || "",
+          datosBancarios:        datosBancarios || "",
         }),
       });
       const json = await res.json() as { mensaje: string };
@@ -116,7 +133,7 @@ export default function PaginaConfiguracion() {
     { label: "Premio 4 cifras exactas 🏆", value: pct4, set: setPct4, color: "bg-yellow-400" },
     { label: "Premio 3 últimas cifras 🥈",  value: pct3, set: setPct3, color: "bg-gray-400"   },
     { label: "Premio 2 últimas cifras 🥉",  value: pct2, set: setPct2, color: "bg-amber-600"  },
-    { label: "Premio 1 última cifra 🎁",    value: pct1, set: setPct1, color: "bg-blue-400"   },
+    { label: "Fondo 1 cifra → devuelve membresía 🎫", value: pct1, set: setPct1, color: "bg-blue-400" },
   ];
 
   return (
@@ -178,29 +195,43 @@ export default function PaginaConfiguracion() {
                     {n4Ok ? `${n4} sorteo${n4 !== 1 ? "s" : ""} de 4 cifras` : "Debe ser entre 1 y 10"}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    Premio 4 cifras: {pct4.toFixed(1)}% ÷ {n4} ={" "}
-                    <strong>{n4Ok ? (pct4 / n4).toFixed(2) : "—"}%</strong> por ganador
+                    Distribución 2:1 — gran ganador recibe el doble que los previos
                   </p>
                 </div>
               </div>
 
-              {/* Mini preview de los sorteos */}
-              <div className="mt-4 flex flex-wrap gap-2">
-                {Array.from({ length: Math.min(n4Ok ? n4 : 0, 10) }, (_, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${
-                      i === (n4Ok ? n4 - 1 : -1)
-                        ? "bg-[#F5A623]/15 border-[#F5A623]/50 text-[#b87b00]"
-                        : "bg-[#1B4F8A]/8 border-[#1B4F8A]/20 text-[#1B4F8A]"
-                    }`}
-                  >
-                    <span>{i === (n4 - 1) ? "🏆" : "🎯"}</span>
-                    Sorteo {i + 1}
-                    {i === n4 - 1 && <span className="ml-1 opacity-70">(principal)</span>}
+              {/* Mini preview de los sorteos con montos ponderados */}
+              {n4Ok && (() => {
+                const fondo4 = precioCaja * 10000 * dec(pct4);
+                const montoEarly = n4 > 1 ? fondo4 / (n4 + 1)       : fondo4;
+                const montoLast  = n4 > 1 ? (2 * fondo4) / (n4 + 1) : fondo4;
+                return (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {Array.from({ length: Math.min(n4, 10) }, (_, i) => {
+                      const esUltimo = i === n4 - 1;
+                      const monto = esUltimo ? montoLast : montoEarly;
+                      return (
+                        <div
+                          key={i}
+                          className={`flex flex-col px-3 py-2 rounded-xl text-xs font-bold border ${
+                            esUltimo
+                              ? "bg-[#F5A623]/15 border-[#F5A623]/50 text-[#b87b00]"
+                              : "bg-[#1B4F8A]/8 border-[#1B4F8A]/20 text-[#1B4F8A]"
+                          }`}
+                        >
+                          <span className="flex items-center gap-1">
+                            <span>{esUltimo ? "🏆" : "🎯"}</span>
+                            Sorteo {i + 1}{esUltimo && " (gran ganador)"}
+                          </span>
+                          <span className={`mt-0.5 text-[11px] font-extrabold ${esUltimo ? "text-[#b87b00]" : "text-[#1B4F8A]"}`}>
+                            ${Math.round(monto).toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </div>
 
             {/* ── Membresías por gift card ──────────────────────────────── */}
@@ -257,6 +288,38 @@ export default function PaginaConfiguracion() {
               {!gcActivo && (
                 <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs text-amber-700 font-medium">
                   ⚠️ Las gift cards existentes siguen vigentes. Solo se pausan las nuevas emisiones automáticas.
+                </div>
+              )}
+            </div>
+
+            {/* ── Activar / desactivar tienda de bonos ─────────────────── */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-bold text-gray-800">Tienda de bonos</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {tiendaActiva
+                      ? "Activa — visible y accesible para todos los usuarios."
+                      : "Inactiva — el botón queda visible con etiqueta \"Próximamente\" y la página /tienda no se puede usar."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTiendaActiva((v) => !v)}
+                  className={`relative flex-shrink-0 w-14 h-7 rounded-full transition-colors duration-200 focus:outline-none ${
+                    tiendaActiva ? "bg-green-500" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform duration-200 ${
+                      tiendaActiva ? "translate-x-7" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+              {!tiendaActiva && (
+                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs text-amber-700 font-medium">
+                  ⚠️ Ideal para pre-lanzamiento: el catálogo y las compras quedan bloqueados hasta que la actives.
                 </div>
               )}
             </div>
@@ -344,17 +407,28 @@ export default function PaginaConfiguracion() {
                 <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-400 mr-1" />4 cifras {pct4.toFixed(1)}%</span>
                 <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-gray-400 mr-1" />3 cifras {pct3.toFixed(1)}%</span>
                 <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-amber-600 mr-1" />2 cifras {pct2.toFixed(1)}%</span>
-                <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-blue-400 mr-1" />1 cifra {pct1.toFixed(1)}%</span>
+                <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-blue-400 mr-1" />1 cifra {pct1.toFixed(1)}% (membresía)</span>
               </div>
 
               {/* Ejemplo con precios reales */}
-              <div className="mt-4 bg-gray-50 rounded-xl p-4 text-xs text-gray-600 space-y-1">
-                <p className="font-semibold text-gray-700 mb-2">Ejemplo con 10.000 cajas vendidas a ${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}:</p>
-                <p>🎯 Premio 4 cifras (÷{n4ok(n4)}): <strong>${Math.round(precioCaja * 10000 * dec(pct4) / Math.max(n4, 1)).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
-                <p>🥈 Premio 3 cifras: <strong>hasta ${Math.round(precioCaja * 10000 * dec(pct3) / 9).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
-                <p>🥉 Premio 2 cifras: <strong>hasta ${Math.round(precioCaja * 10000 * dec(pct2) / 90).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
-                <p>🎁 Premio 1 cifra: <strong>hasta ${Math.round(precioCaja * 10000 * dec(pct1) / 900).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
-              </div>
+              {(() => {
+                const total = precioCaja * 10000;
+                const fondo4ej = total * dec(pct4);
+                const n = Math.max(n4Ok ? n4 : 1, 1);
+                const ejEarly = n > 1 ? Math.round(fondo4ej / (n + 1))       : Math.round(fondo4ej);
+                const ejLast  = n > 1 ? Math.round((2 * fondo4ej) / (n + 1)) : Math.round(fondo4ej);
+                const fmt = (v: number) => v.toLocaleString("es-CO", { maximumFractionDigits: 0 });
+                return (
+                  <div className="mt-4 bg-gray-50 rounded-xl p-4 text-xs text-gray-600 space-y-1">
+                    <p className="font-semibold text-gray-700 mb-2">Ejemplo con 10.000 membresías vendidas a ${fmt(precioCaja)}:</p>
+                    {n > 1 && <p>🎯 Sorteos previos de 4 cifras ({n - 1} ganadores): <strong>${fmt(ejEarly)}</strong> c/u</p>}
+                    <p>🏆 Gran ganador (4 cifras, sorteo {n}): <strong>${fmt(ejLast)}</strong></p>
+                    <p>🥈 Premio 3 cifras: <strong>hasta ${Math.round(total * dec(pct3) / 9).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
+                    <p>🥉 Premio 2 cifras: <strong>hasta ${Math.round(total * dec(pct2) / 90).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
+                    <p>🎫 1 cifra → devuelve membresía: <strong>gift card ${fmt(precioCaja)}</strong> c/u (segunda oportunidad)</p>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* ── Fecha del sorteo ──────────────────────────────────────── */}
@@ -369,6 +443,47 @@ export default function PaginaConfiguracion() {
               <p className="text-xs text-gray-400 mt-1.5">
                 Se mostrará en la página de inicio y en la tienda. Deja vacío para no mostrar fecha.
               </p>
+            </div>
+
+            {/* ── Datos de pago por transferencia ──────────────────────── */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="font-bold text-gray-800 mb-1">Pago por transferencia (Bre-b / QR)</h2>
+              <p className="text-xs text-gray-400 mb-5">
+                Estos datos se muestran al usuario cuando elige pagar con transferencia bancaria.
+              </p>
+
+              <div className="space-y-4">
+                <SubirImagen
+                  tipo="qr"
+                  urlActual={qrPagoUrl || undefined}
+                  onSubida={(url) => setQrPagoUrl(url)}
+                  label="Código QR de pago"
+                  placeholder="Haz clic para subir el QR de tu banco (PNG, JPG)"
+                />
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Llave / número Bre-b o Nequi</label>
+                  <input
+                    type="text"
+                    value={brebKey}
+                    onChange={(e) => setBrebKey(e.target.value)}
+                    placeholder="Ej: 3001234567 o clave@banco.com"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Datos bancarios adicionales</label>
+                  <textarea
+                    value={datosBancarios}
+                    onChange={(e) => setDatosBancarios(e.target.value)}
+                    rows={3}
+                    placeholder={"Banco: Banco de Bogotá\nCuenta de ahorros: 123-456789-0\nNIT: 900.123.456-7"}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A] resize-none"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Se muestra tal cual en la página de pago. Puedes incluir banco, número de cuenta, titular, etc.</p>
+                </div>
+              </div>
             </div>
 
             {/* Mensaje */}

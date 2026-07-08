@@ -1,4 +1,5 @@
 {
+  "alias": ["tienda10k.com", "www.tienda10k.com"],
   "crons": [
     {
       "path": "/api/cron/backup",

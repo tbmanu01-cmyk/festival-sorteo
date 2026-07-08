@@ -852,6 +852,15 @@ export default function AdminPanel() {
                   </div>
                   <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
                 </Link>
+                <Link href="/admin/pagos-manuales"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-amber-50 transition-colors group">
+                  <span className="text-xl">📲</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">Pagos por transferencia</p>
+                    <p className="text-[10px] text-gray-400">Aprobar comprobantes Bre-b / QR</p>
+                  </div>
+                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
+                </Link>
               </div>
             </div>
 
