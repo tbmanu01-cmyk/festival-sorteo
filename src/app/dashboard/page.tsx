@@ -1358,6 +1358,7 @@ export default function Dashboard() {
   const [modalRetiro, setModalRetiro] = useState(false);
   const [reenviando, setReenviando] = useState(false);
   const [mensajeVerify, setMensajeVerify] = useState<string | null>(null);
+  const [tiendaActiva, setTiendaActiva] = useState(true);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -1381,7 +1382,10 @@ export default function Dashboard() {
   useEffect(() => {
     fetch("/api/config")
       .then((r) => r.json())
-      .then((c: { precioCaja?: number }) => { if (c.precioCaja) setPrecioCaja(c.precioCaja); })
+      .then((c: { precioCaja?: number; tiendaActiva?: boolean }) => {
+        if (c.precioCaja) setPrecioCaja(c.precioCaja);
+        setTiendaActiva(c.tiendaActiva ?? true);
+      })
       .catch(() => undefined);
   }, []);
 
@@ -1623,8 +1627,8 @@ export default function Dashboard() {
           {/* Sección de referidos */}
           <SeccionReferidos cuentaConfirmada={confirmado} />
 
-          {/* Árbol de familias multinivel */}
-          <SeccionRed />
+          {/* Árbol de familias multinivel — depende de la tienda de bonos */}
+          {tiendaActiva && <SeccionRed />}
 
           {/* Cajas compradas */}
           {cajas.length > 0 && (
@@ -1651,8 +1655,8 @@ export default function Dashboard() {
             </section>
           )}
 
-          {/* Mis Bonos */}
-          {misBonos && misBonos.compras.length > 0 && (
+          {/* Mis Bonos — depende de la tienda de bonos */}
+          {tiendaActiva && misBonos && misBonos.compras.length > 0 && (
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-bold text-gray-900">
