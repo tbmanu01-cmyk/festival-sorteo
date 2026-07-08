@@ -16,11 +16,12 @@ export async function POST(
     id: string;
     nombre: string;
     premioDescripcion: string;
+    fondoPremios: number;
     estado: string;
   };
 
   const [gs] = await prisma.$queryRaw<GsRow[]>`
-    SELECT id, nombre, "premioDescripcion", estado::text
+    SELECT id, nombre, "premioDescripcion", "fondoPremios", estado::text
     FROM grandes_sorteos WHERE id = ${id} LIMIT 1
   `;
 
@@ -76,6 +77,16 @@ export async function POST(
         "updatedAt" = NOW()
     WHERE id = ${id}
   `;
+
+  await prisma.ganadorPublico.create({
+    data: {
+      userId: cajaGanadora.userId,
+      numeroCaja: numeroGanador,
+      monto: gs.fondoPremios || null,
+      categoria: "Gran Sorteo",
+      origen: gs.nombre,
+    },
+  });
 
   return NextResponse.json({
     mensaje: "¡Gran Sorteo ejecutado exitosamente!",

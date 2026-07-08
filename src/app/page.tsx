@@ -95,7 +95,7 @@ export default function Inicio() {
     botones.push(
       { href: "/dashboard", label: "Mi cuenta", sub: "Billetera y red", icono: ICONO_CUENTA },
       { href: "/dashboard/perfil", label: "Perfil", sub: "Tus datos", icono: ICONO_PERFIL },
-      { href: "/ranking", label: "Ranking", sub: "Top compradores", icono: ICONO_RANKING },
+      { href: "/ranking", label: "Ranking", sub: "Ganadores", icono: ICONO_RANKING },
     );
     if (rol === "ADMIN") {
       botones.push({ href: "/admin", label: "Administrar", sub: "Panel admin", icono: ICONO_ADMIN });
@@ -104,7 +104,7 @@ export default function Inicio() {
     }
   } else {
     botones.push(
-      { href: "/ranking", label: "Ranking", sub: "Top compradores", icono: ICONO_RANKING },
+      { href: "/ranking", label: "Ranking", sub: "Ganadores", icono: ICONO_RANKING },
       { href: "/login", label: "Iniciar sesión", sub: "Ya tengo cuenta", icono: ICONO_LOGIN },
       { href: "/registro", label: "Registrarme", sub: "Crear cuenta gratis", icono: ICONO_REGISTRO },
     );

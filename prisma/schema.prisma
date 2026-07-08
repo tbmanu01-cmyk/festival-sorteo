@@ -100,6 +100,7 @@ model User {
   cajas           Caja[]
   transacciones   Transaccion[]
   premios         Premio[]
+  ganadoresPublicos GanadorPublico[]
   retiros         Retiro[]
   referidosHechos    Referido[] @relation("Referidor")
   referidoRegistrado Referido?  @relation("Referido")
@@ -223,6 +224,23 @@ model Premio {
   user       User            @relation(fields: [userId], references: [id])
 
   @@map("premios")
+}
+
+// Feed unificado de ganadores para el ranking público — se alimenta desde los
+// 4 mecanismos de sorteo (Sorteo principal, Gran Sorteo, Sorteo Previo, Selección
+// Anticipada), cada uno con su propio modelo/lógica de premios internos.
+model GanadorPublico {
+  id         String   @id @default(cuid())
+  userId     String
+  numeroCaja String?
+  monto      Float?
+  categoria  String
+  origen     String
+  fecha      DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@map("ganadores_publicos")
 }
 
 model Retiro {

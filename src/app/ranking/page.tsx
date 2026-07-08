@@ -5,40 +5,46 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 
-interface RankEntry {
-  posicion: number;
+interface Ganador {
+  id: string;
   nombre: string;
   apellido: string;
   ciudad: string;
-  totalCajas: number;
-  esStar: boolean;
+  categoria: string;
+  origen: string;
+  numeroCaja: string | null;
+  monto: number | null;
+  fecha: string;
 }
 
 function mask(s: string): string {
   return s.split(" ")[0].slice(0, 3) + "***";
 }
 
-function nombreOculto(entry: RankEntry): string {
-  return `${mask(entry.nombre)} ${mask(entry.apellido)}`;
+function nombreOculto(g: Ganador): string {
+  return `${mask(g.nombre)} ${mask(g.apellido)}`;
 }
 
-function initials(entry: RankEntry): string {
-  return (entry.nombre[0] ?? "") + (entry.apellido[0] ?? "");
+function initials(g: Ganador): string {
+  return (g.nombre[0] ?? "") + (g.apellido[0] ?? "");
 }
 
-/* ── Colores por posición del podio ── */
-const PODIO_CONFIG = [
-  { pos: 1, height: 130, barBg: "linear-gradient(180deg,#ffbd1f,#f0a500)", avatarBg: "#ffbd1f", avatarColor: "#102463", crown: true },
-  { pos: 2, height: 100, barBg: "linear-gradient(180deg,#85a8ff,#2f5fdf)", avatarBg: "#d9e6ff", avatarColor: "#102463", crown: false },
-  { pos: 3, height: 80,  barBg: "linear-gradient(180deg,#b6cdff,#1e44b8)", avatarBg: "#d9e6ff", avatarColor: "#102463", crown: false },
-];
+const CATEGORIA_COLOR: Record<string, { bg: string; color: string }> = {
+  "4 Cifras": { bg: "rgba(255,189,31,0.15)", color: "#f0a500" },
+  "3 Cifras": { bg: "rgba(47,95,223,0.12)", color: "#2f5fdf" },
+  "2 Cifras": { bg: "rgba(47,95,223,0.12)", color: "#2f5fdf" },
+  "1 Cifra":  { bg: "rgba(107,118,147,0.12)", color: "#6b7693" },
+  "Gran Sorteo": { bg: "rgba(124,58,237,0.12)", color: "#7c3aed" },
+  "Sorteo Previo": { bg: "rgba(124,58,237,0.10)", color: "#7c3aed" },
+  "Selección Anticipada": { bg: "rgba(5,150,105,0.12)", color: "#059669" },
+};
 
-function Avatar({ initials: ini, bg, color, size = 44 }: { initials: string; bg: string; color: string; size?: number }) {
+function Avatar({ initials: ini, size = 44 }: { initials: string; size?: number }) {
   return (
     <div
       style={{
         width: size, height: size, borderRadius: 999,
-        background: bg, color,
+        background: "#eff2f9", color: "#102463",
         display: "flex", alignItems: "center", justifyContent: "center",
         fontWeight: 800, fontSize: size * 0.36,
         flexShrink: 0,
@@ -49,50 +55,8 @@ function Avatar({ initials: ini, bg, color, size = 44 }: { initials: string; bg:
   );
 }
 
-function PodioSlot({ entry, config }: { entry: RankEntry; config: typeof PODIO_CONFIG[0] }) {
-  return (
-    <div style={{ flex: 1, textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
-      {/* Avatar + corona */}
-      <div style={{ position: "relative", marginBottom: 8 }}>
-        {config.crown && (
-          <div style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)", fontSize: 20, lineHeight: 1 }}>
-            👑
-          </div>
-        )}
-        <Avatar
-          initials={initials(entry)}
-          bg={config.avatarBg}
-          color={config.avatarColor}
-          size={config.pos === 1 ? 52 : 44}
-        />
-      </div>
-
-      {/* Nombre */}
-      <p style={{ fontWeight: 700, fontSize: 12, color: "#102463", margin: "0 0 2px", lineHeight: 1.3, maxWidth: 80, wordBreak: "break-word" }}>
-        {nombreOculto(entry)}
-      </p>
-      <p style={{ fontSize: 11, color: "#6b7693", margin: "0 0 8px" }}>
-        {entry.totalCajas} {entry.totalCajas === 1 ? "membresía" : "membresías"}
-      </p>
-
-      {/* Barra de podio */}
-      <div
-        style={{
-          width: "100%", height: config.height,
-          borderRadius: "12px 12px 0 0",
-          background: config.barBg,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          color: config.pos === 1 ? "#102463" : "white",
-          fontWeight: 800, fontSize: 28,
-        }}
-      >
-        {config.pos}
-      </div>
-    </div>
-  );
-}
-
-function FilaRanking({ entry }: { entry: RankEntry }) {
+function FilaGanador({ g }: { g: Ganador }) {
+  const cat = CATEGORIA_COLOR[g.categoria] ?? { bg: "rgba(16,36,99,0.08)", color: "#102463" };
   return (
     <div
       style={{
@@ -104,40 +68,40 @@ function FilaRanking({ entry }: { entry: RankEntry }) {
         boxShadow: "0 2px 6px rgba(16,36,99,0.04)",
       }}
     >
-      {/* Posición */}
-      <div style={{ width: 28, textAlign: "center", flexShrink: 0 }}>
-        <span style={{ fontSize: 13, fontWeight: 800, color: "#98a2bf" }}>#{entry.posicion}</span>
-      </div>
+      <Avatar initials={initials(g)} size={38} />
 
-      {/* Avatar */}
-      <Avatar initials={initials(entry)} bg="#eff2f9" color="#102463" size={38} />
-
-      {/* Info */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <p style={{ fontWeight: 700, fontSize: 14, color: "#102463", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {nombreOculto(entry)}
+            {nombreOculto(g)}
           </p>
-          {entry.esStar && (
-            <span style={{ fontSize: 10, fontWeight: 700, background: "#ede9fe", color: "#7c3aed", padding: "2px 8px", borderRadius: 999, flexShrink: 0 }}>
-              ⭐ VIP
-            </span>
-          )}
+          <span style={{ fontSize: 10, fontWeight: 700, background: cat.bg, color: cat.color, padding: "2px 8px", borderRadius: 999, flexShrink: 0 }}>
+            {g.categoria}
+          </span>
         </div>
-        <p style={{ fontSize: 12, color: "#6b7693", margin: 0 }}>{entry.ciudad}</p>
+        <p style={{ fontSize: 12, color: "#6b7693", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {g.origen}{g.numeroCaja ? ` · membresía #${g.numeroCaja}` : ""}
+        </p>
       </div>
 
-      {/* Membresías */}
       <div style={{ textAlign: "right", flexShrink: 0 }}>
-        <p style={{ fontWeight: 800, fontSize: 15, color: "#102463", margin: 0 }}>{entry.totalCajas}</p>
-        <p style={{ fontSize: 11, color: "#98a2bf", margin: 0 }}>{entry.totalCajas === 1 ? "membresía" : "membresías"}</p>
+        {g.monto ? (
+          <p style={{ fontWeight: 800, fontSize: 14, color: "#059669", margin: 0 }}>
+            +${g.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+          </p>
+        ) : (
+          <p style={{ fontWeight: 700, fontSize: 12, color: "#98a2bf", margin: 0 }}>Premio especial</p>
+        )}
+        <p style={{ fontSize: 11, color: "#98a2bf", margin: 0 }}>
+          {new Date(g.fecha).toLocaleDateString("es-CO", { day: "2-digit", month: "short" })}
+        </p>
       </div>
     </div>
   );
 }
 
 export default function PaginaRanking() {
-  const [ranking, setRanking] = useState<RankEntry[]>([]);
+  const [ganadores, setGanadores] = useState<Ganador[]>([]);
   const [cargando, setCargando] = useState(true);
   const [ultimaActualizacion, setUltimaActualizacion] = useState<Date | null>(null);
 
@@ -145,7 +109,7 @@ export default function PaginaRanking() {
     const res = await fetch("/api/ranking");
     if (res.ok) {
       const json = await res.json();
-      setRanking(json.ranking ?? []);
+      setGanadores(json.ganadores ?? []);
       setUltimaActualizacion(new Date());
     }
     setCargando(false);
@@ -157,10 +121,8 @@ export default function PaginaRanking() {
     return () => clearInterval(t);
   }, []);
 
-  /* Reordenar podio: 2° - 1° - 3° para visualización */
-  const top3 = ranking.slice(0, 3);
-  const podioOrdenado = [top3[1], top3[0], top3[2]].filter(Boolean) as RankEntry[];
-  const resto = ranking.slice(3);
+  const destacado = ganadores[0];
+  const resto = ganadores.slice(1);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#f7f8fc" }}>
@@ -179,10 +141,10 @@ export default function PaginaRanking() {
               Comunidad Club 10K
             </span>
             <h1 style={{ fontSize: "clamp(28px,3.2vw,36px)", fontWeight: 800, color: "#102463", letterSpacing: "-0.02em", margin: "0 0 10px" }}>
-              Ranking de miembros
+              Ranking de ganadores
             </h1>
             <p style={{ color: "#6b7693", fontSize: 15, margin: 0 }}>
-              Top {ranking.length > 0 ? ranking.length : 20} miembros con más membresías
+              Se actualiza con cada sorteo y selección aleatoria de membresías
             </p>
             {ultimaActualizacion && (
               <p style={{ color: "#c5cbe0", fontSize: 12, marginTop: 6 }}>
@@ -195,16 +157,16 @@ export default function PaginaRanking() {
             /* ── Skeleton loading ── */
             <div style={{ background: "white", borderRadius: 24, padding: "48px 24px", textAlign: "center", border: "1px solid #e3e7f2", boxShadow: "0 4px 16px rgba(16,36,99,0.06)" }}>
               <div style={{ width: 48, height: 48, borderRadius: 999, background: "#eff2f9", margin: "0 auto 16px", animation: "pulse 1.5s ease-in-out infinite" }} />
-              <p style={{ color: "#98a2bf", fontSize: 14, margin: 0 }}>Cargando ranking…</p>
+              <p style={{ color: "#98a2bf", fontSize: 14, margin: 0 }}>Cargando ganadores…</p>
             </div>
 
-          ) : ranking.length === 0 ? (
+          ) : ganadores.length === 0 ? (
             /* ── Empty state ── */
             <div style={{ background: "white", borderRadius: 24, padding: "56px 24px", textAlign: "center", border: "1px solid #e3e7f2", boxShadow: "0 4px 16px rgba(16,36,99,0.06)" }}>
               <div style={{ fontSize: 52, marginBottom: 16 }}>🏆</div>
-              <h3 style={{ fontWeight: 800, color: "#102463", fontSize: 20, margin: "0 0 8px" }}>¡Sé el primero!</h3>
+              <h3 style={{ fontWeight: 800, color: "#102463", fontSize: 20, margin: "0 0 8px" }}>¡Aún no hay ganadores!</h3>
               <p style={{ color: "#6b7693", fontSize: 14, margin: "0 0 24px" }}>
-                El ranking se llenará cuando los primeros miembros adquieran sus membresías.
+                Esta lista se llenará apenas se ejecute el primer sorteo o selección aleatoria.
               </p>
               <Link
                 href="/membresias"
@@ -217,68 +179,73 @@ export default function PaginaRanking() {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-              {/* ── Podio ── */}
-              {top3.length > 0 && (
+              {/* ── Último ganador destacado ── */}
+              {destacado && (
                 <div style={{
                   background: "linear-gradient(135deg, #102463 0%, #173592 55%, #1e44b8 100%)",
                   borderRadius: 24,
-                  padding: "28px 20px 0",
+                  padding: "28px 24px",
                   position: "relative",
                   overflow: "hidden",
                   boxShadow: "0 16px 32px rgba(16,36,99,0.18)",
+                  textAlign: "center",
                 }}>
-                  {/* Glow decorativo */}
                   <div style={{ position: "absolute", top: -60, right: -60, width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle,rgba(255,189,31,0.30),transparent 70%)", pointerEvents: "none" }} />
-                  <div style={{ position: "absolute", bottom: -40, left: -40, width: 160, height: 160, borderRadius: "50%", background: "radial-gradient(circle,rgba(255,189,31,0.14),transparent 70%)", pointerEvents: "none" }} />
-
-                  <p style={{ textAlign: "center", fontSize: 11, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase", color: "#ffbd1f", margin: "0 0 24px", position: "relative" }}>
-                    Podio de honor
-                  </p>
-
-                  {/* Barras del podio: orden 2 - 1 - 3 */}
-                  <div style={{ display: "flex", alignItems: "flex-end", gap: 8, position: "relative" }}>
-                    {podioOrdenado.map((entry) => {
-                      const cfg = PODIO_CONFIG.find((c) => c.pos === entry.posicion)!;
-                      return <PodioSlot key={entry.posicion} entry={entry} config={cfg} />;
-                    })}
+                  <div style={{ position: "relative" }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase", color: "#ffbd1f", margin: "0 0 16px" }}>
+                      🎉 Último ganador
+                    </p>
+                    <div style={{ marginBottom: 6 }}>
+                      <Avatar initials={initials(destacado)} size={56} />
+                    </div>
+                    <p style={{ fontWeight: 800, color: "white", fontSize: 18, margin: "8px 0 4px" }}>
+                      {nombreOculto(destacado)}
+                    </p>
+                    <p style={{ color: "rgba(255,255,255,0.70)", fontSize: 13, margin: "0 0 12px" }}>
+                      {destacado.categoria} — {destacado.origen}{destacado.numeroCaja ? ` · #${destacado.numeroCaja}` : ""}
+                    </p>
+                    {destacado.monto ? (
+                      <p style={{ fontWeight: 800, color: "#ffbd1f", fontSize: 26, margin: 0 }}>
+                        +${destacado.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                      </p>
+                    ) : (
+                      <p style={{ fontWeight: 700, color: "#ffbd1f", fontSize: 16, margin: 0 }}>Premio especial</p>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* ── Lista completa ── */}
-              <div style={{ background: "white", borderRadius: 24, border: "1px solid #e3e7f2", overflow: "hidden", boxShadow: "0 4px 16px rgba(16,36,99,0.06)" }}>
-                <div style={{ padding: "14px 20px", background: "#f7f8fc", borderBottom: "1px solid #e3e7f2", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: "#6b7693", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
-                    Clasificación completa
-                  </p>
-                  <p style={{ fontSize: 12, color: "#98a2bf", margin: 0 }}>Top {ranking.length}</p>
+              {resto.length > 0 && (
+                <div style={{ background: "white", borderRadius: 24, border: "1px solid #e3e7f2", overflow: "hidden", boxShadow: "0 4px 16px rgba(16,36,99,0.06)" }}>
+                  <div style={{ padding: "14px 20px", background: "#f7f8fc", borderBottom: "1px solid #e3e7f2", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: "#6b7693", textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>
+                      Ganadores recientes
+                    </p>
+                    <p style={{ fontSize: 12, color: "#98a2bf", margin: 0 }}>Últimos {ganadores.length}</p>
+                  </div>
+                  <div style={{ padding: "12px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
+                    {resto.map((g) => (
+                      <FilaGanador key={g.id} g={g} />
+                    ))}
+                  </div>
                 </div>
-                <div style={{ padding: "12px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
-                  {ranking.map((entry) => (
-                    <FilaRanking key={entry.posicion} entry={entry} />
-                  ))}
-                </div>
-              </div>
+              )}
 
               {/* ── Leyenda ── */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, flexWrap: "wrap" }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#98a2bf" }}>
-                  <span style={{ background: "#ede9fe", color: "#7c3aed", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>⭐ VIP</span>
-                  10+ membresías
-                </span>
-                <span style={{ color: "#c5cbe0", fontSize: 12 }}>·</span>
-                <span style={{ fontSize: 12, color: "#98a2bf" }}>Se actualiza cada 30 seg</span>
-              </div>
+              <p style={{ textAlign: "center", fontSize: 12, color: "#98a2bf", margin: 0 }}>
+                Se actualiza cada 30 seg
+              </p>
 
               {/* ── CTA ── */}
               <div style={{ background: "linear-gradient(135deg, #102463 0%, #173592 55%, #1e44b8 100%)", borderRadius: 20, padding: "28px 24px", textAlign: "center", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 70% 30%, rgba(255,189,31,0.22), transparent 55%)", pointerEvents: "none" }} />
                 <div style={{ position: "relative" }}>
                   <p style={{ fontWeight: 800, color: "white", fontSize: 18, margin: "0 0 8px", letterSpacing: "-0.01em" }}>
-                    ¿Quieres aparecer aquí?
+                    ¿Quieres ser el próximo ganador?
                   </p>
                   <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 14, margin: "0 0 20px" }}>
-                    Adquiere más membresías y escala en el ranking.
+                    Adquiere tu membresía y participa en los sorteos.
                   </p>
                   <Link
                     href="/membresias"

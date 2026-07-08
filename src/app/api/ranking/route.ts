@@ -3,31 +3,23 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const { prisma } = await import("@/lib/prisma");
 
-  type RankRow = {
-    nombre: string;
-    apellido: string;
-    ciudad: string;
-    totalCajas: bigint;
-  };
-
-  const rows = await prisma.$queryRaw<RankRow[]>`
-    SELECT u.nombre, u.apellido, u.ciudad, COUNT(c.id) AS "totalCajas"
-    FROM users u
-    JOIN cajas c ON c."userId" = u.id AND c.estado = 'VENDIDA'
-    WHERE u.rol != 'ADMIN'::"Rol"
-    GROUP BY u.id, u.nombre, u.apellido, u.ciudad
-    ORDER BY "totalCajas" DESC
-    LIMIT 20
-  `;
+  const ganadores = await prisma.ganadorPublico.findMany({
+    orderBy: { fecha: "desc" },
+    take: 50,
+    include: { user: { select: { nombre: true, apellido: true, ciudad: true } } },
+  });
 
   return NextResponse.json({
-    ranking: rows.map((r, i) => ({
-      posicion: i + 1,
-      nombre: r.nombre,
-      apellido: r.apellido,
-      ciudad: r.ciudad,
-      totalCajas: Number(r.totalCajas),
-      esStar: Number(r.totalCajas) >= 10,
+    ganadores: ganadores.map((g) => ({
+      id: g.id,
+      nombre: g.user.nombre,
+      apellido: g.user.apellido,
+      ciudad: g.user.ciudad,
+      categoria: g.categoria,
+      origen: g.origen,
+      numeroCaja: g.numeroCaja,
+      monto: g.monto,
+      fecha: g.fecha,
     })),
   });
 }

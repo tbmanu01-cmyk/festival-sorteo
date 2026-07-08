@@ -111,6 +111,16 @@ export async function POST(
     WHERE id = ${id}
   `;
 
+  await prisma.ganadorPublico.createMany({
+    data: ganadores.map((g) => ({
+      userId: g.userId,
+      numeroCaja: g.numeroCaja,
+      monto: anticipada.premioValor,
+      categoria: "Selección Anticipada",
+      origen: anticipada.nombre,
+    })),
+  });
+
   // Enviar correos — fire and forget
   import("@/lib/email").then(({ enviarPremioAnticipado }) => {
     for (const g of ganadores) {

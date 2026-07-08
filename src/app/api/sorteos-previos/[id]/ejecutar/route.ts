@@ -165,6 +165,16 @@ export async function POST(
     WHERE id = ${id}
   `;
 
+  await prisma.ganadorPublico.createMany({
+    data: ganadores.map((g) => ({
+      userId: g.userId,
+      numeroCaja: g.numeroCaja,
+      monto: sp.premioValor,
+      categoria: "Sorteo Previo",
+      origen: sp.nombre,
+    })),
+  });
+
   return NextResponse.json({
     mensaje: "¡Sorteo previo ejecutado exitosamente!",
     ganadores,

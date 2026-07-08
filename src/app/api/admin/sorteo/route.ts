@@ -192,6 +192,22 @@ export async function POST(req: NextRequest) {
 
       if (premiosData.length > 0) {
         await tx.premio.createMany({ data: premiosData });
+
+        const NOMBRE_CAT: Record<string, string> = {
+          CUATRO_CIFRAS: "4 Cifras",
+          TRES_CIFRAS: "3 Cifras",
+          DOS_CIFRAS: "2 Cifras",
+          UNA_CIFRA: "1 Cifra",
+        };
+        await tx.ganadorPublico.createMany({
+          data: premiosData.map((p) => ({
+            userId: p.userId,
+            numeroCaja: p.numeroCaja,
+            monto: p.monto,
+            categoria: NOMBRE_CAT[p.categoria],
+            origen: "Sorteo principal",
+          })),
+        });
       }
 
       // UNA_CIFRA → gift card (segunda oportunidad); demás categorías → saldo
