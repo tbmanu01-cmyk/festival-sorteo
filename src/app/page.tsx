@@ -149,6 +149,9 @@ export default function Inicio() {
                   borderRadius: 24,
                   boxShadow: "0 8px 20px -6px rgba(16,36,99,0.20)",
                   padding: "0 22px",
+                  minHeight: 0,
+                  minWidth: 0,
+                  overflow: "hidden",
                 }}
               >
                 <span
@@ -173,6 +176,9 @@ export default function Inicio() {
                 textDecoration: "none",
                 boxShadow: "0 8px 20px -6px rgba(16,36,99,0.35)",
                 padding: "0 22px",
+                minHeight: 0,
+                minWidth: 0,
+                overflow: "hidden",
               }}
             >
               {contenido}
