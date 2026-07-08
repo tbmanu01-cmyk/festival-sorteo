@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 
 const ITEMS = [
   {
@@ -63,10 +64,20 @@ const ITEMS = [
 export default function NavMobile() {
   const { status } = useSession();
   const pathname = usePathname();
+  const [tiendaActiva, setTiendaActiva] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((c: { tiendaActiva?: boolean }) => setTiendaActiva(c.tiendaActiva ?? true))
+      .catch(() => undefined);
+  }, []);
 
   if (status !== "authenticated") return null;
   if (pathname.startsWith("/admin")) return null;
   if (pathname === "/") return null;
+
+  const items = ITEMS.filter((item) => item.href !== "/tienda" || tiendaActiva);
 
   return (
     <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:hidden">
@@ -78,7 +89,7 @@ export default function NavMobile() {
           boxShadow: "0 8px 32px rgba(16,36,99,0.35), 0 2px 8px rgba(0,0,0,0.2)",
         }}
       >
-        {ITEMS.map(({ href, label, icon }) => {
+        {items.map(({ href, label, icon }) => {
           const active = pathname === href || (href !== "/" && pathname.startsWith(href + "/"));
           return (
             <Link
