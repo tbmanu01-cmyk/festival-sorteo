@@ -111,24 +111,27 @@ export default function PreInicio() {
       </div>
 
       <main
-        className="flex-1 grid grid-cols-2 sm:grid-cols-3"
+        className="flex-1 grid grid-cols-1 sm:grid-cols-3"
         style={{ gridAutoRows: "1fr", gap: 10, padding: "0 10px 10px", minHeight: 0 }}
       >
         {botones.map((b) => (
           <Link
             key={b.href}
             href={b.href}
-            className="flex flex-col items-center justify-center text-center hover:scale-[1.02] active:scale-[0.97] transition-transform"
+            className="flex flex-row sm:flex-col items-center justify-start sm:justify-center text-left sm:text-center hover:scale-[1.02] active:scale-[0.97] transition-transform"
             style={{
               background: "linear-gradient(135deg, #102463 0%, #173592 100%)",
               borderRadius: 24,
               textDecoration: "none",
               boxShadow: "0 8px 20px -6px rgba(16,36,99,0.35)",
+              padding: "0 22px",
             }}
           >
-            <div style={{ color: "#ffbd1f", marginBottom: 10 }}>{b.icono}</div>
-            <span style={{ color: "white", fontWeight: 800, fontSize: 17, lineHeight: 1.2 }}>{b.label}</span>
-            <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, marginTop: 4 }}>{b.sub}</span>
+            <div className="mr-4 mb-0 sm:mr-0 sm:mb-2" style={{ color: "#ffbd1f", flexShrink: 0 }}>{b.icono}</div>
+            <div className="flex flex-col sm:items-center">
+              <span style={{ color: "white", fontWeight: 800, fontSize: 17, lineHeight: 1.2 }}>{b.label}</span>
+              <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, marginTop: 4 }}>{b.sub}</span>
+            </div>
           </Link>
         ))}
       </main>
