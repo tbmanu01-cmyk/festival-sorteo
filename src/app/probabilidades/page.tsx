@@ -117,6 +117,35 @@ export default function PaginaProbabilidades() {
           </div>
         </section>
 
+        {/* ── SECCIÓN 1.5: Cómo funciona ──────────────────────────────────── */}
+        <section id="como-funciona" className="py-16 px-4 bg-white">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-10">
+              <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#F5A623] bg-[#F5A623]/10 rounded-full px-4 py-1 mb-3">
+                Fácil y transparente
+              </span>
+              <h2 className="text-3xl font-extrabold text-[#1B4F8A] mb-2">¿Cómo funciona?</h2>
+              <p className="text-gray-500 text-sm">En 3 simples pasos empiezas a participar por los premios del Club 10K.</p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { n: "01", icono: "📝", titulo: "Regístrate gratis", texto: "Crea tu cuenta en 2 minutos. Solo necesitas tus datos básicos para empezar." },
+                { n: "02", icono: "🎟️", titulo: "Elige tu membresía", texto: "Compra uno o varios números (0000–9999). Cada membresía es una oportunidad distinta de ganar." },
+                { n: "03", icono: "🏆", titulo: "Participa y gana", texto: "Si tu número coincide con las cifras ganadoras del sorteo, tu premio llega directo a tu billetera." },
+              ].map((paso) => (
+                <div key={paso.n} className="relative bg-white rounded-2xl border border-gray-100 shadow-sm px-6 pt-9 pb-6">
+                  <div className="absolute -top-5 left-6 w-10 h-10 rounded-full bg-[#1B4F8A] text-white flex items-center justify-center font-extrabold text-sm shadow-md">
+                    {paso.n}
+                  </div>
+                  <div className="text-3xl mb-3">{paso.icono}</div>
+                  <h3 className="font-bold text-gray-800 text-lg mb-1.5">{paso.titulo}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">{paso.texto}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ── SECCIÓN 2: Tabla principal ──────────────────────────────────── */}
         <section className="py-16 px-4">
           <div className="max-w-5xl mx-auto">
