@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NotifBell from "@/components/NotifBell";
 
 export default function Header() {
   const { data: session } = useSession();
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [tiendaActiva, setTiendaActiva] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((c: { tiendaActiva?: boolean }) => setTiendaActiva(c.tiendaActiva ?? true))
+      .catch(() => undefined);
+  }, []);
 
   return (
     <header className="bg-[#102463] shadow-lg sticky top-0 z-50">
@@ -27,9 +35,11 @@ export default function Header() {
             <Link href="/" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
               Inicio
             </Link>
-            <Link href="/tienda" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
-              Tienda
-            </Link>
+            {tiendaActiva && (
+              <Link href="/tienda" className="text-blue-200 hover:text-white text-sm font-medium transition-colors">
+                Tienda
+              </Link>
+            )}
             {session ? (
               <>
                 <Link
@@ -105,10 +115,24 @@ export default function Header() {
             <Link href="/" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
               Inicio
             </Link>
+            <Link href="/membresias" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+              Membresías
+            </Link>
+            <Link href="/ranking" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+              Ranking
+            </Link>
+            {tiendaActiva && (
+              <Link href="/tienda" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+                Tienda
+              </Link>
+            )}
             {session ? (
               <>
                 <Link href="/dashboard" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
                   Mi cuenta
+                </Link>
+                <Link href="/dashboard/perfil" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+                  Perfil
                 </Link>
                 {(session.user as { rol?: string })?.rol === "ASISTENTE" && (
                   <Link href="/asistente/retiros" className="block text-[#F5A623] hover:text-yellow-300 px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
