@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 export default function Footer() {
+  const { data: session } = useSession();
+
   return (
     <footer style={{ background: "#102463", color: "rgba(255,255,255,0.60)" }} className="mt-auto mb-20 md:mb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -21,10 +26,12 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-3">Enlaces</h3>
             <ul className="space-y-2 text-sm">
               <li><Link href="/" className="hover:text-white transition-colors">Inicio</Link></li>
-              <li><Link href="/#como-funciona" className="hover:text-white transition-colors">¿Cómo funciona?</Link></li>
-              <li><Link href="/#premios" className="hover:text-white transition-colors">Beneficios</Link></li>
-              <li><Link href="/registro" className="hover:text-white transition-colors">Registrarse</Link></li>
-              <li><Link href="/login" className="hover:text-white transition-colors">Iniciar sesión</Link></li>
+              {!session && (
+                <>
+                  <li><Link href="/registro" className="hover:text-white transition-colors">Registrarse</Link></li>
+                  <li><Link href="/login" className="hover:text-white transition-colors">Iniciar sesión</Link></li>
+                </>
+              )}
             </ul>
           </div>
 

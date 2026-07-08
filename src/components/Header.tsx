@@ -105,9 +105,6 @@ export default function Header() {
             <Link href="/" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
               Inicio
             </Link>
-            <Link href="/tienda" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
-              Tienda
-            </Link>
             {session ? (
               <>
                 <Link href="/dashboard" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
