@@ -712,7 +712,7 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
 
         {/* Cabecera */}
         <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] px-6 py-5">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col items-center text-center gap-2">
             <div>
               <h2 className="text-white font-extrabold text-lg leading-tight">
                 Invita amigos y gana gift cards
@@ -738,15 +738,15 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
 
           {/* Código + acciones */}
           {!cargando && datos?.codigoRef && (
-            <div className="bg-[#1B4F8A]/5 border border-[#1B4F8A]/15 rounded-xl p-4">
+            <div className="bg-[#1B4F8A]/5 border border-[#1B4F8A]/15 rounded-xl p-4 flex flex-col items-center text-center">
               <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">
                 Tu código de referido
               </p>
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center justify-center gap-3 flex-wrap">
                 <span className="text-3xl font-extrabold tracking-[0.2em] text-[#1B4F8A] font-mono">
                   {datos.codigoRef}
                 </span>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex justify-center gap-2 flex-wrap">
                   <button
                     onClick={copiarLink}
                     className={`text-sm font-bold px-4 py-2 rounded-xl transition-all shadow-sm ${copiado ? "bg-green-500 text-white" : "bg-[#1B4F8A] hover:bg-[#1a5fa8] text-white"}`}
@@ -1614,7 +1614,7 @@ export default function Dashboard() {
           {/* Mensaje motivacional 10+ cajas */}
           {cajas.length >= 10 && (
             <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl p-5 text-white">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col items-center text-center gap-2">
                 <span className="text-3xl">⭐</span>
                 <div>
                   <p className="font-extrabold text-lg">¡Eres VIP!</p>
