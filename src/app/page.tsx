@@ -132,8 +132,8 @@ export default function Inicio() {
             <>
               <div className="mr-4 mb-0 sm:mr-0 sm:mb-2" style={{ color: b.proximamente ? "rgba(255,255,255,0.45)" : "#ffbd1f", flexShrink: 0 }}>{b.icono}</div>
               <div className="flex flex-col sm:items-center">
-                <span style={{ color: "white", fontWeight: 800, fontSize: 17, lineHeight: 1.2 }}>{b.label}</span>
-                <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, marginTop: 4 }}>{b.sub}</span>
+                <span style={{ color: "white", fontWeight: 800, fontSize: "clamp(19px, 4.2vw, 22px)", lineHeight: 1.2 }}>{b.label}</span>
+                <span style={{ color: "rgba(255,255,255,0.65)", fontSize: "clamp(13px, 3vw, 15px)", marginTop: 4 }}>{b.sub}</span>
               </div>
             </>
           );
