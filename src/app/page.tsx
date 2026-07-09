@@ -14,7 +14,7 @@ interface Boton {
 }
 
 const ICONO_TIENDA = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 sm:w-16 sm:h-16">
     <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
     <line x1="3" y1="6" x2="21" y2="6" />
     <path d="M16 10a4 4 0 0 1-8 0" />
@@ -22,7 +22,7 @@ const ICONO_TIENDA = (
 );
 
 const ICONO_MEMBRESIAS = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 sm:w-16 sm:h-16">
     <polyline points="20 12 20 22 4 22 4 12" />
     <rect x="2" y="7" width="20" height="5" />
     <line x1="12" y1="22" x2="12" y2="7" />
@@ -32,34 +32,34 @@ const ICONO_MEMBRESIAS = (
 );
 
 const ICONO_CUENTA = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 sm:w-16 sm:h-16">
     <circle cx="12" cy="8" r="4" />
     <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
   </svg>
 );
 
 const ICONO_PERFIL = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 sm:w-16 sm:h-16">
     <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
     <circle cx="12" cy="7" r="4" />
   </svg>
 );
 
 const ICONO_RANKING = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 sm:w-16 sm:h-16">
     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
   </svg>
 );
 
 const ICONO_ADMIN = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 sm:w-16 sm:h-16">
     <path d="M12 2l8 4v6c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6l8-4z" />
     <path d="M9 12l2 2 4-4" />
   </svg>
 );
 
 const ICONO_LOGIN = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 sm:w-16 sm:h-16">
     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
     <path d="M10 17l5-5-5-5" />
     <path d="M15 12H3" />
@@ -67,7 +67,7 @@ const ICONO_LOGIN = (
 );
 
 const ICONO_REGISTRO = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 sm:w-16 sm:h-16">
     <circle cx="9" cy="8" r="4" />
     <path d="M2 21c0-4 3.1-7 7-7s7 3 7 7" />
     <path d="M19 8v6M22 11h-6" />
@@ -130,10 +130,10 @@ export default function Inicio() {
         {botones.map((b) => {
           const contenido = (
             <>
-              <div className="mr-4 mb-0 sm:mr-0 sm:mb-2" style={{ color: b.proximamente ? "rgba(255,255,255,0.45)" : "#ffbd1f", flexShrink: 0 }}>{b.icono}</div>
+              <div className="mr-4 mb-0 sm:mr-0 sm:mb-3" style={{ color: b.proximamente ? "rgba(255,255,255,0.45)" : "#ffbd1f", flexShrink: 0 }}>{b.icono}</div>
               <div className="flex flex-col sm:items-center">
-                <span style={{ color: "white", fontWeight: 800, fontSize: "clamp(19px, 4.2vw, 22px)", lineHeight: 1.2 }}>{b.label}</span>
-                <span style={{ color: "rgba(255,255,255,0.65)", fontSize: "clamp(13px, 3vw, 15px)", marginTop: 4 }}>{b.sub}</span>
+                <span className="text-2xl sm:text-5xl" style={{ color: "white", fontWeight: 800, lineHeight: 1.15 }}>{b.label}</span>
+                <span className="text-base sm:text-xl" style={{ color: "rgba(255,255,255,0.70)", marginTop: 6 }}>{b.sub}</span>
               </div>
             </>
           );
