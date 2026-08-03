@@ -16,9 +16,11 @@ export default function ResultadoPagoBold() {
 
 function ResultadoInner() {
   const searchParams = useSearchParams();
-  const numero = searchParams.get("numero") ?? "";
-  const orderId = searchParams.get("orderId") ?? "";
+  // Bold agrega este parámetro automáticamente al volver — es nuestro propio
+  // data-order-id, no un id interno de Bold, pese al nombre.
+  const orderId = searchParams.get("bold-order-id") ?? "";
 
+  const [numero, setNumero] = useState("");
   const [estado, setEstado] = useState<"PENDIENTE" | "APROBADO" | "RECHAZADO" | "ERROR">(
     orderId ? "PENDIENTE" : "ERROR"
   );
@@ -30,7 +32,8 @@ function ResultadoInner() {
     const t = setTimeout(async () => {
       try {
         const res = await fetch(`/api/pagos/bold/estado?orderId=${encodeURIComponent(orderId)}`);
-        const json = await res.json() as { estado?: "PENDIENTE" | "APROBADO" | "RECHAZADO" };
+        const json = await res.json() as { estado?: "PENDIENTE" | "APROBADO" | "RECHAZADO"; numeroCaja?: string };
+        if (json.numeroCaja) setNumero(json.numeroCaja);
         if (res.ok && json.estado && json.estado !== "PENDIENTE") {
           setEstado(json.estado);
         } else {

@@ -38,7 +38,9 @@ export default function BotonPagoBold({ numeroCaja }: Props) {
           return;
         }
 
-        const redirectionUrl = `${window.location.origin}/membresias/pagar/resultado?numero=${numeroCaja}&orderId=${json.orderId}`;
+        // Bold no acepta query string propia en data-redirection-url; al volver,
+        // Bold agrega automáticamente ?bold-order-id=<nuestro order-id>&bold-tx-status=...
+        const redirectionUrl = `${window.location.origin}/membresias/pagar/resultado`;
 
         if (contenedorRef.current) {
           contenedorRef.current.innerHTML = "";
