@@ -33,6 +33,7 @@ export async function PUT(req: NextRequest) {
     qrPagoUrl?: string;
     brebKey?: string;
     datosBancarios?: string;
+    linkPagoBoldUrl?: string;
     tiendaActiva?: boolean;
   };
 

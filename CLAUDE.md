@@ -164,15 +164,13 @@ Panel con 4 tabs que centraliza todos los tipos de sorteo:
 - ✅ Vista previa bonos en inicio: 6 cards con estilo igual a tienda (barra azul, logo, stock, cashback). Grid `1/2/3` columnas.
 - ✅ CTA final inicio: "¡Empieza a ganar cashback hoy!" → `/tienda`.
 
-### Pasarela de pagos Bold (2 agosto 2026)
-- ✅ Botón de pagos Bold integrado en `/membresias/pagar` como alternativa a la transferencia manual (selector de método: 💳 Tarjeta/PSE vs 🏦 Transferencia)
-- ✅ Firma de integridad (SHA256) generada SIEMPRE en servidor — `POST /api/pagos/bold/firma` (nunca se expone `BOLD_SECRET_KEY` al navegador)
-- ✅ Webhook `POST /api/webhooks/bold` valida `x-bold-signature` (HMAC-SHA256) y activa la membresía automáticamente en `SALE_APPROVED`
-- ✅ Lógica de activación (marcar caja VENDIDA, crear Transaccion, cascada de referidos/gift cards, email) extraída a `src/lib/confirmarCompra.ts` — compartida entre aprobación manual de admin y el webhook de Bold
-- ✅ Página `/membresias/pagar/resultado` hace polling a `GET /api/pagos/bold/estado?orderId=` (cada 2s, máx 15 intentos) mientras el webhook confirma en segundo plano
-- ✅ Modelo `PagoBold` en BD (orderId único, estado PENDIENTE/APROBADO/RECHAZADO, paymentId de Bold)
-- ⚠️ Corriendo con llaves de **prueba** — ver PENDIENTE arriba para pasar a producción
-- `src/lib/bold.ts`: `generarFirmaBold()` y `verificarFirmaWebhookBold()`
+### Pasarela de pagos Bold (2-3 agosto 2026)
+- ⚠️ **Botón de pagos automático (webhook) construido pero BLOQUEADO** — la cuenta Bold del cliente solo tiene el producto "Datáfono" habilitado, no "Botón de pagos" (online). Error `BTN-000` ("llave de identidad no reconocida") aunque la llave sea correcta — confirmado que es un tema de activación de producto en la cuenta, no de código. Pendiente que el cliente le pida a Bold activar "Botón de pagos"/pagos en línea. También se descartó la "API Link de Pagos" como workaround por API — devuelve 403 IAM ("explicit deny"), mismo bloqueo de producto.
+  - `src/lib/bold.ts`: `generarFirmaBold()` (SHA256 server-side) y `verificarFirmaWebhookBold()` (HMAC-SHA256)
+  - `POST /api/pagos/bold/firma`, `POST /api/webhooks/bold`, `GET /api/pagos/bold/estado`, `/membresias/pagar/resultado` (polling), modelo `PagoBold`, componente `src/components/BotonPagoBold.tsx` (actualmente sin usar en la UI — queda listo para cuando Bold active el producto)
+  - Lógica de activación de compra extraída a `src/lib/confirmarCompra.ts` — compartida entre aprobación manual de admin y el futuro webhook de Bold
+  - **Gotcha ya resuelto:** `data-redirection-url` NO acepta query string propia (causaba BTN-001) — debe ir pelada, Bold agrega `?bold-order-id=&bold-tx-status=` automáticamente al volver
+- ✅ **Solución interim que SÍ está en producción (3 ago 2026): link de pago estático de Bold** (creado a mano desde el panel del cliente, no por API — por eso sí funciona pese al bloqueo de arriba). Tercera fuente de pago en `/membresias/pagar`, pestaña 💳 Tarjeta/PSE ahora muestra este link en vez del botón automático, y reutiliza el MISMO formulario/flujo de aprobación manual que la transferencia (`PagoManual` + admin aprueba a mano). Configurable en `/admin/configuracion` → "Pago con tarjeta (link de Bold)" → campo `Config.linkPagoBoldUrl`. Es de **monto fijo** — si cambia `precioCaja`, hay que crear un link nuevo en el panel de Bold por ese valor y actualizar la URL aquí.
 
 ### Modelos en BD (Prisma)
 User, Caja, Sorteo, Premio, Retiro, Transaccion, Config,
@@ -202,7 +200,7 @@ identidad antes de habilitar retiros)
 
 ## PENDIENTE
 
-- **Pasarela Bold — activar producción**: hoy corre con llaves de PRUEBA (`BOLD_API_KEY`/`BOLD_SECRET_KEY` en `.env`). Para pagos reales: (1) reemplazar esas 2 variables en `.env` local y en Vercel (Production) por las llaves de producción del panel Bold, (2) registrar el webhook `https://<dominio-prod>/api/webhooks/bold` en panel.bold.co/panel/integrations (hasta 5 endpoints permitidos)
+- **Pasarela Bold — botón automático bloqueado**: pendiente que el cliente consiga que Bold active el producto "Botón de pagos" (online) en su cuenta — hoy solo tiene "Datáfono". Sin esto ni el botón/webhook ni la API de Link de Pagos funcionan (ver sección Bold arriba). Mientras tanto corre el link de pago estático (manual). Cuando se active: (1) reemplazar `BOLD_API_KEY`/`BOLD_SECRET_KEY` en Vercel por las llaves reales de "Botón de pagos" (hoy tiene llaves de Datáfono, que no sirven para esto), (2) volver a mostrar `<BotonPagoBold>` en `/membresias/pagar` (hoy está reemplazado por el link estático), (3) registrar el webhook `https://tienda10k.com/api/webhooks/bold` en panel.bold.co/panel/integrations
 - **`confirmado`** — definir para qué usarlo (ej: validar identidad antes de habilitar retiros)
 - **"Grabable para redes sociales"** — captura de video del overlay de animación (no implementado)
 - **Logo final** — pendiente arte definitivo del cliente

@@ -22,6 +22,7 @@ interface Config {
   qrPagoUrl:             string | null;
   brebKey:               string | null;
   datosBancarios:        string | null;
+  linkPagoBoldUrl:       string | null;
 }
 
 function pct(v: number) { return +(v * 100).toFixed(2); }
@@ -57,6 +58,7 @@ export default function PaginaConfiguracion() {
   const [qrPagoUrl,     setQrPagoUrl]     = useState("");
   const [brebKey,       setBrebKey]       = useState("");
   const [datosBancarios, setDatosBancarios] = useState("");
+  const [linkPagoBoldUrl, setLinkPagoBoldUrl] = useState("");
 
   // Validaciones en tiempo real
   const sumaPremios = pct4 + pct3 + pct2 + pct1;
@@ -85,6 +87,7 @@ export default function PaginaConfiguracion() {
         setQrPagoUrl(c.qrPagoUrl ?? "");
         setBrebKey(c.brebKey ?? "");
         setDatosBancarios(c.datosBancarios ?? "");
+        setLinkPagoBoldUrl(c.linkPagoBoldUrl ?? "");
       })
       .finally(() => setCargando(false));
   }, []);
@@ -113,6 +116,7 @@ export default function PaginaConfiguracion() {
           qrPagoUrl:             qrPagoUrl || "",
           brebKey:               brebKey || "",
           datosBancarios:        datosBancarios || "",
+          linkPagoBoldUrl:       linkPagoBoldUrl || "",
         }),
       });
       const json = await res.json() as { mensaje: string };
@@ -444,6 +448,26 @@ export default function PaginaConfiguracion() {
               <p className="text-xs text-gray-400 mt-1.5">
                 Se mostrará en la página de inicio y en la tienda. Deja vacío para no mostrar fecha.
               </p>
+            </div>
+
+            {/* ── Link de pago con tarjeta (Bold) ─────────────────────── */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="font-bold text-gray-800 mb-1">Pago con tarjeta (link de Bold)</h2>
+              <p className="text-xs text-gray-400 mb-5">
+                Link de pago creado manualmente desde tu panel de Bold (panel.bold.co). Monto fijo — si cambias el
+                precio de la membresía, crea un nuevo link en Bold por ese valor y actualízalo aquí.
+              </p>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">URL del link de pago Bold</label>
+                <input
+                  type="text"
+                  value={linkPagoBoldUrl}
+                  onChange={(e) => setLinkPagoBoldUrl(e.target.value)}
+                  placeholder="https://checkout.bold.co/payment/LNK_XXXXXXXX"
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
+                />
+                <p className="text-xs text-gray-400 mt-1">Déjalo vacío para ocultar la opción de pago con tarjeta.</p>
+              </div>
             </div>
 
             {/* ── Datos de pago por transferencia ──────────────────────── */}

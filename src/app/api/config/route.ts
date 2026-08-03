@@ -10,6 +10,7 @@ const DEFAULTS = {
   qrPagoUrl: "",
   brebKey: "",
   datosBancarios: "",
+  linkPagoBoldUrl: "",
   tiendaActiva: true,
 };
 
