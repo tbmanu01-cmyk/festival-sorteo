@@ -1,10 +1,10 @@
-const CACHE = 'c10k-v2';
+const CACHE = 'c10k-v3';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE).then((cache) =>
-      cache.addAll(['/', '/tienda', '/ranking']).catch(() => {})
+      cache.addAll(['/', '/tienda']).catch(() => {})
     )
   );
 });
@@ -20,6 +20,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (event.request.url.includes('/api/') || event.request.url.includes('/_next/')) return;
+  // Nunca interceptar navegaciones de página (HTML): cachear estas por URL ignora
+  // el estado de sesión y, si el fetch sigue un redirect (ej. a /login por falta de
+  // auth) o la red falla en móvil, el SW puede servir después una página vieja o
+  // equivocada (ej. mandar a un usuario ya logueado de vuelta a /login). Dejar que
+  // el navegador maneje las páginas siempre por red; el SW solo cachea assets.
+  if (event.request.mode === 'navigate') return;
 
   event.respondWith(
     fetch(event.request)
