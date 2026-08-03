@@ -1,0 +1,79 @@
+import { NextRequest, NextResponse } from "next/server";
+
+interface EventoBold {
+  type: "SALE_APPROVED" | "SALE_REJECTED" | "VOID_APPROVED" | "VOID_REJECTED";
+  data: {
+    payment_id: string;
+    amount: { currency: string; total: number };
+    metadata?: { reference?: string };
+  };
+}
+
+// Bold llama a este endpoint tras cada transacción. Debe registrarse en
+// panel.bold.co/panel/integrations como https://<dominio>/api/webhooks/bold
+export async function POST(req: NextRequest) {
+  const rawBody = await req.text();
+  const firma = req.headers.get("x-bold-signature");
+
+  const { verificarFirmaWebhookBold } = await import("@/lib/bold");
+  if (!verificarFirmaWebhookBold(rawBody, firma)) {
+    console.error("Webhook Bold: firma inválida");
+    return NextResponse.json({ mensaje: "Firma inválida." }, { status: 401 });
+  }
+
+  let evento: EventoBold;
+  try {
+    evento = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ mensaje: "JSON inválido." }, { status: 400 });
+  }
+
+  const orderId = evento.data?.metadata?.reference;
+  if (!orderId) {
+    return NextResponse.json({ mensaje: "Sin referencia de orden, ignorado." }, { status: 200 });
+  }
+
+  const { prisma } = await import("@/lib/prisma");
+  const pago = await prisma.pagoBold.findUnique({ where: { orderId } });
+  if (!pago) {
+    console.error("Webhook Bold: orden no encontrada", orderId);
+    return NextResponse.json({ mensaje: "Orden no encontrada." }, { status: 200 });
+  }
+  if (pago.estado !== "PENDIENTE") {
+    return NextResponse.json({ mensaje: "Ya procesado." }, { status: 200 });
+  }
+
+  if (evento.type === "SALE_APPROVED") {
+    // El monto/moneda reportados por Bold deben coincidir con lo que se firmó al crear la orden
+    if (evento.data.amount.total !== pago.monto || evento.data.amount.currency !== pago.moneda) {
+      console.error("Webhook Bold: monto/moneda no coinciden", orderId, evento.data.amount, pago.monto, pago.moneda);
+      return NextResponse.json({ mensaje: "Monto no coincide." }, { status: 200 });
+    }
+
+    const { confirmarCompraMembresia } = await import("@/lib/confirmarCompra");
+    try {
+      await confirmarCompraMembresia({
+        usuarioId: pago.usuarioId,
+        numeroCaja: pago.numeroCaja,
+        monto: pago.monto,
+        descripcionTransaccion: `Membresía #${pago.numeroCaja} — pago con Bold (${evento.data.payment_id})`,
+        referenciaTransaccion: orderId,
+      });
+      await prisma.pagoBold.update({
+        where: { orderId },
+        data: { estado: "APROBADO", paymentId: evento.data.payment_id },
+      });
+    } catch (e) {
+      console.error("Webhook Bold: error al confirmar compra", orderId, e);
+      // No marcamos RECHAZADO aquí — puede ser que la caja se vendió por otro medio
+      // entre tanto; queda PENDIENTE para revisión manual del admin.
+    }
+  } else if (evento.type === "SALE_REJECTED") {
+    await prisma.pagoBold.update({
+      where: { orderId },
+      data: { estado: "RECHAZADO", paymentId: evento.data.payment_id },
+    });
+  }
+
+  return NextResponse.json({ mensaje: "OK" });
+}

@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import Image from "next/image";
 import SubirImagen from "@/components/SubirImagen";
+import BotonPagoBold from "@/components/BotonPagoBold";
 
 interface DatosPago {
   qrPagoUrl: string;
@@ -31,6 +32,7 @@ function PaginaPagarInner() {
   const numero = searchParams.get("numero") ?? "";
 
   const [datos, setDatos] = useState<DatosPago | null>(null);
+  const [metodo, setMetodo] = useState<"bold" | "manual">("bold");
   const [nombrePagador, setNombrePagador] = useState("");
   const [refBancaria, setRefBancaria] = useState("");
   const [comprobanteUrl, setComprobanteUrl] = useState("");
@@ -132,6 +134,40 @@ function PaginaPagarInner() {
             </p>
           </div>
 
+          {/* Selector de método de pago */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1.5 mb-5 flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => setMetodo("bold")}
+              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
+                metodo === "bold" ? "bg-[#102463] text-white" : "text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              💳 Tarjeta / PSE
+            </button>
+            <button
+              type="button"
+              onClick={() => setMetodo("manual")}
+              className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
+                metodo === "manual" ? "bg-[#102463] text-white" : "text-gray-500 hover:bg-gray-50"
+              }`}
+            >
+              🏦 Transferencia
+            </button>
+          </div>
+
+          {metodo === "bold" && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+              <h2 className="font-extrabold text-gray-900 text-lg mb-1">Pago con tarjeta, PSE o Nequi</h2>
+              <p className="text-gray-500 text-sm mb-5">
+                Pago procesado por Bold. Tu membresía se activa automáticamente al confirmarse.
+              </p>
+              <BotonPagoBold numeroCaja={numero} />
+            </div>
+          )}
+
+          {metodo === "manual" && (
+          <>
           {/* Instrucciones de pago */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-5">
             <h2 className="font-extrabold text-gray-900 text-lg mb-4">Cómo pagar</h2>
@@ -274,6 +310,9 @@ function PaginaPagarInner() {
               </button>
             </form>
           </div>
+
+          </>
+          )}
 
           <p className="text-center text-gray-400 text-xs pb-4">
             ¿Tienes algún problema? Escríbenos directamente.

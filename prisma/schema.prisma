@@ -68,6 +68,12 @@ enum EstadoPagoManual {
   RECHAZADO
 }
 
+enum EstadoPagoBold {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
 model User {
   id              String        @id @default(cuid())
   nombre          String
@@ -115,6 +121,7 @@ model User {
   bonoComisionesN2   BonoCompra[] @relation("BonoNivel2")
   pagosManuals       PagoManual[] @relation("PagoUsuario")
   pagosAprobados     PagoManual[] @relation("PagoAprobador")
+  pagosBold          PagoBold[]
 
   @@map("users")
 }
@@ -464,6 +471,24 @@ model PagoManual {
   aprobadoPor User? @relation("PagoAprobador", fields: [aprobadoPorId], references: [id])
 
   @@map("pagos_manuales")
+}
+
+model PagoBold {
+  id          String         @id @default(cuid())
+  orderId     String         @unique
+  usuarioId   String
+  numeroCaja  String
+  monto       Float
+  moneda      String         @default("COP")
+  estado      EstadoPagoBold @default(PENDIENTE)
+  paymentId   String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  usuario     User           @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId])
+  @@map("pagos_bold")
 }
 
 model BonoCompra {

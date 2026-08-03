@@ -164,6 +164,16 @@ Panel con 4 tabs que centraliza todos los tipos de sorteo:
 - ✅ Vista previa bonos en inicio: 6 cards con estilo igual a tienda (barra azul, logo, stock, cashback). Grid `1/2/3` columnas.
 - ✅ CTA final inicio: "¡Empieza a ganar cashback hoy!" → `/tienda`.
 
+### Pasarela de pagos Bold (2 agosto 2026)
+- ✅ Botón de pagos Bold integrado en `/membresias/pagar` como alternativa a la transferencia manual (selector de método: 💳 Tarjeta/PSE vs 🏦 Transferencia)
+- ✅ Firma de integridad (SHA256) generada SIEMPRE en servidor — `POST /api/pagos/bold/firma` (nunca se expone `BOLD_SECRET_KEY` al navegador)
+- ✅ Webhook `POST /api/webhooks/bold` valida `x-bold-signature` (HMAC-SHA256) y activa la membresía automáticamente en `SALE_APPROVED`
+- ✅ Lógica de activación (marcar caja VENDIDA, crear Transaccion, cascada de referidos/gift cards, email) extraída a `src/lib/confirmarCompra.ts` — compartida entre aprobación manual de admin y el webhook de Bold
+- ✅ Página `/membresias/pagar/resultado` hace polling a `GET /api/pagos/bold/estado?orderId=` (cada 2s, máx 15 intentos) mientras el webhook confirma en segundo plano
+- ✅ Modelo `PagoBold` en BD (orderId único, estado PENDIENTE/APROBADO/RECHAZADO, paymentId de Bold)
+- ⚠️ Corriendo con llaves de **prueba** — ver PENDIENTE arriba para pasar a producción
+- `src/lib/bold.ts`: `generarFirmaBold()` y `verificarFirmaWebhookBold()`
+
 ### Modelos en BD (Prisma)
 User, Caja, Sorteo, Premio, Retiro, Transaccion, Config,
 SorteoAnticipado, Referido, Cupon, GiftCard, GranSorteo, SorteoPrevioGran, AuditLog,
@@ -192,7 +202,7 @@ identidad antes de habilitar retiros)
 
 ## PENDIENTE
 
-- **Integración Wompi** (pagos reales) — cuenta del socio en trámite
+- **Pasarela Bold — activar producción**: hoy corre con llaves de PRUEBA (`BOLD_API_KEY`/`BOLD_SECRET_KEY` en `.env`). Para pagos reales: (1) reemplazar esas 2 variables en `.env` local y en Vercel (Production) por las llaves de producción del panel Bold, (2) registrar el webhook `https://<dominio-prod>/api/webhooks/bold` en panel.bold.co/panel/integrations (hasta 5 endpoints permitidos)
 - **`confirmado`** — definir para qué usarlo (ej: validar identidad antes de habilitar retiros)
 - **"Grabable para redes sociales"** — captura de video del overlay de animación (no implementado)
 - **Logo final** — pendiente arte definitivo del cliente
