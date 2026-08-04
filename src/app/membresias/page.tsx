@@ -161,7 +161,7 @@ function ModalReserva({ caja, precio, giftCardId, giftCardValor, esSorpresa, onC
                 href={`/membresias/pagar?numero=${caja.numero}`}
                 className="flex-1 bg-[#ffbd1f] hover:bg-yellow-300 text-[#102463] font-bold py-3 rounded-full transition-all shadow-md text-center"
               >
-                Pagar con transferencia
+                Pagar
               </a>
             </div>
 
