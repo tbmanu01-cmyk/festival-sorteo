@@ -33,6 +33,18 @@ function fila(label: string, valor: string) {
   </tr>`;
 }
 
+// El SDK de Resend NO lanza excepción en errores de la API (dominio no
+// verificado, remitente rechazado, rate limit, etc.) — devuelve { data, error }
+// silenciosamente. Sin este chequeo, un envío fallido se veía igual que uno
+// exitoso para quien llamaba la función, y nunca quedaba rastro en los logs.
+async function enviarCorreo(payload: { to: string; subject: string; html: string }) {
+  const { data, error } = await resend().emails.send({ from: FROM, ...payload });
+  if (error) {
+    throw new Error(`Resend rechazó el envío a ${payload.to} ("${payload.subject}"): ${error.name} — ${error.message}`);
+  }
+  return data;
+}
+
 // ── Comprobante de compra ─────────────────────────────────────────────────
 
 export async function enviarComprobante(opts: {
@@ -57,8 +69,7 @@ export async function enviarComprobante(opts: {
       Guarda esta referencia. El resultado se determinará mediante selección aleatoria de membresías.
       ¡Mucha suerte! 🍀
     </p>`;
-  await resend().emails.send({
-    from: FROM,
+  await enviarCorreo({
     to: correo,
     subject: `¡Membresía activada! #${numeroCaja} — Club 10K`,
     html: base(cuerpo),
@@ -94,8 +105,7 @@ export async function enviarPremio(opts: {
       Tu saldo ha sido acreditado en tu cuenta. Puedes solicitar el retiro
       directamente desde tu panel en <strong>Mi cuenta → Saldo disponible</strong>.
     </p>`;
-  await resend().emails.send({
-    from: FROM,
+  await enviarCorreo({
     to: correo,
     subject: `¡Ganaste $${monto.toLocaleString("es-CO")} en Club 10K! 🏆`,
     html: base(cuerpo, "#1B4F8A"),
@@ -124,8 +134,7 @@ export async function enviarPremioGiftCard(opts: {
       Puedes usar tu gift card al comprar tu próxima membresía en
       <strong>Mi cuenta → Membresías</strong>. ¡Buena suerte la próxima vez! 🍀
     </p>`;
-  await resend().emails.send({
-    from: FROM,
+  await enviarCorreo({
     to: correo,
     subject: `¡Ganaste una membresía gratis en Club 10K! 🎁`,
     html: base(cuerpo, "#16a34a"),
@@ -152,8 +161,7 @@ export async function enviarRetiroAprobado(opts: {
       El pago será efectuado en las próximas <strong>24–48 horas hábiles</strong>.
       Si tienes dudas, contacta al administrador.
     </p>`;
-  await resend().emails.send({
-    from: FROM,
+  await enviarCorreo({
     to: correo,
     subject: "Tu retiro fue aprobado — Club 10K",
     html: base(cuerpo, "#16a34a"),
@@ -182,8 +190,7 @@ export async function enviarPremioAnticipado(opts: {
       El administrador se pondrá en contacto contigo para coordinar la entrega del premio.
       ¡Mucha suerte en la selección aleatoria principal también! 🍀
     </p>`;
-  await resend().emails.send({
-    from: FROM,
+  await enviarCorreo({
     to: correo,
     subject: `¡Ganaste en ${nombreEvento} — Club 10K! 🎉`,
     html: base(cuerpo, "#1B4F8A"),
@@ -212,8 +219,7 @@ export async function enviarRecuperacionPassword(opts: {
     <p style="margin:0;color:#999;font-size:13px;line-height:1.6;">
       Si no solicitaste esto, ignora este correo. Tu contraseña no cambiará.
     </p>`;
-  await resend().emails.send({
-    from: FROM,
+  await enviarCorreo({
     to: correo,
     subject: "Restablece tu contraseña — Club 10K",
     html: base(cuerpo),
@@ -238,8 +244,7 @@ export async function enviarRetiroRechazado(opts: {
       El saldo fue devuelto a tu cuenta y puedes volver a solicitarlo.
       Comunícate con el administrador si necesitas más información.
     </p>`;
-  await resend().emails.send({
-    from: FROM,
+  await enviarCorreo({
     to: correo,
     subject: "Solicitud de retiro rechazada — Club 10K",
     html: base(cuerpo, "#dc2626"),
@@ -266,8 +271,7 @@ export async function enviarVerificacionCorreo(opts: {
       Este enlace es válido por <strong>24 horas</strong>.<br>
       Si no creaste esta cuenta, ignora este correo.
     </p>`;
-  await resend().emails.send({
-    from: FROM,
+  await enviarCorreo({
     to: correo,
     subject: "Verifica tu correo para activar tu cuenta — Club 10K",
     html: base(cuerpo),
@@ -301,8 +305,7 @@ export async function enviarCodigoRetiro(opts: {
     </div>
     <p style="margin:16px 0 0;color:#999;font-size:13px;line-height:1.6;text-align:center;">Si no solicitaste este retiro, <strong>ignora este correo</strong>. Tu saldo está seguro.</p>
   `;
-  await resend().emails.send({
-    from: FROM,
+  await enviarCorreo({
     to: correo,
     subject: `${codigo} es tu código de retiro — Club 10K`,
     html: base(cuerpo, "#1B4F8A"),
@@ -330,8 +333,7 @@ export async function enviarComprobanteRecibido(opts: {
     <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
       Nuestro equipo revisará tu pago en las próximas horas. Recibirás otro correo cuando sea aprobado. 🙏
     </p>`;
-  await resend().emails.send({
-    from: FROM,
+  await enviarCorreo({
     to: correo,
     subject: "Comprobante recibido — Club 10K",
     html: base(cuerpo),
@@ -357,8 +359,7 @@ export async function enviarPagoManualAprobado(opts: {
     <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
       ¡Ya estás participando en la selección aleatoria! Guarda tu número y mucha suerte. 🍀
     </p>`;
-  await resend().emails.send({
-    from: FROM,
+  await enviarCorreo({
     to: correo,
     subject: "¡Tu membresía fue aprobada! — Club 10K",
     html: base(cuerpo, "#16a34a"),
@@ -380,8 +381,7 @@ export async function enviarPagoManualRechazado(opts: {
       Si crees que es un error, contacta a nuestro equipo de soporte y comparte tu comprobante.<br>
       Puedes intentar nuevamente desde <a href="https://tienda10k.com/membresias" style="color:#1B4F8A;font-weight:600;">tienda10k.com/membresias</a>
     </p>`;
-  await resend().emails.send({
-    from: FROM,
+  await enviarCorreo({
     to: correo,
     subject: "Pago no aprobado — Club 10K",
     html: base(cuerpo, "#dc2626"),

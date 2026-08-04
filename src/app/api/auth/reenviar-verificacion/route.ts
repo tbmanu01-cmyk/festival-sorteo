@@ -33,9 +33,16 @@ export async function POST() {
   const base   = process.env.NEXTAUTH_URL ?? "https://tienda10k.com";
   const enlace = `${base}/api/auth/verificar-correo?token=${token}`;
 
-  import("@/lib/email").then(({ enviarVerificacionCorreo }) =>
-    enviarVerificacionCorreo({ correo: user.correo, nombre: user.nombre, enlace }).catch(console.error)
-  );
+  try {
+    const { enviarVerificacionCorreo } = await import("@/lib/email");
+    await enviarVerificacionCorreo({ correo: user.correo, nombre: user.nombre, enlace });
+  } catch (error) {
+    console.error("Error enviando correo de verificación:", error);
+    return NextResponse.json(
+      { mensaje: "No pudimos enviar el correo. Intenta de nuevo en unos minutos o contáctanos." },
+      { status: 502 }
+    );
+  }
 
-  return NextResponse.json({ ok: true, mensaje: "Correo de verificación enviado." });
+  return NextResponse.json({ ok: true, mensaje: "Correo de verificación enviado. Revisa tu bandeja (y spam)." });
 }

@@ -1357,7 +1357,7 @@ export default function Dashboard() {
   } | null>(null);
   const [modalRetiro, setModalRetiro] = useState(false);
   const [reenviando, setReenviando] = useState(false);
-  const [mensajeVerify, setMensajeVerify] = useState<string | null>(null);
+  const [mensajeVerify, setMensajeVerify] = useState<{ texto: string; ok: boolean } | null>(null);
   const [tiendaActiva, setTiendaActiva] = useState(true);
 
   useEffect(() => {
@@ -1441,31 +1441,40 @@ export default function Dashboard() {
       <main className="flex-1 bg-gray-50 py-8">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
-        {/* Banner verificación de correo */}
+        {/* Banner verificación de correo — muy visible a propósito: bloquea compras/retiros */}
         {!confirmado && (
-          <div className="bg-amber-50 border border-amber-300 rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="flex-1">
-              <p className="font-bold text-amber-800 text-sm">📧 Verifica tu correo electrónico</p>
-              <p className="text-amber-700 text-xs mt-0.5">
-                Hasta que verifiques no podrás comprar membresías, bonos ni solicitar retiros.
-                Revisa tu bandeja de entrada (y spam).
-              </p>
-              {mensajeVerify && <p className="text-xs font-semibold text-green-700 mt-1">{mensajeVerify}</p>}
+          <div className="bg-gradient-to-r from-amber-400 to-orange-400 rounded-2xl p-[2px] shadow-md">
+            <div className="bg-amber-50 rounded-2xl px-5 py-5 flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-amber-400 flex items-center justify-center text-2xl flex-shrink-0">
+                📧
+              </div>
+              <div className="flex-1">
+                <p className="font-extrabold text-amber-900 text-base">Verifica tu correo electrónico</p>
+                <p className="text-amber-800 text-sm mt-0.5">
+                  Todavía no puedes comprar membresías, bonos ni solicitar retiros.
+                  Revisa tu bandeja de entrada (y la carpeta de spam).
+                </p>
+                {mensajeVerify && (
+                  <p className={`text-xs font-bold mt-2 ${mensajeVerify.ok ? "text-green-700" : "text-red-600"}`}>
+                    {mensajeVerify.ok ? "✅ " : "⚠️ "}{mensajeVerify.texto}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={async () => {
+                  setReenviando(true);
+                  setMensajeVerify(null);
+                  const res = await fetch("/api/auth/reenviar-verificacion", { method: "POST" });
+                  const j = await res.json() as { mensaje: string };
+                  setMensajeVerify({ texto: j.mensaje, ok: res.ok });
+                  setReenviando(false);
+                }}
+                disabled={reenviando}
+                className="flex-shrink-0 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors shadow-sm"
+              >
+                {reenviando ? "Enviando..." : "✉️ Reenviar correo de verificación"}
+              </button>
             </div>
-            <button
-              onClick={async () => {
-                setReenviando(true);
-                setMensajeVerify(null);
-                const res = await fetch("/api/auth/reenviar-verificacion", { method: "POST" });
-                const j = await res.json() as { mensaje: string };
-                setMensajeVerify(j.mensaje);
-                setReenviando(false);
-              }}
-              disabled={reenviando}
-              className="flex-shrink-0 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold text-xs px-4 py-2 rounded-xl transition-colors"
-            >
-              {reenviando ? "Enviando..." : "Reenviar correo"}
-            </button>
           </div>
         )}
 

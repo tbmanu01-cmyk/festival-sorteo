@@ -157,9 +157,15 @@ export async function POST(req: NextRequest) {
     });
     const base   = process.env.NEXTAUTH_URL ?? "https://tienda10k.com";
     const enlace = `${base}/api/auth/verificar-correo?token=${verifyToken}`;
+    // No bloqueamos la respuesta del registro por el correo, pero sí lo
+    // esperamos y registramos el error real (antes era fire-and-forget con
+    // .catch(console.error) sobre una función que nunca lanzaba en fallos
+    // de la API de Resend — ver enviarCorreo() en src/lib/email.ts).
     import("@/lib/email").then(({ enviarVerificacionCorreo }) =>
-      enviarVerificacionCorreo({ correo, nombre, enlace }).catch(console.error)
-    );
+      enviarVerificacionCorreo({ correo, nombre, enlace })
+    ).catch((error) => {
+      console.error(`Error enviando correo de verificación a ${correo}:`, error);
+    });
 
     return NextResponse.json({ mensaje: "Cuenta creada exitosamente. Revisa tu correo para verificar tu cuenta." }, { status: 201 });
   } catch (error) {
