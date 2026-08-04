@@ -111,4 +111,32 @@ export const authOptions: NextAuthOptions = {
     maxAge: 8 * 60 * 60, // 8 horas
   },
   secret: process.env.NEXTAUTH_SECRET,
+  // tienda10k.com (sin www) sirve la app directamente en vez de redirigir a
+  // www.tienda10k.com — son dos orígenes distintos para las cookies. Sin
+  // "domain" explícito, next-auth las deja host-only: una sesión iniciada en
+  // uno de los dos dominios no era válida en el otro, y el usuario terminaba
+  // "logueado pero deslogueado" al navegar entre ambos. Con el dot-prefix la
+  // cookie queda compartida entre tienda10k.com y cualquier subdominio.
+  ...(process.env.NODE_ENV === "production" && {
+    cookies: {
+      sessionToken: {
+        name: "__Secure-next-auth.session-token",
+        options: {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          secure: true,
+          domain: ".tienda10k.com",
+        },
+      },
+      callbackUrl: {
+        name: "__Secure-next-auth.callback-url",
+        options: { sameSite: "lax", path: "/", secure: true, domain: ".tienda10k.com" },
+      },
+      csrfToken: {
+        name: "__Host-next-auth.csrf-token",
+        options: { httpOnly: true, sameSite: "lax", path: "/", secure: true },
+      },
+    },
+  }),
 };
