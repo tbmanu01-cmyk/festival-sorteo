@@ -27,9 +27,9 @@ export async function POST(req: NextRequest) {
 
     const usuario = await prisma.user.findUnique({
       where: { id: userId },
-      select: { confirmado: true },
+      select: { confirmado: true, rol: true },
     });
-    if (!usuario?.confirmado) {
+    if (!usuario?.confirmado && usuario?.rol !== "ADMIN") {
       return NextResponse.json(
         { mensaje: "Debes verificar tu correo electrónico antes de comprar una membresía.", codigo: "EMAIL_NO_VERIFICADO" },
         { status: 403 }
