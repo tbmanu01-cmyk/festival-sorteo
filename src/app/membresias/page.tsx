@@ -532,7 +532,7 @@ function MembresiasInner() {
               className="shrink-0 bg-[#102463] hover:bg-[#173592] disabled:opacity-60 text-white font-bold px-6 py-3 rounded-full text-sm transition-all shadow-md flex items-center gap-2 whitespace-nowrap"
             >
               <span className={buscandoAleatoria ? "animate-spin inline-block" : "inline-block"}>🎲</span>
-              {buscandoAleatoria ? "Eligiendo..." : "¡Quiero una sorpresa!"}
+              {buscandoAleatoria ? "Eligiendo..." : "Número al azar"}
             </button>
           </div>
 
@@ -585,7 +585,7 @@ function MembresiasInner() {
                   className="px-4 py-2 rounded-full text-sm font-semibold bg-[#ffbd1f] hover:bg-yellow-300 text-[#102463] disabled:opacity-60 transition-all flex items-center gap-1.5"
                 >
                   <span className={buscandoAleatoria ? "animate-spin inline-block" : "inline-block"}>🎲</span>
-                  Sorpresa
+                  Al azar
                 </button>
               </div>
             </div>
