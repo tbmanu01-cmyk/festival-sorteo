@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     if (!process.env.BOLD_API_KEY || !process.env.BOLD_SECRET_KEY) {
       return NextResponse.json(
-        { mensaje: "El pago con tarjeta/PSE aún no está disponible. Usa la transferencia manual." },
+        { mensaje: "El pago con tarjeta, PSE o Nequi no está disponible en este momento. Intenta de nuevo en unos minutos o contáctanos." },
         { status: 503 }
       );
     }
