@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 
 const TIPOS = [
   { value: "PROMO",     label: "Promoción",  icono: "📢" },
-  { value: "SORTEO",    label: "Sorteo",     icono: "🎰" },
+  { value: "SORTEO",    label: "Selección Aleatoria", icono: "🎲" },
   { value: "SISTEMA",   label: "Sistema",    icono: "⚙️" },
   { value: "MEMBRESIA", label: "Membresía",  icono: "🎁" },
   { value: "RETIRO",    label: "Retiro",     icono: "💸" },

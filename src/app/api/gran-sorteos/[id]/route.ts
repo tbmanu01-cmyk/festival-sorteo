@@ -36,11 +36,11 @@ export async function PATCH(
       SELECT id, estado::text FROM grandes_sorteos WHERE id = ${id} LIMIT 1
     `;
     if (!gs) {
-      return NextResponse.json({ mensaje: "Gran Sorteo no encontrado." }, { status: 404 });
+      return NextResponse.json({ mensaje: "Gran Selección no encontrada." }, { status: 404 });
     }
     if (gs.estado === "FINALIZADO") {
       return NextResponse.json(
-        { mensaje: "No se puede editar un sorteo ya finalizado." },
+        { mensaje: "No se puede editar una selección ya finalizada." },
         { status: 409 }
       );
     }
@@ -69,7 +69,7 @@ export async function PATCH(
     valores.push(id);
     await prisma.$executeRawUnsafe(query, ...valores);
 
-    return NextResponse.json({ mensaje: "Gran Sorteo actualizado." });
+    return NextResponse.json({ mensaje: "Gran Selección actualizada." });
   } catch (err) {
     console.error("PATCH /api/gran-sorteos/[id]:", err);
     return NextResponse.json({ mensaje: "Error al actualizar." }, { status: 500 });
@@ -95,11 +95,11 @@ export async function DELETE(
       SELECT estado::text FROM grandes_sorteos WHERE id = ${id} LIMIT 1
     `;
     if (!gs) {
-      return NextResponse.json({ mensaje: "Gran Sorteo no encontrado." }, { status: 404 });
+      return NextResponse.json({ mensaje: "Gran Selección no encontrada." }, { status: 404 });
     }
     if (gs.estado !== "PENDIENTE") {
       return NextResponse.json(
-        { mensaje: "Solo se pueden eliminar Gran Sorteos en estado Pendiente." },
+        { mensaje: "Solo se pueden eliminar Grandes Selecciones en estado Pendiente." },
         { status: 409 }
       );
     }
@@ -107,7 +107,7 @@ export async function DELETE(
     await prisma.$executeRaw`DELETE FROM sorteos_previos_gran WHERE "granSorteoId" = ${id}`;
     await prisma.$executeRaw`DELETE FROM grandes_sorteos WHERE id = ${id}`;
 
-    return NextResponse.json({ mensaje: "Gran Sorteo eliminado." });
+    return NextResponse.json({ mensaje: "Gran Selección eliminada." });
   } catch (err) {
     console.error("DELETE /api/gran-sorteos/[id]:", err);
     return NextResponse.json({ mensaje: "Error al eliminar." }, { status: 500 });

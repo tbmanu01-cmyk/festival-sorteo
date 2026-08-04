@@ -47,12 +47,12 @@ export async function POST(
     const precioCaja = config?.precioCaja ?? 10_000;
 
     const caja = await prisma.caja.findUnique({ where: { numero } });
-    if (!caja) return NextResponse.json({ mensaje: "Caja no encontrada." }, { status: 404 });
+    if (!caja) return NextResponse.json({ mensaje: "Membresía no encontrada." }, { status: 404 });
 
     const esReservadaMia = caja.estado === "RESERVADA" && caja.userId === userId;
     if (caja.estado !== "DISPONIBLE" && !esReservadaMia) {
       return NextResponse.json(
-        { mensaje: "Esta caja ya está comprada o reservada por otro usuario." },
+        { mensaje: "Esta membresía ya está comprada o reservada por otro usuario." },
         { status: 409 }
       );
     }

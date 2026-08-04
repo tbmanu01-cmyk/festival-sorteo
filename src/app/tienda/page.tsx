@@ -423,7 +423,7 @@ export default function TiendaBonos() {
           {/* Link a membresías */}
           {!cargando && (
             <div className="mt-10 text-center">
-              <p className="text-gray-500 text-sm mb-3">¿Buscas membresías para el sorteo?</p>
+              <p className="text-gray-500 text-sm mb-3">¿Buscas membresías para la selección aleatoria?</p>
               <Link
                 href="/membresias"
                 className="inline-block border-2 border-[#102463] text-[#102463] hover:bg-[#102463] hover:text-white font-bold px-8 py-3 rounded-full text-sm transition-all"

@@ -89,7 +89,7 @@ export default function Inicio() {
   const tienda: Boton = { href: "/tienda", label: "Tienda", sub: "Bonos con cashback", icono: ICONO_TIENDA, proximamente: !tiendaActiva };
 
   const botones: Boton[] = [
-    { href: "/membresias", label: "Membresías", sub: "Cajas del sorteo", icono: ICONO_MEMBRESIAS },
+    { href: "/membresias", label: "Membresías", sub: "Selección aleatoria", icono: ICONO_MEMBRESIAS },
   ];
 
   if (status === "authenticated") {

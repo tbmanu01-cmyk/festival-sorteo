@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     const yaEjecutado = await prisma.sorteo.findFirst({ where: { estado: "FINALIZADO" } });
     if (yaEjecutado) {
       return NextResponse.json(
-        { mensaje: "Ya existe un sorteo finalizado. Solo puede haber uno.", sorteo: yaEjecutado },
+        { mensaje: "Ya existe una selección finalizada. Solo puede haber una.", sorteo: yaEjecutado },
         { status: 409 }
       );
     }
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (cajasVendidas.length === 0) {
-      return NextResponse.json({ mensaje: "No hay cajas vendidas para realizar el sorteo." }, { status: 400 });
+      return NextResponse.json({ mensaje: "No hay membresías vendidas para realizar la selección." }, { status: 400 });
     }
 
     const totalVendidas = cajasVendidas.length;
@@ -205,7 +205,7 @@ export async function POST(req: NextRequest) {
             numeroCaja: p.numeroCaja,
             monto: p.monto,
             categoria: NOMBRE_CAT[p.categoria],
-            origen: "Sorteo principal",
+            origen: "Selección principal",
           })),
         });
       }
@@ -228,7 +228,7 @@ export async function POST(req: NextRequest) {
             userId,
             tipo: "PREMIO",
             monto,
-            descripcion: `Premio sorteo — números ganadores: ${numerosGanadores.join(", ")}`,
+            descripcion: `Premio selección aleatoria — números ganadores: ${numerosGanadores.join(", ")}`,
             referencia: nuevoSorteo.id,
           },
         });
@@ -242,7 +242,7 @@ export async function POST(req: NextRequest) {
             codigo: gcCodigo,
             valor: PRECIO_CAJA,
             propietarioId: c.userId!,
-            nota: `Premio 1 cifra sorteo ${nuevoSorteo.id} — membresía #${c.numero}`,
+            nota: `Premio 1 cifra selección ${nuevoSorteo.id} — membresía #${c.numero}`,
           },
         });
       }
@@ -302,7 +302,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      mensaje: "¡Sorteo ejecutado exitosamente!",
+      mensaje: "¡Selección ejecutada exitosamente!",
       sorteo: sorteoCompleto,
       numerosGanadores,
       resumen: {
@@ -324,7 +324,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("[POST /api/admin/sorteo]", err);
     return NextResponse.json(
-      { mensaje: "Error interno al ejecutar el sorteo. Revisa los logs del servidor." },
+      { mensaje: "Error interno al ejecutar la selección. Revisa los logs del servidor." },
       { status: 500 }
     );
   }
@@ -340,5 +340,5 @@ export async function DELETE() {
   await prisma.premio.deleteMany();
   await prisma.sorteo.deleteMany();
 
-  return NextResponse.json({ mensaje: "Sorteos eliminados. Puedes ejecutar uno nuevo." });
+  return NextResponse.json({ mensaje: "Selecciones eliminadas. Puedes ejecutar una nueva." });
 }

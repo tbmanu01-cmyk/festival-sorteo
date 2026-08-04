@@ -30,10 +30,10 @@ export async function POST(
   `;
 
   if (!sp) {
-    return NextResponse.json({ mensaje: "Sorteo previo no encontrado." }, { status: 404 });
+    return NextResponse.json({ mensaje: "Selección previa no encontrada." }, { status: 404 });
   }
   if (sp.estado === "FINALIZADO") {
-    return NextResponse.json({ mensaje: "Este sorteo ya fue ejecutado." }, { status: 409 });
+    return NextResponse.json({ mensaje: "Esta selección ya fue ejecutada." }, { status: 409 });
   }
 
   const req_ = sp.requisitos as {
@@ -60,7 +60,7 @@ export async function POST(
     usuariosElegibles = new Set(ueRows.map((r) => r.userId));
     if (usuariosElegibles.size === 0) {
       return NextResponse.json(
-        { mensaje: `No hay usuarios con ${minCajas}+ cajas para este sorteo.` },
+        { mensaje: `No hay usuarios con ${minCajas}+ membresías para esta selección.` },
         { status: 400 }
       );
     }
@@ -125,7 +125,7 @@ export async function POST(
 
   if (cajasFiltradas.length === 0) {
     return NextResponse.json(
-      { mensaje: "No hay cajas elegibles para ejecutar este sorteo." },
+      { mensaje: "No hay membresías elegibles para ejecutar esta selección." },
       { status: 400 }
     );
   }
@@ -170,13 +170,13 @@ export async function POST(
       userId: g.userId,
       numeroCaja: g.numeroCaja,
       monto: sp.premioValor,
-      categoria: "Sorteo Previo",
+      categoria: "Selección Previa",
       origen: sp.nombre,
     })),
   });
 
   return NextResponse.json({
-    mensaje: "¡Sorteo previo ejecutado exitosamente!",
+    mensaje: "¡Selección previa ejecutada exitosamente!",
     ganadores,
   });
 }

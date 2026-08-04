@@ -261,10 +261,10 @@ function ModalConfirmacion({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center mb-5">
-          <span className="text-5xl">🎰</span>
+          <span className="text-5xl">🎲</span>
         </div>
         <h2 className="text-xl font-extrabold text-gray-900 text-center mb-2">
-          ¿Ejecutar sorteo principal?
+          ¿Ejecutar selección principal?
         </h2>
         <p className="text-gray-500 text-sm text-center mb-6">
           Esta acción no se puede deshacer. Los premios se acreditarán automáticamente a los ganadores.
@@ -282,7 +282,7 @@ function ModalConfirmacion({
             disabled={ejecutando}
             className="flex-1 bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-extrabold py-3 rounded-xl transition-colors shadow-md"
           >
-            {ejecutando ? "⏳ Procesando..." : "Sí, ejecutar sorteo"}
+            {ejecutando ? "⏳ Procesando..." : "Sí, ejecutar selección"}
           </button>
         </div>
       </div>
@@ -403,7 +403,7 @@ function TabPrincipal() {
         throw new Error("El servidor no respondió correctamente.");
       }
       if (!res.ok) {
-        setError((json.mensaje as string) ?? "Error desconocido al ejecutar el sorteo.");
+        setError((json.mensaje as string) ?? "Error desconocido al ejecutar la selección.");
         if (json.sorteo) setSorteoExistente(json.sorteo as SorteoData);
         setModalAbierto(false);
         return;
@@ -441,7 +441,7 @@ function TabPrincipal() {
   }
 
   async function reiniciarSorteo() {
-    if (!confirm("¿Seguro que quieres eliminar el sorteo actual? Esta acción no se puede deshacer.")) return;
+    if (!confirm("¿Seguro que quieres eliminar la selección actual? Esta acción no se puede deshacer.")) return;
     setReiniciando(true);
     await fetch("/api/admin/sorteo", { method: "DELETE" });
     setSorteoExistente(null);
@@ -465,7 +465,7 @@ function TabPrincipal() {
       {!sorteoExistente ? (
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-5">Configurar sorteo principal</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-5">Configurar selección principal</h2>
 
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5">
@@ -492,7 +492,7 @@ function TabPrincipal() {
               </div>
               <p className="text-xs text-gray-400 mt-2">
                 {modo === "auto"
-                  ? "Se elige al azar entre los números de cajas vendidas"
+                  ? "Se elige al azar entre los números de membresías vendidas"
                   : "Ingresa el número ganador manualmente (validado 0000-9999)"}
               </p>
             </div>
@@ -523,7 +523,7 @@ function TabPrincipal() {
               disabled={ejecutando || (modo === "manual" && numeroManual.length !== 4)}
               className="w-full bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-extrabold py-4 rounded-xl text-lg transition-all shadow-md hover:shadow-lg mb-3"
             >
-              🎰 Ejecutar sorteo principal
+              🎲 Ejecutar selección principal
             </button>
 
             <button
@@ -571,14 +571,14 @@ function TabPrincipal() {
               {sorteoExistente.numeroGanador}
             </div>
             <p className="text-blue-200 text-sm">
-              Sorteo ejecutado el{" "}
+              Selección ejecutada el{" "}
               {new Date(sorteoExistente.fecha).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: "Cajas vendidas", valor: sorteoExistente.totalVendidas.toLocaleString("es-CO", { maximumFractionDigits: 0 }), icono: "📦" },
+              { label: "Membresías vendidas", valor: sorteoExistente.totalVendidas.toLocaleString("es-CO", { maximumFractionDigits: 0 }), icono: "📦" },
               { label: "Recaudo total", valor: `$${(sorteoExistente.totalRecaudo / 1_000_000).toFixed(2)}M`, icono: "💰" },
               { label: "Fondo premios", valor: `$${(sorteoExistente.fondoPremios / 1_000_000).toFixed(2)}M`, icono: "🏆" },
               { label: "Ganancia operación", valor: `$${(sorteoExistente.ganancia / 1_000_000).toFixed(2)}M`, icono: "🎪" },
@@ -593,7 +593,7 @@ function TabPrincipal() {
 
           {resumen && (
             <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
-              <h3 className="font-bold text-green-800 mb-3">✅ Sorteo ejecutado exitosamente</h3>
+              <h3 className="font-bold text-green-800 mb-3">✅ Selección ejecutada exitosamente</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                 {[
                   { label: "Ganadores 4 cifras", val: resumen.ganadores4, monto: resumen.monto4 },
@@ -632,14 +632,14 @@ function TabPrincipal() {
           <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
             <h3 className="font-bold text-red-800 mb-1">Zona de peligro</h3>
             <p className="text-red-600 text-sm mb-3">
-              Solo para pruebas. Elimina el sorteo actual y permite ejecutar uno nuevo.
+              Solo para pruebas. Elimina la selección actual y permite ejecutar una nueva.
             </p>
             <button
               onClick={reiniciarSorteo}
               disabled={reiniciando}
               className="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
             >
-              {reiniciando ? "Eliminando..." : "🗑️ Reiniciar sorteo"}
+              {reiniciando ? "Eliminando..." : "🗑️ Reiniciar selección"}
             </button>
           </div>
         </div>
@@ -658,7 +658,7 @@ function TabPrincipal() {
         animTerminada={animTerminada}
         onTerminado={() => setAnimTerminada(true)}
         onCerrar={cerrarOverlay}
-        badge={modoDemo ? "Modo demo — sin sorteo real" : "🎰 Sorteo Principal"}
+        badge={modoDemo ? "Modo demo — sin selección real" : "🎲 Selección Principal"}
         modoDemo={modoDemo}
         textoBoton={modoDemo ? "✕  Cerrar demo" : "Ver resultados →"}
       />
@@ -728,7 +728,7 @@ function TarjetaAnticipada({
           <div className="bg-gray-50 rounded-xl p-3">
             <p className="text-xs text-gray-500 mb-0.5">Elegibles</p>
             <p className="font-extrabold text-gray-700 text-sm">{a.soloVendidas ? "Solo vendidas" : "Vendidas + reservadas"}</p>
-            {a.minCajas > 0 && <p className="text-xs text-purple-600 font-semibold mt-0.5">⭐ {a.minCajas}+ cajas</p>}
+            {a.minCajas > 0 && <p className="text-xs text-purple-600 font-semibold mt-0.5">⭐ {a.minCajas}+ membresías</p>}
           </div>
           <div className="bg-gray-50 rounded-xl p-3">
             <p className="text-xs text-gray-500 mb-0.5">Fecha</p>
@@ -902,7 +902,7 @@ function TabAnticipadas() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-lg font-bold text-gray-900">Selecciones Anticipadas</h2>
-          <p className="text-gray-500 text-sm">Sorteos previos al evento principal</p>
+          <p className="text-gray-500 text-sm">Selecciones previas al evento principal</p>
         </div>
         <button
           onClick={() => { setMostrarForm(!mostrarForm); setErrorForm(""); }}
@@ -948,14 +948,14 @@ function TabAnticipadas() {
               <input type="checkbox" checked={form.soloVendidas as boolean}
                 onChange={(e) => setField("soloVendidas", e.target.checked)}
                 className="w-4 h-4 accent-[#1B4F8A]" />
-              <span className="text-sm text-gray-700">Solo cajas vendidas (recomendado)</span>
+              <span className="text-sm text-gray-700">Solo membresías vendidas (recomendado)</span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={form.minCajas as boolean}
                 onChange={(e) => setField("minCajas", e.target.checked)}
                 className="w-4 h-4 accent-purple-600" />
               <span className="text-sm text-gray-700">
-                <span className="text-purple-700 font-bold">⭐ Exclusivo para compradores de 10+ cajas</span>
+                <span className="text-purple-700 font-bold">⭐ Exclusivo para compradores de 10+ membresías</span>
               </span>
             </label>
           </div>
@@ -1079,7 +1079,7 @@ function FormGranSorteo({
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nombre <span className="text-red-500">*</span></label>
           <input type="text" value={form.nombre} onChange={(e) => set("nombre", e.target.value)}
-            placeholder="Gran Sorteo 10K — Edición 2026"
+            placeholder="Gran Selección 10K — Edición 2026"
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]" />
         </div>
         <div>
@@ -1089,7 +1089,7 @@ function FormGranSorteo({
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]" />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Valor por caja (COP) <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Valor por membresía (COP) <span className="text-red-500">*</span></label>
           <input type="number" value={form.valorCaja} onChange={(e) => set("valorCaja", e.target.value)}
             min="1000"
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]" />
@@ -1100,7 +1100,7 @@ function FormGranSorteo({
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]" />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Fecha del sorteo <span className="text-red-500">*</span></label>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Fecha de la selección <span className="text-red-500">*</span></label>
           <input type="datetime-local" value={form.fechaSorteo} onChange={(e) => set("fechaSorteo", e.target.value)}
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]" />
         </div>
@@ -1115,14 +1115,14 @@ function FormGranSorteo({
         <div className="md:col-span-2">
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Descripción (opcional)</label>
           <input type="text" value={form.descripcion} onChange={(e) => set("descripcion", e.target.value)}
-            placeholder="Detalles adicionales del Gran Sorteo..."
+            placeholder="Detalles adicionales de la Gran Selección..."
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]" />
         </div>
       </div>
       <div className="flex gap-3">
         <button onClick={() => onGuardar(form)} disabled={guardando}
           className="flex-1 bg-[#1B4F8A] hover:bg-[#1a5fa8] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-3 rounded-xl transition-all shadow-md">
-          {guardando ? "Guardando..." : "Guardar Gran Sorteo"}
+          {guardando ? "Guardando..." : "Guardar Gran Selección"}
         </button>
         <button onClick={onCancelar}
           className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold text-sm transition-colors">
@@ -1159,7 +1159,7 @@ function TabGrandes({ onVerPrevios }: { onVerPrevios: (id: string) => void }) {
   async function crearGranSorteo(form: typeof FORM_GS_INICIAL) {
     setErrorForm("");
     if (!form.nombre.trim() || !form.premioDescripcion.trim() || !form.valorCaja || !form.fechaInicio || !form.fechaSorteo) {
-      setErrorForm("Nombre, premio, valor por caja, fecha inicio y fecha sorteo son requeridos.");
+      setErrorForm("Nombre, premio, valor por membresía, fecha inicio y fecha de la selección son requeridos.");
       return;
     }
     setGuardando(true);
@@ -1204,7 +1204,7 @@ function TabGrandes({ onVerPrevios }: { onVerPrevios: (id: string) => void }) {
   }
 
   async function eliminarGranSorteo(gs: GranSorteo) {
-    if (!confirm(`¿Eliminar "${gs.nombre}"? Solo se pueden eliminar sorteos en estado Pendiente.`)) return;
+    if (!confirm(`¿Eliminar "${gs.nombre}"? Solo se pueden eliminar selecciones en estado Pendiente.`)) return;
     const res = await fetch(`/api/gran-sorteos/${gs.id}`, { method: "DELETE" });
     const json = await res.json();
     if (!res.ok) { alert(json.mensaje); return; }
@@ -1245,21 +1245,21 @@ function TabGrandes({ onVerPrevios }: { onVerPrevios: (id: string) => void }) {
     <>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">Grandes Sorteos</h2>
-          <p className="text-gray-500 text-sm">Sorteos especiales con premio mayor propio</p>
+          <h2 className="text-lg font-bold text-gray-900">Grandes Selecciones</h2>
+          <p className="text-gray-500 text-sm">Selecciones especiales con premio mayor propio</p>
         </div>
         <button
           onClick={() => { setMostrarForm(!mostrarForm); setErrorForm(""); setEditando(null); }}
           className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-5 py-2.5 rounded-xl transition-colors shadow-md text-sm"
         >
-          {mostrarForm ? "× Cancelar" : "+ Crear Gran Sorteo"}
+          {mostrarForm ? "× Cancelar" : "+ Crear Gran Selección"}
         </button>
       </div>
 
       {mostrarForm && !editando && (
         <FormGranSorteo
           inicial={FORM_GS_INICIAL}
-          titulo="Crear nuevo Gran Sorteo"
+          titulo="Crear nueva Gran Selección"
           onGuardar={crearGranSorteo}
           onCancelar={() => { setMostrarForm(false); setErrorForm(""); }}
           guardando={guardando}
@@ -1281,11 +1281,11 @@ function TabGrandes({ onVerPrevios }: { onVerPrevios: (id: string) => void }) {
       {lista.length === 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
           <p className="text-5xl mb-3">🏆</p>
-          <h2 className="text-lg font-bold text-gray-900 mb-2">No hay Grandes Sorteos</h2>
-          <p className="text-gray-500 text-sm mb-4">Crea el primer Gran Sorteo para comenzar.</p>
+          <h2 className="text-lg font-bold text-gray-900 mb-2">No hay Grandes Selecciones</h2>
+          <p className="text-gray-500 text-sm mb-4">Crea la primera Gran Selección para comenzar.</p>
           <button onClick={() => setMostrarForm(true)}
             className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-6 py-3 rounded-xl transition-colors shadow-md text-sm">
-            + Crear Gran Sorteo
+            + Crear Gran Selección
           </button>
         </div>
       )}
@@ -1298,7 +1298,7 @@ function TabGrandes({ onVerPrevios }: { onVerPrevios: (id: string) => void }) {
                 <tr className="bg-gray-50 text-gray-500 text-left">
                   <th className="px-5 py-3.5 font-semibold">Nombre</th>
                   <th className="px-5 py-3.5 font-semibold hidden md:table-cell">Premio</th>
-                  <th className="px-5 py-3.5 font-semibold hidden lg:table-cell">Fecha sorteo</th>
+                  <th className="px-5 py-3.5 font-semibold hidden lg:table-cell">Fecha selección</th>
                   <th className="px-5 py-3.5 font-semibold">Participantes</th>
                   <th className="px-5 py-3.5 font-semibold">Estado</th>
                   <th className="px-5 py-3.5 font-semibold text-right">Acciones</th>
@@ -1328,7 +1328,7 @@ function TabGrandes({ onVerPrevios }: { onVerPrevios: (id: string) => void }) {
                       </td>
                       <td className="px-5 py-4">
                         <span className="font-bold text-[#1B4F8A]">{gs.participantes}</span>
-                        <span className="text-gray-400 text-xs ml-1">cajas</span>
+                        <span className="text-gray-400 text-xs ml-1">membresías</span>
                       </td>
                       <td className="px-5 py-4">
                         <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${ESTADO_BADGE[gs.estado]}`}>
@@ -1392,10 +1392,10 @@ function TabGrandes({ onVerPrevios }: { onVerPrevios: (id: string) => void }) {
               <div className="grid grid-cols-2 gap-3 mb-5">
                 {[
                   { label: "Premio", valor: detalle.premioDescripcion },
-                  { label: "Valor por caja", valor: `$${detalle.valorCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}` },
+                  { label: "Valor por membresía", valor: `$${detalle.valorCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}` },
                   { label: "Fecha inicio", valor: new Date(detalle.fechaInicio).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }) },
-                  { label: "Fecha sorteo", valor: new Date(detalle.fechaSorteo).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }) },
-                  { label: "Participantes", valor: `${detalle.participantes} cajas vendidas` },
+                  { label: "Fecha selección", valor: new Date(detalle.fechaSorteo).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }) },
+                  { label: "Participantes", valor: `${detalle.participantes} membresías vendidas` },
                   { label: "Recaudo estimado", valor: `$${(detalle.valorCaja * detalle.participantes).toLocaleString("es-CO", { maximumFractionDigits: 0 })}` },
                 ].map((item) => (
                   <div key={item.label} className="bg-gray-50 rounded-xl p-3">
@@ -1420,7 +1420,7 @@ function TabGrandes({ onVerPrevios }: { onVerPrevios: (id: string) => void }) {
                           <p className="text-gray-500 text-xs">{detalle.ganadorCorreo}</p>
                         </>
                       ) : (
-                        <p className="text-gray-500 text-sm">Portador de la caja</p>
+                        <p className="text-gray-500 text-sm">Portador de la membresía</p>
                       )}
                     </div>
                     <p className="font-extrabold text-[#1B4F8A] text-3xl tracking-[0.4em]">#{detalle.numeroGanador}</p>
@@ -1431,7 +1431,7 @@ function TabGrandes({ onVerPrevios }: { onVerPrevios: (id: string) => void }) {
                 onClick={() => { setDetalle(null); onVerPrevios(detalle.id); }}
                 className="w-full text-center bg-[#1B4F8A]/10 hover:bg-[#1B4F8A]/20 text-[#1B4F8A] font-semibold py-2.5 rounded-xl transition-colors text-sm"
               >
-                🎯 Ver Sorteos Previos de este Gran Sorteo →
+                🎯 Ver Selecciones Previas de esta Gran Selección →
               </button>
             </div>
           </div>
@@ -1444,7 +1444,7 @@ function TabGrandes({ onVerPrevios }: { onVerPrevios: (id: string) => void }) {
         animTerminada={animTerminada}
         onTerminado={() => setAnimTerminada(true)}
         onCerrar={() => { setOverlayActivo(false); setAnimTerminada(false); setPendienteGanadores(null); }}
-        badge="🏆 Gran Sorteo — Premio Mayor"
+        badge="🏆 Gran Selección — Premio Mayor"
         ganadores={pendienteGanadores}
         textoBoton="Ver resultados →"
       />
@@ -1513,8 +1513,8 @@ function TarjetaSorteoPrevio({
           <div className="bg-gray-50 rounded-xl p-3">
             <p className="text-xs text-gray-500 mb-0.5">Requisitos</p>
             <p className="font-semibold text-gray-700 text-xs leading-snug">
-              {req?.soloEsteGranSorteo ? "Solo este sorteo" : "Todos"}
-              {req && req.minCajas > 0 && ` · ${req.minCajas}+ cajas`}
+              {req?.soloEsteGranSorteo ? "Solo esta selección" : "Todos"}
+              {req && req.minCajas > 0 && ` · ${req.minCajas}+ membresías`}
             </p>
           </div>
           <div className="bg-gray-50 rounded-xl p-3">
@@ -1531,7 +1531,7 @@ function TarjetaSorteoPrevio({
           {!esEjecutado && (
             <button onClick={() => onEjecutar(sp.id)} disabled={ejecutando}
               className="flex-1 bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-extrabold py-2.5 rounded-xl text-sm transition-all shadow-md">
-              {ejecutando ? "⏳ Ejecutando..." : "🎯 Ejecutar sorteo previo"}
+              {ejecutando ? "⏳ Ejecutando..." : "🎯 Ejecutar selección previa"}
             </button>
           )}
           {esEjecutado && sp.ganadores && (
@@ -1620,7 +1620,7 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
 
   async function crearSorteoPrevio() {
     setErrorForm("");
-    if (!granSorteoSeleccionado) { setErrorForm("Selecciona un Gran Sorteo."); return; }
+    if (!granSorteoSeleccionado) { setErrorForm("Selecciona una Gran Selección."); return; }
     if (!form.nombre.trim() || !form.premioDescripcion.trim() || !form.fechaSorteo) {
       setErrorForm("Nombre, premio y fecha son requeridos.");
       return;
@@ -1696,16 +1696,16 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
   return (
     <>
       <div className="mb-6">
-        <h2 className="text-lg font-bold text-gray-900">Sorteos Previos</h2>
-        <p className="text-gray-500 text-sm">Sorteos previos vinculados a Grandes Sorteos</p>
+        <h2 className="text-lg font-bold text-gray-900">Selecciones Previas</h2>
+        <p className="text-gray-500 text-sm">Selecciones previas vinculadas a Grandes Selecciones</p>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
         <label className="block text-sm font-bold text-gray-700 mb-2">
-          ¿A qué Gran Sorteo pertenecen estos sorteos previos?
+          ¿A qué Gran Selección pertenecen estas selecciones previas?
         </label>
         {granSorteos.length === 0 ? (
-          <p className="text-gray-400 text-sm">No hay Grandes Sorteos. Créalos en la pestaña "Grandes Sorteos".</p>
+          <p className="text-gray-400 text-sm">No hay Grandes Selecciones. Créalas en la pestaña &quot;Grandes Selecciones&quot;.</p>
         ) : (
           <div className="flex flex-col sm:flex-row gap-3">
             <select
@@ -1713,7 +1713,7 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
               onChange={(e) => { setGranSorteoSeleccionado(e.target.value); setMostrarForm(false); }}
               className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
             >
-              <option value="">— Selecciona un Gran Sorteo —</option>
+              <option value="">— Selecciona una Gran Selección —</option>
               {granSorteos.map((gs) => (
                 <option key={gs.id} value={gs.id}>{gs.nombre} ({gs.estado})</option>
               ))}
@@ -1723,7 +1723,7 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
                 onClick={() => { setMostrarForm(!mostrarForm); setErrorForm(""); }}
                 className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-5 py-2.5 rounded-xl transition-colors shadow-md text-sm whitespace-nowrap"
               >
-                {mostrarForm ? "× Cancelar" : "+ Nuevo sorteo previo"}
+                {mostrarForm ? "× Cancelar" : "+ Nueva selección previa"}
               </button>
             )}
           </div>
@@ -1732,10 +1732,10 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
 
       {mostrarForm && granSorteoSeleccionado && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-1">Crear sorteo previo</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-1">Crear selección previa</h3>
           {granSorteoActual && (
             <p className="text-sm text-[#1B4F8A] mb-5">
-              Gran Sorteo: <span className="font-bold">{granSorteoActual.nombre}</span>
+              Gran Selección: <span className="font-bold">{granSorteoActual.nombre}</span>
             </p>
           )}
           {errorForm && (
@@ -1747,7 +1747,7 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nombre <span className="text-red-500">*</span></label>
               <input type="text" value={form.nombre} onChange={(e) => setField("nombre", e.target.value)}
-                placeholder="Previo #1 — Viernes de cajas"
+                placeholder="Previo #1 — Viernes de membresías"
                 className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]" />
             </div>
             <div>
@@ -1778,32 +1778,32 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
             <p className="text-sm font-bold text-gray-700 mb-2">Requisitos de participación</p>
             <label className="flex items-center gap-3">
               <input type="checkbox" checked={true} disabled className="w-4 h-4 accent-[#1B4F8A]" />
-              <span className="text-sm text-gray-700">Solo participantes del Gran Sorteo <span className="text-gray-400">(siempre activo)</span></span>
+              <span className="text-sm text-gray-700">Solo participantes de la Gran Selección <span className="text-gray-400">(siempre activo)</span></span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={form.soloEsteGranSorteo as boolean}
                 onChange={(e) => setField("soloEsteGranSorteo", e.target.checked)} className="w-4 h-4 accent-[#1B4F8A]" />
               <span className="text-sm text-gray-700">
-                <span className="font-semibold text-[#1B4F8A]">Solo cajas de este Gran Sorteo</span>
-                <span className="text-gray-400 ml-1">(excluye cajas del sorteo principal)</span>
+                <span className="font-semibold text-[#1B4F8A]">Solo membresías de esta Gran Selección</span>
+                <span className="text-gray-400 ml-1">(excluye membresías de la selección principal)</span>
               </span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={form.soloVendidas as boolean}
                 onChange={(e) => setField("soloVendidas", e.target.checked)} className="w-4 h-4 accent-[#1B4F8A]" />
               <span className="text-sm text-gray-700">
-                Solo cajas vendidas <span className="text-gray-400">(excluye reservas no completadas)</span>
+                Solo membresías vendidas <span className="text-gray-400">(excluye reservas no completadas)</span>
               </span>
             </label>
             <label className="flex items-center gap-3 cursor-pointer">
               <input type="checkbox" checked={form.minCajas as boolean}
                 onChange={(e) => setField("minCajas", e.target.checked)} className="w-4 h-4 accent-purple-600" />
-              <span className="text-sm text-purple-700 font-bold">⭐ Exclusivo para compradores de 10+ cajas</span>
+              <span className="text-sm text-purple-700 font-bold">⭐ Exclusivo para compradores de 10+ membresías</span>
             </label>
           </div>
           <button onClick={crearSorteoPrevio} disabled={creando}
             className="w-full bg-[#1B4F8A] hover:bg-[#1a5fa8] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-3 rounded-xl transition-all shadow-md">
-            {creando ? "Creando..." : "Crear sorteo previo"}
+            {creando ? "Creando..." : "Crear selección previa"}
           </button>
         </div>
       )}
@@ -1811,13 +1811,13 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
       {!granSorteoSeleccionado && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
           <p className="text-4xl mb-3">🎯</p>
-          <h2 className="text-lg font-bold text-gray-900 mb-2">Selecciona un Gran Sorteo</h2>
-          <p className="text-gray-500 text-sm">Elige el Gran Sorteo para gestionar sus sorteos previos.</p>
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Selecciona una Gran Selección</h2>
+          <p className="text-gray-500 text-sm">Elige la Gran Selección para gestionar sus selecciones previas.</p>
         </div>
       )}
 
       {granSorteoSeleccionado && cargando && (
-        <div className="text-center py-12 text-gray-400">Cargando sorteos previos...</div>
+        <div className="text-center py-12 text-gray-400">Cargando selecciones previas...</div>
       )}
 
       {granSorteoSeleccionado && !cargando && (
@@ -1825,11 +1825,11 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
           {sorteosPrevios.length === 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
               <p className="text-4xl mb-3">🎯</p>
-              <h2 className="text-lg font-bold text-gray-900 mb-2">No hay sorteos previos</h2>
-              <p className="text-gray-500 text-sm mb-4">Crea el primer sorteo previo para este Gran Sorteo.</p>
+              <h2 className="text-lg font-bold text-gray-900 mb-2">No hay selecciones previas</h2>
+              <p className="text-gray-500 text-sm mb-4">Crea la primera selección previa para esta Gran Selección.</p>
               <button onClick={() => setMostrarForm(true)}
                 className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-6 py-3 rounded-xl transition-colors shadow-md text-sm">
-                + Nuevo sorteo previo
+                + Nueva selección previa
               </button>
             </div>
           )}
@@ -1837,7 +1837,7 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
           {activos.length > 0 && (
             <section className="mb-8">
               <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                Próximos sorteos previos
+                Próximas selecciones previas
                 <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">{activos.length}</span>
               </h2>
               <div className="space-y-4">
@@ -1851,7 +1851,7 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
           {finalizados.length > 0 && (
             <section>
               <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                Sorteos previos ejecutados
+                Selecciones previas ejecutadas
                 <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">{finalizados.length}</span>
               </h2>
               <div className="space-y-4">
@@ -1870,7 +1870,7 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
         animTerminada={animTerminada}
         onTerminado={() => setAnimTerminada(true)}
         onCerrar={cerrarOverlay}
-        badge={pendienteNombre ?? "Sorteo Previo"}
+        badge={pendienteNombre ?? "Selección Previa"}
         ganadores={pendienteGanadores}
         textoBoton="Ver resultados →"
       />
@@ -1881,10 +1881,10 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
 // ── Main component ─────────────────────────────────────────────────────────
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: "principal", label: "Sorteo Principal", icon: "🎰" },
+  { id: "principal", label: "Selección Principal", icon: "🎲" },
   { id: "anticipadas", label: "Anticipadas", icon: "🎯" },
-  { id: "grandes", label: "Grandes Sorteos", icon: "🏆" },
-  { id: "previos", label: "Sorteos Previos", icon: "📋" },
+  { id: "grandes", label: "Grandes Selecciones", icon: "🏆" },
+  { id: "previos", label: "Selecciones Previas", icon: "📋" },
 ];
 
 export default function MotorSorteos() {
@@ -1924,8 +1924,8 @@ export default function MotorSorteos() {
               ← Panel Admin
             </Link>
             <div>
-              <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Motor de Sorteos</h1>
-              <p className="text-gray-500 text-sm">Gestión centralizada de todos los sorteos</p>
+              <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Motor de Selección Aleatoria</h1>
+              <p className="text-gray-500 text-sm">Gestión centralizada de todas las selecciones</p>
             </div>
           </div>
 

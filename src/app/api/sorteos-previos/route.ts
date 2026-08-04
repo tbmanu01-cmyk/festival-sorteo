@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
 
   if (!granSorteoId || !nombre?.trim() || !premioDescripcion?.trim() || !fechaSorteo) {
     return NextResponse.json(
-      { mensaje: "Gran Sorteo, nombre, premio y fecha son requeridos." },
+      { mensaje: "Gran Selección, nombre, premio y fecha son requeridos." },
       { status: 400 }
     );
   }
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
       SELECT id FROM grandes_sorteos WHERE id = ${granSorteoId} LIMIT 1
     `;
     if (!gs) {
-      return NextResponse.json({ mensaje: "Gran Sorteo no encontrado." }, { status: 404 });
+      return NextResponse.json({ mensaje: "Gran Selección no encontrada." }, { status: 404 });
     }
 
     const id = crypto.randomUUID();
@@ -159,6 +159,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ sorteoPrevio: normalizar(sp) }, { status: 201 });
   } catch (err) {
     console.error("POST /api/sorteos-previos:", err);
-    return NextResponse.json({ mensaje: "Error al crear el sorteo previo." }, { status: 500 });
+    return NextResponse.json({ mensaje: "Error al crear la selección previa." }, { status: 500 });
   }
 }

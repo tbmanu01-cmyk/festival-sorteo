@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
 
   if (!nombre?.trim() || !premioDescripcion?.trim() || !valorCaja || !fechaInicio || !fechaSorteo) {
     return NextResponse.json(
-      { mensaje: "Nombre, premio, valor por caja, fecha inicio y fecha sorteo son requeridos." },
+      { mensaje: "Nombre, premio, valor por membresía, fecha inicio y fecha de la selección son requeridos." },
       { status: 400 }
     );
   }
@@ -146,6 +146,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ granSorteo: normalizar(gs) }, { status: 201 });
   } catch (err) {
     console.error("POST /api/gran-sorteos:", err);
-    return NextResponse.json({ mensaje: "Error al crear el Gran Sorteo." }, { status: 500 });
+    return NextResponse.json({ mensaje: "Error al crear la Gran Selección." }, { status: 500 });
   }
 }

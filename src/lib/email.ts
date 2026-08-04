@@ -54,7 +54,7 @@ export async function enviarComprobante(opts: {
       ${fila("Valor pagado", `$${precio.toLocaleString("es-CO")} COP`)}
     </table>
     <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
-      Guarda esta referencia. El resultado del sorteo se basará en la Lotería de Bogotá.
+      Guarda esta referencia. El resultado se determinará mediante selección aleatoria de membresías.
       ¡Mucha suerte! 🍀
     </p>`;
   await resend().emails.send({
@@ -86,7 +86,7 @@ export async function enviarPremio(opts: {
     <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">¡Ganaste un premio!</h2>
     <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, ¡felicitaciones!</p>
     <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;">
-      ${fila("Número ganador del sorteo", `<span style="font-size:24px;font-weight:900;color:#1B4F8A;">${numeroGanador}</span>`)}
+      ${fila("Número ganador de la selección aleatoria", `<span style="font-size:24px;font-weight:900;color:#1B4F8A;">${numeroGanador}</span>`)}
       ${fila("Categoría", NOMBRE_CATEGORIA[categoria] ?? categoria)}
       ${fila("Premio acreditado", `<span style="font-size:20px;font-weight:900;color:#F5A623;">$${monto.toLocaleString("es-CO")} COP</span>`)}
     </table>
@@ -114,13 +114,13 @@ export async function enviarPremioGiftCard(opts: {
     <h2 style="margin:0 0 4px;color:#16a34a;font-size:22px;">¡Ganaste una membresía gratis! 🎁</h2>
     <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, ¡tu cifra coincidió!</p>
     <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;">
-      ${fila("Número ganador del sorteo", `<span style="font-size:24px;font-weight:900;color:#1B4F8A;">${numeroGanador}</span>`)}
+      ${fila("Número ganador de la selección aleatoria", `<span style="font-size:24px;font-weight:900;color:#1B4F8A;">${numeroGanador}</span>`)}
       ${fila("Categoría", NOMBRE_CATEGORIA["UNA_CIFRA"])}
       ${fila("Tu regalo", `<span style="font-size:18px;font-weight:900;color:#16a34a;">Gift Card $${valorGiftCard.toLocaleString("es-CO")} COP</span>`)}
       ${fila("Código gift card", `<span style="font-family:monospace;font-size:20px;font-weight:900;color:#102463;letter-spacing:2px;">${codigoGiftCard}</span>`)}
     </table>
     <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
-      Esto te da una <strong>segunda oportunidad</strong> en el siguiente sorteo.
+      Esto te da una <strong>segunda oportunidad</strong> en la siguiente selección aleatoria.
       Puedes usar tu gift card al comprar tu próxima membresía en
       <strong>Mi cuenta → Membresías</strong>. ¡Buena suerte la próxima vez! 🍀
     </p>`;
@@ -175,12 +175,12 @@ export async function enviarPremioAnticipado(opts: {
     <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, ¡felicitaciones!</p>
     <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;">
       ${fila("Evento", `<strong>${nombreEvento}</strong>`)}
-      ${fila("Tu número de caja ganador", `<span style="font-size:24px;font-weight:900;color:#1B4F8A;">#${numeroCaja}</span>`)}
+      ${fila("Tu número de membresía ganador", `<span style="font-size:24px;font-weight:900;color:#1B4F8A;">#${numeroCaja}</span>`)}
       ${fila("Premio", `<span style="font-size:20px;font-weight:900;color:#F5A623;">${premioDescripcion}</span>`)}
     </table>
     <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
       El administrador se pondrá en contacto contigo para coordinar la entrega del premio.
-      ¡Mucha suerte en el sorteo principal también! 🍀
+      ¡Mucha suerte en la selección aleatoria principal también! 🍀
     </p>`;
   await resend().emails.send({
     from: FROM,
@@ -355,7 +355,7 @@ export async function enviarPagoManualAprobado(opts: {
       ${fila("Valor pagado", `$${monto.toLocaleString("es-CO")} COP`)}
     </table>
     <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
-      ¡Ya estás participando en el sorteo! Guarda tu número y mucha suerte. 🍀
+      ¡Ya estás participando en la selección aleatoria! Guarda tu número y mucha suerte. 🍀
     </p>`;
   await resend().emails.send({
     from: FROM,

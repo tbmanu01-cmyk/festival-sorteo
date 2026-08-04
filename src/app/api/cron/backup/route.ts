@@ -87,7 +87,7 @@ export async function GET(req: Request) {
       <p>Fecha: <strong>${new Date().toLocaleString("es-CO")}</strong></p>
       <table style="border-collapse:collapse;font-size:14px">
         <tr><td style="padding:4px 12px 4px 0;color:#666">Usuarios</td><td><strong>${backup.resumen.usuarios}</strong></td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Cajas</td><td><strong>${backup.resumen.cajas}</strong></td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666">Membresías</td><td><strong>${backup.resumen.cajas}</strong></td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666">Transacciones</td><td><strong>${backup.resumen.transacciones}</strong></td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666">Retiros</td><td><strong>${backup.resumen.retiros}</strong></td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666">Bonos</td><td><strong>${backup.resumen.bonos}</strong></td></tr>

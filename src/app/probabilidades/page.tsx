@@ -70,7 +70,7 @@ export default function PaginaProbabilidades() {
   }));
 
   const CATEGORIAS = [
-    { icono: "🏆", label: "4 cifras exactas",    w: W4, prize: P4, nota: `${N_SORTEOS_4C} ganadores (1 por sorteo)` },
+    { icono: "🏆", label: "4 cifras exactas",    w: W4, prize: P4, nota: `${N_SORTEOS_4C} ganadores (1 por selección)` },
     { icono: "🥈", label: "3 últimas cifras",    w: W3, prize: P3, nota: "~9 ganadores exclusivos" },
     { icono: "🥉", label: "2 últimas cifras",    w: W2, prize: P2, nota: "~90 ganadores exclusivos" },
     { icono: "🎫", label: "1 última cifra",      w: W1, prize: P1, nota: "~900 ganadores · gift card = 1 membresía", giftCard: true },
@@ -105,7 +105,7 @@ export default function PaginaProbabilidades() {
               {[
                 { label: "Total membresías", val: "10.000" },
                 { label: "Precio por membresía", val: "$50.000 COP" },
-                { label: "Sorteos de 4 cifras", val: `${N_SORTEOS_4C} sorteos` },
+                { label: "Selecciones de 4 cifras", val: `${N_SORTEOS_4C} selecciones` },
                 { label: "Categorías de premio", val: "4 categorías" },
               ].map((x) => (
                 <div key={x.label} className="bg-white/10 border border-white/20 rounded-2xl px-6 py-4 text-center">
@@ -131,7 +131,7 @@ export default function PaginaProbabilidades() {
               {[
                 { n: "01", icono: "📝", titulo: "Regístrate gratis", texto: "Crea tu cuenta en 2 minutos. Solo necesitas tus datos básicos para empezar." },
                 { n: "02", icono: "🎟️", titulo: "Elige tu membresía", texto: "Compra uno o varios números (0000–9999). Cada membresía es una oportunidad distinta de ganar." },
-                { n: "03", icono: "🏆", titulo: "Participa y gana", texto: "Si tu número coincide con las cifras ganadoras del sorteo, tu premio llega directo a tu billetera." },
+                { n: "03", icono: "🏆", titulo: "Participa y gana", texto: "Si tu número coincide con las cifras ganadoras de la selección aleatoria, tu premio llega directo a tu billetera." },
               ].map((paso) => (
                 <div key={paso.n} className="relative bg-white rounded-2xl border border-gray-100 shadow-sm px-6 pt-9 pb-6">
                   <div className="absolute -top-5 left-6 w-10 h-10 rounded-full bg-[#1B4F8A] text-white flex items-center justify-center font-extrabold text-sm shadow-md">
@@ -422,7 +422,7 @@ export default function PaginaProbabilidades() {
                 {
                   qty: "×10", n: 10,
                   title: "Participación VIP",
-                  desc: "2 de cada 3 participantes ganan algún premio. Acceso al Club VIP con sorteos exclusivos, atención preferencial y beneficios adicionales del Club.",
+                  desc: "2 de cada 3 participantes ganan algún premio. Acceso al Club VIP con beneficios exclusivos, atención preferencial y beneficios adicionales del Club.",
                   tag: "Club VIP", tagBg: "bg-blue-100 text-blue-800",
                   border: "border-blue-300",
                 },
@@ -466,7 +466,7 @@ export default function PaginaProbabilidades() {
               Adquiere tu membresía ahora
             </h2>
             <p className="text-blue-200 mb-8 text-lg">
-              10.000 números disponibles. Tu caja sorpresa te espera.
+              10.000 números disponibles. Tu membresía te espera.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link

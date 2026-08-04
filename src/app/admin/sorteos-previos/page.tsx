@@ -104,8 +104,8 @@ function TarjetaSorteoPrevio({
           <div className="bg-gray-50 rounded-xl p-3">
             <p className="text-xs text-gray-500 mb-0.5">Requisitos</p>
             <p className="font-semibold text-gray-700 text-xs leading-snug">
-              {req?.soloEsteGranSorteo ? "Solo este sorteo" : "Todos"}
-              {req && req.minCajas > 0 && ` · ${req.minCajas}+ cajas`}
+              {req?.soloEsteGranSorteo ? "Solo esta selección" : "Todos"}
+              {req && req.minCajas > 0 && ` · ${req.minCajas}+ membresías`}
             </p>
           </div>
           <div className="bg-gray-50 rounded-xl p-3">
@@ -126,7 +126,7 @@ function TarjetaSorteoPrevio({
               disabled={ejecutando}
               className="flex-1 bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-extrabold py-2.5 rounded-xl text-sm transition-all shadow-md hover:shadow-lg"
             >
-              {ejecutando ? "⏳ Ejecutando..." : "🎯 Ejecutar sorteo previo"}
+              {ejecutando ? "⏳ Ejecutando..." : "🎯 Ejecutar selección previa"}
             </button>
           )}
 
@@ -238,7 +238,7 @@ function ContenidoSorteosPrevios() {
 
   async function crearSorteoPrevio() {
     setErrorForm("");
-    if (!granSorteoSeleccionado) { setErrorForm("Selecciona un Gran Sorteo."); return; }
+    if (!granSorteoSeleccionado) { setErrorForm("Selecciona una Gran Selección."); return; }
     if (!form.nombre.trim() || !form.premioDescripcion.trim() || !form.fechaSorteo) {
       setErrorForm("Nombre, premio y fecha son requeridos.");
       return;
@@ -333,28 +333,28 @@ function ContenidoSorteosPrevios() {
                 ← Panel Admin
               </Link>
               <div>
-                <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Sorteos Previos</h1>
-                <p className="text-gray-500 text-sm">Sorteos previos vinculados a Grandes Sorteos</p>
+                <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Selecciones Previas</h1>
+                <p className="text-gray-500 text-sm">Selecciones previas vinculadas a Grandes Selecciones</p>
               </div>
             </div>
             <Link
               href="/admin/grandes-sorteos"
               className="border border-[#1B4F8A] text-[#1B4F8A] hover:bg-[#1B4F8A]/5 font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
             >
-              🏆 Grandes Sorteos
+              🏆 Grandes Selecciones
             </Link>
           </div>
 
-          {/* Selector Gran Sorteo */}
+          {/* Selector Gran Selección */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              ¿A qué Gran Sorteo pertenecen estos sorteos previos?
+              ¿A qué Gran Selección pertenecen estas selecciones previas?
             </label>
             {granSorteos.length === 0 ? (
               <div className="flex items-center gap-3">
-                <p className="text-gray-400 text-sm">No hay Grandes Sorteos creados aún.</p>
+                <p className="text-gray-400 text-sm">No hay Grandes Selecciones creadas aún.</p>
                 <Link href="/admin/grandes-sorteos" className="text-[#1B4F8A] font-semibold text-sm hover:underline">
-                  Crear uno →
+                  Crear una →
                 </Link>
               </div>
             ) : (
@@ -367,7 +367,7 @@ function ContenidoSorteosPrevios() {
                   }}
                   className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
                 >
-                  <option value="">— Selecciona un Gran Sorteo —</option>
+                  <option value="">— Selecciona una Gran Selección —</option>
                   {granSorteos.map((gs) => (
                     <option key={gs.id} value={gs.id}>
                       {gs.nombre} ({gs.estado})
@@ -379,7 +379,7 @@ function ContenidoSorteosPrevios() {
                     onClick={() => { setMostrarForm(!mostrarForm); setErrorForm(""); }}
                     className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-5 py-2.5 rounded-xl transition-colors shadow-md text-sm whitespace-nowrap"
                   >
-                    {mostrarForm ? "× Cancelar" : "+ Nuevo sorteo previo"}
+                    {mostrarForm ? "× Cancelar" : "+ Nueva selección previa"}
                   </button>
                 )}
               </div>
@@ -389,10 +389,10 @@ function ContenidoSorteosPrevios() {
           {/* Formulario crear */}
           {mostrarForm && granSorteoSeleccionado && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-8">
-              <h2 className="text-lg font-bold text-gray-900 mb-1">Crear sorteo previo</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-1">Crear selección previa</h2>
               {granSorteoActual && (
                 <p className="text-sm text-[#1B4F8A] mb-5">
-                  Gran Sorteo: <span className="font-bold">{granSorteoActual.nombre}</span>
+                  Gran Selección: <span className="font-bold">{granSorteoActual.nombre}</span>
                 </p>
               )}
 
@@ -411,7 +411,7 @@ function ContenidoSorteosPrevios() {
                     type="text"
                     value={form.nombre}
                     onChange={(e) => setField("nombre", e.target.value)}
-                    placeholder="Previo #1 — Viernes de cajas"
+                    placeholder="Previo #1 — Viernes de membresías"
                     className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
                   />
                 </div>
@@ -476,7 +476,7 @@ function ContenidoSorteosPrevios() {
                     className="w-4 h-4 accent-[#1B4F8A]"
                   />
                   <span className="text-sm text-gray-700">
-                    Solo participantes del Gran Sorteo{" "}
+                    Solo participantes de la Gran Selección{" "}
                     <span className="text-gray-400">(siempre activo)</span>
                   </span>
                 </label>
@@ -488,8 +488,8 @@ function ContenidoSorteosPrevios() {
                     className="w-4 h-4 accent-[#1B4F8A]"
                   />
                   <span className="text-sm text-gray-700">
-                    <span className="font-semibold text-[#1B4F8A]">Solo cajas de este Gran Sorteo</span>
-                    <span className="text-gray-400 ml-1">(excluye cajas del sorteo principal)</span>
+                    <span className="font-semibold text-[#1B4F8A]">Solo membresías de esta Gran Selección</span>
+                    <span className="text-gray-400 ml-1">(excluye membresías de la selección principal)</span>
                   </span>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -500,7 +500,7 @@ function ContenidoSorteosPrevios() {
                     className="w-4 h-4 accent-[#1B4F8A]"
                   />
                   <span className="text-sm text-gray-700">
-                    Solo cajas vendidas{" "}
+                    Solo membresías vendidas{" "}
                     <span className="text-gray-400">(excluye reservas no completadas)</span>
                   </span>
                 </label>
@@ -512,7 +512,7 @@ function ContenidoSorteosPrevios() {
                     className="w-4 h-4 accent-purple-600"
                   />
                   <span className="text-sm text-gray-700">
-                    <span className="text-purple-700 font-bold">⭐ Exclusivo para compradores de 10+ cajas</span>
+                    <span className="text-purple-700 font-bold">⭐ Exclusivo para compradores de 10+ membresías</span>
                   </span>
                 </label>
               </div>
@@ -522,7 +522,7 @@ function ContenidoSorteosPrevios() {
                 disabled={creando}
                 className="w-full bg-[#1B4F8A] hover:bg-[#1a5fa8] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-3 rounded-xl transition-all shadow-md"
               >
-                {creando ? "Creando..." : "Crear sorteo previo"}
+                {creando ? "Creando..." : "Crear selección previa"}
               </button>
             </div>
           )}
@@ -531,9 +531,9 @@ function ContenidoSorteosPrevios() {
           {!granSorteoSeleccionado && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
               <p className="text-4xl mb-3">🎯</p>
-              <h2 className="text-lg font-bold text-gray-900 mb-2">Selecciona un Gran Sorteo</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-2">Selecciona una Gran Selección</h2>
               <p className="text-gray-500 text-sm">
-                Elige el Gran Sorteo para gestionar sus sorteos previos.
+                Elige la Gran Selección para gestionar sus selecciones previas.
               </p>
             </div>
           )}
@@ -544,13 +544,13 @@ function ContenidoSorteosPrevios() {
               {sorteosPrevios.length === 0 && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
                   <p className="text-4xl mb-3">🎯</p>
-                  <h2 className="text-lg font-bold text-gray-900 mb-2">No hay sorteos previos</h2>
-                  <p className="text-gray-500 text-sm mb-4">Crea el primer sorteo previo para este Gran Sorteo.</p>
+                  <h2 className="text-lg font-bold text-gray-900 mb-2">No hay selecciones previas</h2>
+                  <p className="text-gray-500 text-sm mb-4">Crea la primera selección previa para esta Gran Selección.</p>
                   <button
                     onClick={() => setMostrarForm(true)}
                     className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-6 py-3 rounded-xl transition-colors shadow-md text-sm"
                   >
-                    + Nuevo sorteo previo
+                    + Nueva selección previa
                   </button>
                 </div>
               )}
@@ -558,7 +558,7 @@ function ContenidoSorteosPrevios() {
               {activos.length > 0 && (
                 <section className="mb-8">
                   <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    Próximos sorteos previos
+                    Próximas selecciones previas
                     <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">
                       {activos.length}
                     </span>
@@ -580,7 +580,7 @@ function ContenidoSorteosPrevios() {
               {finalizados.length > 0 && (
                 <section>
                   <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    Sorteos previos ejecutados
+                    Selecciones previas ejecutadas
                     <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
                       {finalizados.length}
                     </span>
@@ -602,7 +602,7 @@ function ContenidoSorteosPrevios() {
           )}
 
           {granSorteoSeleccionado && cargando && (
-            <div className="text-center py-12 text-gray-400">Cargando sorteos previos...</div>
+            <div className="text-center py-12 text-gray-400">Cargando selecciones previas...</div>
           )}
         </div>
       </main>
@@ -627,7 +627,7 @@ function ContenidoSorteosPrevios() {
                   letterSpacing: "2px", textTransform: "uppercase",
                   padding: "4px 14px", borderRadius: "20px",
                 }}>
-                  {sorteosPrevios.find((s) => s.id === pendienteId)?.nombre ?? "Sorteo Previo"}
+                  {sorteosPrevios.find((s) => s.id === pendienteId)?.nombre ?? "Selección Previa"}
                 </span>
               </div>
             )}

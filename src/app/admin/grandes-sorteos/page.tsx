@@ -99,7 +99,7 @@ function FormGranSorteo({
             type="text"
             value={form.nombre}
             onChange={(e) => set("nombre", e.target.value)}
-            placeholder="Gran Sorteo 10K — Edición 2026"
+            placeholder="Gran Selección 10K — Edición 2026"
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
           />
         </div>
@@ -117,7 +117,7 @@ function FormGranSorteo({
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-            Valor por caja (COP) <span className="text-red-500">*</span>
+            Valor por membresía (COP) <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
@@ -140,7 +140,7 @@ function FormGranSorteo({
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-            Fecha del sorteo <span className="text-red-500">*</span>
+            Fecha de la selección <span className="text-red-500">*</span>
           </label>
           <input
             type="datetime-local"
@@ -168,7 +168,7 @@ function FormGranSorteo({
             type="text"
             value={form.descripcion}
             onChange={(e) => set("descripcion", e.target.value)}
-            placeholder="Detalles adicionales del Gran Sorteo..."
+            placeholder="Detalles adicionales de la Gran Selección..."
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
           />
         </div>
@@ -180,7 +180,7 @@ function FormGranSorteo({
           disabled={guardando}
           className="flex-1 bg-[#1B4F8A] hover:bg-[#1a5fa8] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-3 rounded-xl transition-all shadow-md"
         >
-          {guardando ? "Guardando..." : "Guardar Gran Sorteo"}
+          {guardando ? "Guardando..." : "Guardar Gran Selección"}
         </button>
         <button
           onClick={onCancelar}
@@ -233,7 +233,7 @@ export default function AdminGrandesSorteos() {
   async function crearGranSorteo(form: typeof FORM_INICIAL) {
     setErrorForm("");
     if (!form.nombre.trim() || !form.premioDescripcion.trim() || !form.valorCaja || !form.fechaInicio || !form.fechaSorteo) {
-      setErrorForm("Nombre, premio, valor por caja, fecha inicio y fecha sorteo son requeridos.");
+      setErrorForm("Nombre, premio, valor por membresía, fecha inicio y fecha de la selección son requeridos.");
       return;
     }
     setGuardando(true);
@@ -284,7 +284,7 @@ export default function AdminGrandesSorteos() {
   }
 
   async function eliminarGranSorteo(gs: GranSorteo) {
-    if (!confirm(`¿Eliminar "${gs.nombre}"? Solo se pueden eliminar sorteos en estado Pendiente.`)) return;
+    if (!confirm(`¿Eliminar "${gs.nombre}"? Solo se pueden eliminar selecciones en estado Pendiente.`)) return;
     const res = await fetch(`/api/gran-sorteos/${gs.id}`, { method: "DELETE" });
     const json = await res.json();
     if (!res.ok) { alert(json.mensaje); return; }
@@ -348,8 +348,8 @@ export default function AdminGrandesSorteos() {
                 ← Panel Admin
               </Link>
               <div>
-                <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Grandes Sorteos</h1>
-                <p className="text-gray-500 text-sm">Sorteos especiales con premio mayor propio</p>
+                <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Grandes Selecciones</h1>
+                <p className="text-gray-500 text-sm">Selecciones especiales con premio mayor propio</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -357,13 +357,13 @@ export default function AdminGrandesSorteos() {
                 href="/admin/sorteos-previos"
                 className="border border-[#1B4F8A] text-[#1B4F8A] hover:bg-[#1B4F8A]/5 font-semibold px-4 py-2.5 rounded-xl transition-colors text-sm"
               >
-                🎯 Sorteos Previos
+                🎯 Selecciones Previas
               </Link>
               <button
                 onClick={() => { setMostrarForm(!mostrarForm); setErrorForm(""); setEditando(null); }}
                 className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-5 py-2.5 rounded-xl transition-colors shadow-md text-sm"
               >
-                {mostrarForm ? "× Cancelar" : "+ Crear Gran Sorteo"}
+                {mostrarForm ? "× Cancelar" : "+ Crear Gran Selección"}
               </button>
             </div>
           </div>
@@ -372,7 +372,7 @@ export default function AdminGrandesSorteos() {
           {mostrarForm && !editando && (
             <FormGranSorteo
               inicial={FORM_INICIAL}
-              titulo="Crear nuevo Gran Sorteo"
+              titulo="Crear nueva Gran Selección"
               onGuardar={crearGranSorteo}
               onCancelar={() => { setMostrarForm(false); setErrorForm(""); }}
               guardando={guardando}
@@ -396,15 +396,15 @@ export default function AdminGrandesSorteos() {
           {lista.length === 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
               <p className="text-5xl mb-3">🏆</p>
-              <h2 className="text-lg font-bold text-gray-900 mb-2">No hay Grandes Sorteos</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-2">No hay Grandes Selecciones</h2>
               <p className="text-gray-500 text-sm mb-4">
-                Crea el primer Gran Sorteo para comenzar.
+                Crea la primera Gran Selección para comenzar.
               </p>
               <button
                 onClick={() => setMostrarForm(true)}
                 className="bg-[#F5A623] hover:bg-yellow-400 text-[#1B4F8A] font-bold px-6 py-3 rounded-xl transition-colors shadow-md text-sm"
               >
-                + Crear Gran Sorteo
+                + Crear Gran Selección
               </button>
             </div>
           )}
@@ -418,8 +418,8 @@ export default function AdminGrandesSorteos() {
                     <tr className="bg-gray-50 text-gray-500 text-left">
                       <th className="px-5 py-3.5 font-semibold">Nombre</th>
                       <th className="px-5 py-3.5 font-semibold hidden md:table-cell">Premio</th>
-                      <th className="px-5 py-3.5 font-semibold hidden lg:table-cell">Fecha sorteo</th>
-                      <th className="px-5 py-3.5 font-semibold hidden lg:table-cell">Valor caja</th>
+                      <th className="px-5 py-3.5 font-semibold hidden lg:table-cell">Fecha selección</th>
+                      <th className="px-5 py-3.5 font-semibold hidden lg:table-cell">Valor membresía</th>
                       <th className="px-5 py-3.5 font-semibold">Participantes</th>
                       <th className="px-5 py-3.5 font-semibold hidden md:table-cell">Recaudo</th>
                       <th className="px-5 py-3.5 font-semibold">Estado</th>
@@ -455,7 +455,7 @@ export default function AdminGrandesSorteos() {
                           </td>
                           <td className="px-5 py-4">
                             <span className="font-bold text-[#1B4F8A]">{gs.participantes}</span>
-                            <span className="text-gray-400 text-xs ml-1">cajas</span>
+                            <span className="text-gray-400 text-xs ml-1">membresías</span>
                           </td>
                           <td className="px-5 py-4 hidden md:table-cell">
                             <span className="font-semibold text-gray-700 text-xs">
@@ -551,10 +551,10 @@ export default function AdminGrandesSorteos() {
               <div className="grid grid-cols-2 gap-3 mb-5">
                 {[
                   { label: "Premio", valor: detalle.premioDescripcion },
-                  { label: "Valor por caja", valor: `$${detalle.valorCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}` },
+                  { label: "Valor por membresía", valor: `$${detalle.valorCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}` },
                   { label: "Fecha inicio", valor: new Date(detalle.fechaInicio).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }) },
-                  { label: "Fecha sorteo", valor: new Date(detalle.fechaSorteo).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }) },
-                  { label: "Participantes", valor: `${detalle.participantes} cajas vendidas` },
+                  { label: "Fecha selección", valor: new Date(detalle.fechaSorteo).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" }) },
+                  { label: "Participantes", valor: `${detalle.participantes} membresías vendidas` },
                   { label: "Recaudo estimado", valor: `$${(detalle.valorCaja * detalle.participantes).toLocaleString("es-CO", { maximumFractionDigits: 0 })}` },
                 ].map((item) => (
                   <div key={item.label} className="bg-gray-50 rounded-xl p-3">
@@ -581,7 +581,7 @@ export default function AdminGrandesSorteos() {
                           <p className="text-gray-500 text-xs">{detalle.ganadorCorreo}</p>
                         </>
                       ) : (
-                        <p className="text-gray-500 text-sm">Portador de la caja</p>
+                        <p className="text-gray-500 text-sm">Portador de la membresía</p>
                       )}
                     </div>
                     <p className="font-extrabold text-[#1B4F8A] text-3xl tracking-[0.4em]">
@@ -596,7 +596,7 @@ export default function AdminGrandesSorteos() {
                 className="block w-full text-center bg-[#1B4F8A]/10 hover:bg-[#1B4F8A]/20 text-[#1B4F8A] font-semibold py-2.5 rounded-xl transition-colors text-sm"
                 onClick={() => setDetalle(null)}
               >
-                🎯 Ver Sorteos Previos de este Gran Sorteo →
+                🎯 Ver Selecciones Previas de esta Gran Selección →
               </Link>
             </div>
           </div>
@@ -621,7 +621,7 @@ export default function AdminGrandesSorteos() {
                 letterSpacing: "2px", textTransform: "uppercase",
                 padding: "4px 14px", borderRadius: "20px",
               }}>
-                🏆 Gran Sorteo — Premio Mayor
+                🏆 Gran Selección — Premio Mayor
               </span>
             </div>
 

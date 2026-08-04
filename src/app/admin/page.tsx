@@ -74,7 +74,7 @@ function TablaUsuarios() {
               <th className="px-4 py-3 font-semibold">Usuario</th>
               <th className="px-4 py-3 font-semibold hidden md:table-cell">Documento</th>
               <th className="px-4 py-3 font-semibold hidden lg:table-cell">Ciudad</th>
-              <th className="px-4 py-3 font-semibold">Cajas</th>
+              <th className="px-4 py-3 font-semibold">Membresías</th>
               <th className="px-4 py-3 font-semibold">Saldo</th>
               <th className="px-4 py-3 font-semibold">Estado</th>
             </tr>
@@ -181,7 +181,7 @@ function TablaCajas() {
         </table>
       </div>
       <div className="flex justify-between items-center mt-4 text-sm text-gray-500">
-        <span>{data.total} cajas ocupadas</span>
+        <span>{data.total} membresías ocupadas</span>
         <div className="flex gap-2">
           <button onClick={() => setPagina(p => Math.max(1, p - 1))} disabled={pagina === 1}
             className="px-3 py-1 rounded-lg bg-gray-100 disabled:opacity-40 hover:bg-gray-200">‹</button>
@@ -688,7 +688,7 @@ export default function AdminPanel() {
   const tabs: { key: Tab; label: string; badge?: number }[] = [
     { key: "stats", label: "Resumen" },
     { key: "usuarios", label: "Usuarios", badge: stats.usuarios },
-    { key: "cajas", label: "Cajas ocupadas", badge: stats.vendidas + stats.reservadas },
+    { key: "cajas", label: "Membresías ocupadas", badge: stats.vendidas + stats.reservadas },
     { key: "retiros", label: "Retiros", badge: stats.retirosPendientes || undefined },
   ];
 
@@ -721,7 +721,7 @@ export default function AdminPanel() {
           {/* Tarjetas de métricas */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard
-              titulo="Cajas vendidas"
+              titulo="Membresías vendidas"
               valor={stats.vendidas.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
               subtitulo={`${stats.porcentajeVendido}% del total`}
               color="border-[#1B4F8A]"
@@ -774,18 +774,18 @@ export default function AdminPanel() {
           {/* ── Grid de módulos ─────────────────────────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
 
-            {/* Sorteos & Red */}
+            {/* Selección Aleatoria & Red */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="px-4 pt-4 pb-2">
-                <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Sorteos &amp; Red</p>
+                <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Selección Aleatoria &amp; Red</p>
               </div>
               <div className="px-2 pb-3 space-y-0.5">
                 <Link href="/admin/motor-sorteos"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#F5A623]/10 hover:bg-[#F5A623]/20 transition-colors group">
-                  <span className="text-xl">🎰</span>
+                  <span className="text-xl">🎲</span>
                   <div>
-                    <p className="text-sm font-bold text-[#b87b00] leading-tight">Motor de Sorteos</p>
-                    <p className="text-[10px] text-yellow-700/60">Ejecutar y configurar sorteos</p>
+                    <p className="text-sm font-bold text-[#b87b00] leading-tight">Motor de Selección Aleatoria</p>
+                    <p className="text-[10px] text-yellow-700/60">Ejecutar y configurar selecciones</p>
                   </div>
                   <span className="ml-auto text-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
                 </Link>
@@ -812,7 +812,7 @@ export default function AdminPanel() {
                   <span className="text-xl">⚡</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">Selecciones Anticipadas</p>
-                    <p className="text-[10px] text-gray-400">Sorteos previos al principal</p>
+                    <p className="text-[10px] text-gray-400">Selecciones previas a la principal</p>
                   </div>
                   <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
                 </Link>
@@ -839,7 +839,7 @@ export default function AdminPanel() {
                   <span className="text-xl">📊</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">Reportes</p>
-                    <p className="text-[10px] text-gray-400">Ventas, sorteos, usuarios CSV/PDF</p>
+                    <p className="text-[10px] text-gray-400">Ventas, selecciones, usuarios CSV/PDF</p>
                   </div>
                   <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
                 </Link>
@@ -893,7 +893,7 @@ export default function AdminPanel() {
                   <span className="text-xl">⚙️</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">Configuración</p>
-                    <p className="text-[10px] text-gray-400">Precios, sorteo, gift cards</p>
+                    <p className="text-[10px] text-gray-400">Precios, selección aleatoria, gift cards</p>
                   </div>
                   <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
                 </Link>
@@ -948,7 +948,7 @@ export default function AdminPanel() {
                 <div className="grid sm:grid-cols-3 gap-4">
                   {[
                     { label: "Usuarios registrados", valor: stats.usuarios, icono: "👥" },
-                    { label: "Cajas reservadas", valor: stats.reservadas, icono: "⏳" },
+                    { label: "Membresías reservadas", valor: stats.reservadas, icono: "⏳" },
                     { label: "Retiros pendientes", valor: stats.retirosPendientes, icono: "💸" },
                   ].map((item) => (
                     <div key={item.label} className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">

@@ -2,7 +2,7 @@ type Tipo = "SISTEMA" | "SORTEO" | "RETIRO" | "PROMO" | "MEMBRESIA";
 
 const ICONOS: Record<Tipo, string> = {
   SISTEMA:   "⚙️",
-  SORTEO:    "🎰",
+  SORTEO:    "🎲",
   RETIRO:    "💸",
   PROMO:     "📢",
   MEMBRESIA: "🎁",

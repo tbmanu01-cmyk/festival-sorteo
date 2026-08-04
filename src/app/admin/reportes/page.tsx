@@ -115,11 +115,11 @@ function abrirPDF(titulo: string, subtitulo: string, tablaHTML: string) {
 </style>
 </head>
 <body>
-<div class="logo">🎁 Cajas Sorpresa 10K</div>
+<div class="logo">🎁 Club 10K</div>
 <div class="sub">${subtitulo}</div>
 <h1>${titulo}</h1>
 ${tablaHTML}
-<div class="footer">Generado el ${new Date().toLocaleString("es-CO")} · Cajas Sorpresa 10K</div>
+<div class="footer">Generado el ${new Date().toLocaleString("es-CO")} · Club 10K</div>
 <br>
 <button class="btn" onclick="window.print()">Imprimir / Guardar como PDF</button>
 </body></html>`);
@@ -141,7 +141,7 @@ function ReporteVentas() {
 
   function exportarCSV() {
     if (!datos) return;
-    descargarCSV("reporte_ventas", ["#", "Número Caja", "Nombre", "Correo", "Celular", "Ciudad", "Fecha Compra", "ID Compra"], datos.cajas.map((c, i) => [
+    descargarCSV("reporte_ventas", ["#", "Número Membresía", "Nombre", "Correo", "Celular", "Ciudad", "Fecha Compra", "ID Compra"], datos.cajas.map((c, i) => [
       i + 1, c.numero,
       c.user ? `${c.user.nombre} ${c.user.apellido}` : "—",
       c.user?.correo ?? "—", c.user?.celular ?? "—", c.user?.ciudad ?? "—",
@@ -161,8 +161,8 @@ function ReporteVentas() {
     </tr>`).join("");
     abrirPDF(
       "Reporte de Ventas",
-      `Total vendidas: ${datos.total} cajas · Recaudo: $${(datos.total * 10000).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP`,
-      `<table><thead><tr><th>#</th><th>Caja</th><th>Comprador</th><th>Correo</th><th>Celular</th><th>Fecha</th></tr></thead><tbody>${filas}</tbody></table>`
+      `Total vendidas: ${datos.total} membresías · Recaudo: $${(datos.total * 10000).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP`,
+      `<table><thead><tr><th>#</th><th>Membresía</th><th>Comprador</th><th>Correo</th><th>Celular</th><th>Fecha</th></tr></thead><tbody>${filas}</tbody></table>`
     );
   }
 
@@ -174,7 +174,7 @@ function ReporteVentas() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-sm text-gray-500">
-            Total: <strong>{datos.total}</strong> cajas vendidas ·{" "}
+            Total: <strong>{datos.total}</strong> membresías vendidas ·{" "}
             Recaudo: <strong className="text-green-600">${(datos.total * 10_000).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</strong>
           </p>
         </div>
@@ -194,7 +194,7 @@ function ReporteVentas() {
             <thead>
               <tr className="bg-[#1B4F8A] text-white text-left">
                 <th className="px-4 py-3 font-semibold">#</th>
-                <th className="px-4 py-3 font-semibold">Caja</th>
+                <th className="px-4 py-3 font-semibold">Membresía</th>
                 <th className="px-4 py-3 font-semibold">Comprador</th>
                 <th className="px-4 py-3 font-semibold">Correo</th>
                 <th className="px-4 py-3 font-semibold">Celular</th>
@@ -221,7 +221,7 @@ function ReporteVentas() {
             </tbody>
           </table>
           {datos.cajas.length === 0 && (
-            <div className="py-16 text-center text-gray-400">No hay cajas vendidas aún.</div>
+            <div className="py-16 text-center text-gray-400">No hay membresías vendidas aún.</div>
           )}
         </div>
       </div>
@@ -229,7 +229,7 @@ function ReporteVentas() {
   );
 }
 
-// ── Reporte de sorteo ─────────────────────────────────────────────────────
+// ── Reporte de selección aleatoria ────────────────────────────────────────
 
 function ReporteSorteo() {
   const [sorteos,     setSorteos]     = useState<SorteoReporte[]>([]);
@@ -268,7 +268,7 @@ function ReporteSorteo() {
 
   async function eliminar(ids: string[]) {
     const n = ids.length;
-    if (!confirm(`¿Eliminar ${n} sorteo${n !== 1 ? "s" : ""}? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(`¿Eliminar ${n} selecci${n !== 1 ? "ones" : "ón"}? Esta acción no se puede deshacer.`)) return;
     setEliminando(true);
     try {
       await fetch("/api/admin/reportes/sorteo", {
@@ -287,8 +287,8 @@ function ReporteSorteo() {
     if (!seleccionado) return;
     const s = seleccionado;
     descargarCSV(
-      `sorteo_${new Date(s.fecha).toISOString().slice(0, 10)}`,
-      ["Categoría", "N° Caja", "Ganador", "Correo", "Celular", "Monto Premio", "Pagado"],
+      `seleccion_${new Date(s.fecha).toISOString().slice(0, 10)}`,
+      ["Categoría", "N° Membresía", "Ganador", "Correo", "Celular", "Monto Premio", "Pagado"],
       s.premios.map((p) => [
         NOMBRE_CAT[p.categoria] ?? p.categoria,
         p.numeroCaja ?? "—",
@@ -315,21 +315,21 @@ function ReporteSorteo() {
         <tr><td style="padding:7px 16px;">Ganancia operación</td><td style="padding:7px 16px;font-weight:700;">$${s.ganancia.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td></tr>
       </table>
       <h2 style="color:#1B4F8A;">Ganadores</h2>
-      <table><thead><tr><th>Categoría</th><th>N° Caja</th><th>Nombre</th><th>Correo</th><th>Premio</th></tr></thead>
+      <table><thead><tr><th>Categoría</th><th>N° Membresía</th><th>Nombre</th><th>Correo</th><th>Premio</th></tr></thead>
       <tbody>${s.premios.map((p) => `<tr><td>${NOMBRE_CAT[p.categoria] ?? p.categoria}</td><td style="font-family:monospace;font-weight:700;">${p.numeroCaja ?? "—"}</td><td>${p.user.nombre} ${p.user.apellido}</td><td>${p.user.correo}</td><td>$${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td></tr>`).join("")}</tbody></table>`;
     abrirPDF(
-      "Reporte de Sorteo",
+      "Reporte de Selección Aleatoria",
       `Números ganadores: ${nums.join(", ")} · Fecha: ${new Date(s.fecha).toLocaleDateString("es-CO")}`,
       resumen
     );
   }
 
-  if (cargando) return <div className="py-20 text-center text-gray-400">Cargando sorteos...</div>;
+  if (cargando) return <div className="py-20 text-center text-gray-400">Cargando selecciones...</div>;
 
   if (sorteos.length === 0) return (
     <div className="py-20 text-center text-gray-400">
-      <p className="text-4xl mb-3">🎰</p>
-      <p className="font-semibold">No hay sorteos finalizados aún.</p>
+      <p className="text-4xl mb-3">🎲</p>
+      <p className="font-semibold">No hay selecciones finalizadas aún.</p>
     </div>
   );
 
@@ -341,12 +341,12 @@ function ReporteSorteo() {
   return (
     <div className="space-y-6">
 
-      {/* ── Historial de sorteos ──────────────────────────────────────── */}
+      {/* ── Historial de selecciones ────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between gap-3">
           <h3 className="font-bold text-gray-800">
             Historial
-            <span className="ml-2 text-sm font-normal text-gray-400">({sorteos.length} sorteo{sorteos.length !== 1 ? "s" : ""})</span>
+            <span className="ml-2 text-sm font-normal text-gray-400">({sorteos.length} selecci{sorteos.length !== 1 ? "ones" : "ón"})</span>
           </h3>
           {marcados.size > 0 && (
             <button
@@ -425,7 +425,7 @@ function ReporteSorteo() {
         </div>
       </div>
 
-      {/* ── Detalle del sorteo seleccionado ──────────────────────────── */}
+      {/* ── Detalle de la selección seleccionada ──────────────────────── */}
       {s && (
         <div>
           <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
@@ -440,7 +440,7 @@ function ReporteSorteo() {
                 disabled={eliminando}
                 className="border border-red-200 hover:bg-red-50 disabled:opacity-50 text-red-600 text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
               >
-                🗑️ Eliminar este sorteo
+                🗑️ Eliminar esta selección
               </button>
             </div>
           </div>
@@ -456,7 +456,7 @@ function ReporteSorteo() {
               { label: "Total recaudo",      valor: `$${s.totalRecaudo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`,  color: "text-green-600"  },
               { label: "Fondo premios",       valor: `$${s.fondoPremios.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`,  color: "text-[#F5A623]"  },
               { label: "Ganancia operación",  valor: `$${s.ganancia.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`,      color: "text-purple-600" },
-              { label: "Cajas vendidas",      valor: String(s.totalVendidas),                        color: "text-gray-700"   },
+              { label: "Membresías vendidas", valor: String(s.totalVendidas),                        color: "text-gray-700"   },
               { label: "Total ganadores",     valor: String(s.premios.length),                       color: "text-gray-700"   },
             ].map((c) => (
               <div key={c.label} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -490,7 +490,7 @@ function ReporteSorteo() {
                 <thead>
                   <tr className="bg-[#1B4F8A] text-white text-left">
                     <th className="px-4 py-3 font-semibold">Categoría</th>
-                    <th className="px-4 py-3 font-semibold">N° Caja</th>
+                    <th className="px-4 py-3 font-semibold">N° Membresía</th>
                     <th className="px-4 py-3 font-semibold">Ganador</th>
                     <th className="px-4 py-3 font-semibold">Correo</th>
                     <th className="px-4 py-3 font-semibold">Celular</th>
@@ -547,7 +547,7 @@ function ReporteUsuarios() {
   function exportarCSV() {
     if (!datos) return;
     descargarCSV("reporte_usuarios",
-      ["#", "Nombre", "Apellido", "Documento", "Correo", "Celular", "Ciudad", "Departamento", "Banco", "Tipo Cuenta", "Cuenta Bancaria", "Saldo", "Cajas", "Activo", "Registro"],
+      ["#", "Nombre", "Apellido", "Documento", "Correo", "Celular", "Ciudad", "Departamento", "Banco", "Tipo Cuenta", "Cuenta Bancaria", "Saldo", "Membresías", "Activo", "Registro"],
       datos.usuarios.map((u, i) => [
         i + 1, u.nombre, u.apellido, u.documento, u.correo, u.celular, u.ciudad, u.departamento,
         u.banco ?? "", u.tipoCuenta ?? "", u.cuentaBancaria ?? "",
@@ -573,7 +573,7 @@ function ReporteUsuarios() {
     abrirPDF(
       "Reporte de Usuarios",
       `Total registrados: ${datos.total}`,
-      `<table><thead><tr><th>#</th><th>Nombre</th><th>Correo</th><th>Celular</th><th>Ciudad</th><th>Cuenta</th><th>Saldo</th><th>Cajas</th></tr></thead><tbody>${filas}</tbody></table>`
+      `<table><thead><tr><th>#</th><th>Nombre</th><th>Correo</th><th>Celular</th><th>Ciudad</th><th>Cuenta</th><th>Saldo</th><th>Membresías</th></tr></thead><tbody>${filas}</tbody></table>`
     );
   }
 
@@ -602,7 +602,7 @@ function ReporteUsuarios() {
                 <th className="px-4 py-3 font-semibold">Ciudad</th>
                 <th className="px-4 py-3 font-semibold">Banco / Cuenta</th>
                 <th className="px-4 py-3 font-semibold">Saldo</th>
-                <th className="px-4 py-3 font-semibold">Cajas</th>
+                <th className="px-4 py-3 font-semibold">Membresías</th>
                 <th className="px-4 py-3 font-semibold">Estado</th>
               </tr>
             </thead>
@@ -809,7 +809,7 @@ function ReporteRetiros() {
 
 const TABS: { id: Tab; label: string; icono: string }[] = [
   { id: "ventas",   label: "Ventas",   icono: "📦" },
-  { id: "sorteo",   label: "Sorteo",   icono: "🎰" },
+  { id: "sorteo",   label: "Selección Aleatoria", icono: "🎲" },
   { id: "usuarios", label: "Usuarios", icono: "👥" },
   { id: "retiros",  label: "Retiros",  icono: "💸" },
 ];
@@ -837,7 +837,7 @@ export default function PaginaReportes() {
           {/* Encabezado */}
           <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] rounded-2xl p-6 text-white mb-6">
             <h1 className="text-2xl font-extrabold mb-0.5">Reportes</h1>
-            <p className="text-blue-200 text-sm">Consulta, filtra y exporta datos del sorteo</p>
+            <p className="text-blue-200 text-sm">Consulta, filtra y exporta datos de la selección aleatoria</p>
           </div>
 
           {/* Tabs */}

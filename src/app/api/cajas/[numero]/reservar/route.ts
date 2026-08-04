@@ -12,7 +12,7 @@ export async function POST(
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(
-        { mensaje: "Debes iniciar sesión para reservar una caja." },
+        { mensaje: "Debes iniciar sesión para reservar una membresía." },
         { status: 401 }
       );
     }
@@ -20,7 +20,7 @@ export async function POST(
     const { numero } = await params;
 
     if (!/^\d{4}$/.test(numero)) {
-      return NextResponse.json({ mensaje: "Número de caja inválido." }, { status: 400 });
+      return NextResponse.json({ mensaje: "Número de membresía inválido." }, { status: 400 });
     }
 
     const { prisma } = await import("@/lib/prisma");
@@ -44,12 +44,12 @@ export async function POST(
     const caja = await prisma.caja.findUnique({ where: { numero } });
 
     if (!caja) {
-      return NextResponse.json({ mensaje: "Caja no encontrada." }, { status: 404 });
+      return NextResponse.json({ mensaje: "Membresía no encontrada." }, { status: 404 });
     }
 
     if (caja.estado !== "DISPONIBLE") {
       return NextResponse.json(
-        { mensaje: "Esta caja ya está reservada o comprada. Elige otro número." },
+        { mensaje: "Esta membresía ya está reservada o comprada. Elige otro número." },
         { status: 409 }
       );
     }
@@ -67,7 +67,7 @@ export async function POST(
     });
 
     return NextResponse.json({
-      mensaje: `Caja ${numero} reservada por ${MINUTOS_RESERVA} minutos.`,
+      mensaje: `Membresía ${numero} reservada por ${MINUTOS_RESERVA} minutos.`,
       caja: cajaReservada,
       expira: expira.toISOString(),
     });

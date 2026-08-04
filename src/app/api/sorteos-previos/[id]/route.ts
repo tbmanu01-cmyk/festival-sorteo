@@ -35,10 +35,10 @@ export async function PATCH(
       SELECT estado::text FROM sorteos_previos_gran WHERE id = ${id} LIMIT 1
     `;
     if (!sp) {
-      return NextResponse.json({ mensaje: "Sorteo previo no encontrado." }, { status: 404 });
+      return NextResponse.json({ mensaje: "Selección previa no encontrada." }, { status: 404 });
     }
     if (sp.estado === "FINALIZADO") {
-      return NextResponse.json({ mensaje: "No se puede editar un sorteo ya ejecutado." }, { status: 409 });
+      return NextResponse.json({ mensaje: "No se puede editar una selección ya ejecutada." }, { status: 409 });
     }
 
     const campos: string[] = [];
@@ -61,7 +61,7 @@ export async function PATCH(
     valores.push(id);
     await prisma.$executeRawUnsafe(query, ...valores);
 
-    return NextResponse.json({ mensaje: "Sorteo previo actualizado." });
+    return NextResponse.json({ mensaje: "Selección previa actualizada." });
   } catch (err) {
     console.error("PATCH /api/sorteos-previos/[id]:", err);
     return NextResponse.json({ mensaje: "Error al actualizar." }, { status: 500 });
@@ -87,14 +87,14 @@ export async function DELETE(
       SELECT estado::text FROM sorteos_previos_gran WHERE id = ${id} LIMIT 1
     `;
     if (!sp) {
-      return NextResponse.json({ mensaje: "Sorteo previo no encontrado." }, { status: 404 });
+      return NextResponse.json({ mensaje: "Selección previa no encontrada." }, { status: 404 });
     }
     if (sp.estado === "FINALIZADO") {
-      return NextResponse.json({ mensaje: "No se puede eliminar un sorteo ya ejecutado." }, { status: 409 });
+      return NextResponse.json({ mensaje: "No se puede eliminar una selección ya ejecutada." }, { status: 409 });
     }
 
     await prisma.$executeRaw`DELETE FROM sorteos_previos_gran WHERE id = ${id}`;
-    return NextResponse.json({ mensaje: "Sorteo previo eliminado." });
+    return NextResponse.json({ mensaje: "Selección previa eliminada." });
   } catch (err) {
     console.error("DELETE /api/sorteos-previos/[id]:", err);
     return NextResponse.json({ mensaje: "Error al eliminar." }, { status: 500 });

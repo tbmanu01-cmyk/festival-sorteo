@@ -482,7 +482,7 @@ function MembresiasInner() {
               <span style={{ color: "#ffbd1f" }}>tu oportunidad</span>
             </h1>
             <p style={{ fontSize: 17, color: "rgba(255,255,255,0.85)", margin: "0 0 24px", maxWidth: 480, lineHeight: 1.65 }}>
-              10,000 membresías numeradas. Coincide con la Lotería de Bogotá en 4, 3, 2 o 1 cifra y gana parte del recaudo.
+              10,000 membresías numeradas. Coincide con el número de la selección aleatoria en 4, 3, 2 o 1 cifra y gana parte del recaudo.
             </p>
 
             {/* Pills de stats */}

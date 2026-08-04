@@ -26,10 +26,10 @@ export async function POST(
   `;
 
   if (!gs) {
-    return NextResponse.json({ mensaje: "Gran Sorteo no encontrado." }, { status: 404 });
+    return NextResponse.json({ mensaje: "Gran Selección no encontrada." }, { status: 404 });
   }
   if (gs.estado === "FINALIZADO") {
-    return NextResponse.json({ mensaje: "Este Gran Sorteo ya fue ejecutado." }, { status: 409 });
+    return NextResponse.json({ mensaje: "Esta Gran Selección ya fue ejecutada." }, { status: 409 });
   }
 
   type CajaRow = {
@@ -53,7 +53,7 @@ export async function POST(
 
   if (cajas.length === 0) {
     return NextResponse.json(
-      { mensaje: "No hay cajas vendidas para este Gran Sorteo." },
+      { mensaje: "No hay membresías vendidas para esta Gran Selección." },
       { status: 400 }
     );
   }
@@ -83,13 +83,13 @@ export async function POST(
       userId: cajaGanadora.userId,
       numeroCaja: numeroGanador,
       monto: gs.fondoPremios || null,
-      categoria: "Gran Sorteo",
+      categoria: "Gran Selección",
       origen: gs.nombre,
     },
   });
 
   return NextResponse.json({
-    mensaje: "¡Gran Sorteo ejecutado exitosamente!",
+    mensaje: "¡Gran Selección ejecutada exitosamente!",
     numeroGanador,
     ganadores,
   });

@@ -256,7 +256,7 @@ export default function AdminSorteo() {
   // ── Reiniciar sorteo ─────────────────────────────────────────────────────
 
   async function reiniciarSorteo() {
-    if (!confirm("¿Seguro que quieres eliminar el sorteo actual? Esta acción no se puede deshacer.")) return;
+    if (!confirm("¿Seguro que quieres eliminar la selección actual? Esta acción no se puede deshacer.")) return;
     setReiniciando(true);
     await fetch("/api/admin/sorteo", { method: "DELETE" });
     setSorteoExistente(null);
@@ -306,18 +306,18 @@ export default function AdminSorteo() {
               ← Panel Admin
             </Link>
             <div>
-              <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Motor de Sorteo</h1>
+              <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Motor de Selección Aleatoria</h1>
               <p className="text-gray-500 text-sm">
-                {n4Config} sorteo{n4Config !== 1 ? "s" : ""} de 4 cifras · ejecuta y gestiona el sorteo principal
+                {n4Config} selecci{n4Config !== 1 ? "ones" : "ón"} de 4 cifras · ejecuta y gestiona la selección principal
               </p>
             </div>
           </div>
 
           {!sorteoExistente ? (
-            /* ── Formulario del sorteo ──────────────────────────────── */
+            /* ── Formulario de la selección ──────────────────────────── */
             <div className="grid lg:grid-cols-2 gap-6">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-5">Configurar sorteo</h2>
+                <h2 className="text-lg font-bold text-gray-900 mb-5">Configurar selección</h2>
 
                 {error && (
                   <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5">
@@ -328,7 +328,7 @@ export default function AdminSorteo() {
                 {/* Info de rondas */}
                 <div className="bg-[#1B4F8A]/5 border border-[#1B4F8A]/15 rounded-xl p-4 mb-5">
                   <p className="text-xs font-bold text-[#1B4F8A] uppercase tracking-wider mb-2">
-                    🎯 {n4Config} sorteo{n4Config !== 1 ? "s" : ""} configurados
+                    🎯 {n4Config} selecci{n4Config !== 1 ? "ones" : "ón"} configurada{n4Config !== 1 ? "s" : ""}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {Array.from({ length: n4Config }, (_, i) => (
@@ -337,12 +337,12 @@ export default function AdminSorteo() {
                           ? "bg-[#F5A623]/20 text-[#b87b00]"
                           : "bg-[#1B4F8A]/10 text-[#1B4F8A]"
                       }`}>
-                        Sorteo {i + 1}{i === n4Config - 1 ? " ⭐" : ""}
+                        Selección {i + 1}{i === n4Config - 1 ? " ⭐" : ""}
                       </span>
                     ))}
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    El último sorteo determina también los ganadores de 3, 2 y 1 cifra.
+                    La última selección determina también los ganadores de 3, 2 y 1 cifra.
                   </p>
                 </div>
 
@@ -366,8 +366,8 @@ export default function AdminSorteo() {
                   </div>
                   <p className="text-xs text-gray-400 mt-2">
                     {modo === "auto"
-                      ? "Todos los sorteos se eligen al azar entre cajas vendidas."
-                      : `Los primeros ${Math.max(n4Config - 1, 0)} sorteos son automáticos. El último (principal) usa el número ingresado.`}
+                      ? "Todas las selecciones se eligen al azar entre membresías vendidas."
+                      : `Las primeras ${Math.max(n4Config - 1, 0)} selecciones son automáticas. La última (principal) usa el número ingresado.`}
                   </p>
                 </div>
 
@@ -375,7 +375,7 @@ export default function AdminSorteo() {
                 {modo === "manual" && (
                   <div className="mb-5">
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Número del sorteo principal (último)
+                      Número de la selección principal (última)
                     </label>
                     <input
                       type="text"
@@ -393,7 +393,7 @@ export default function AdminSorteo() {
                   disabled={ejecutando || (modo === "manual" && numeroManual.length !== 4)}
                   className="w-full bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-extrabold py-4 rounded-xl text-lg transition-all shadow-md hover:shadow-lg mb-3"
                 >
-                  {ejecutando ? "⏳ Procesando..." : `🎯 Ejecutar ${n4Config} sorteo${n4Config !== 1 ? "s" : ""}`}
+                  {ejecutando ? "⏳ Procesando..." : `🎯 Ejecutar ${n4Config} selecci${n4Config !== 1 ? "ones" : "ón"}`}
                 </button>
 
                 <button
@@ -414,10 +414,10 @@ export default function AdminSorteo() {
                 <h2 className="text-lg font-bold text-gray-900 mb-5">Distribución de premios</h2>
                 <div className="space-y-3">
                   {[
-                    { label: `🏆 4 cifras × ${n4Config}`,  desc: `${n4Config} sorteo${n4Config !== 1 ? "s" : ""} independientes` },
-                    { label: "🥈 3 últimas cifras",         desc: "Último sorteo — hasta 9 ganadores" },
-                    { label: "🥉 2 últimas cifras",         desc: "Último sorteo — hasta 90 ganadores" },
-                    { label: "🎁 1 última cifra",           desc: "Último sorteo — hasta 900 ganadores" },
+                    { label: `🏆 4 cifras × ${n4Config}`,  desc: `${n4Config} selecci${n4Config !== 1 ? "ones" : "ón"} independientes` },
+                    { label: "🥈 3 últimas cifras",         desc: "Última selección — hasta 9 ganadores" },
+                    { label: "🥉 2 últimas cifras",         desc: "Última selección — hasta 90 ganadores" },
+                    { label: "🎁 1 última cifra",           desc: "Última selección — hasta 900 ganadores" },
                     { label: "🎪 Operación",                desc: "Gastos del evento" },
                   ].map((item) => (
                     <div key={item.label} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
@@ -449,7 +449,7 @@ export default function AdminSorteo() {
                       ))}
                     </div>
                     <p className="text-xs mb-3" style={{ color: "#4a90d9" }}>
-                      {n4Config} sorteo{n4Config !== 1 ? "s" : ""} · uno tras otro
+                      {n4Config} selecci{n4Config !== 1 ? "ones" : "ón"} · una tras otra
                     </p>
                     <p className="text-xs" style={{ color: "#243d5c" }}>
                       Presiona "Ver demo" para previsualizar
@@ -460,7 +460,7 @@ export default function AdminSorteo() {
             </div>
 
           ) : (
-            /* ── Resultados del sorteo ──────────────────────────────── */
+            /* ── Resultados de la selección ──────────────────────────── */
             <div className="space-y-6">
 
               {/* Números ganadores de 4 cifras */}
@@ -481,7 +481,7 @@ export default function AdminSorteo() {
                     <div key={i} className="text-center">
                       <p className="text-blue-300 text-xs font-bold uppercase tracking-widest mb-1">
                         {numerosGanadoresExistente.length > 1
-                          ? (i === numerosGanadoresExistente.length - 1 ? "⭐ Sorteo principal" : `Sorteo ${i + 1}`)
+                          ? (i === numerosGanadoresExistente.length - 1 ? "⭐ Selección principal" : `Selección ${i + 1}`)
                           : "Número ganador"}
                       </p>
                       <div
@@ -500,7 +500,7 @@ export default function AdminSorteo() {
                 </div>
 
                 <p className="text-blue-200 text-sm text-center">
-                  Sorteo ejecutado el{" "}
+                  Selección ejecutada el{" "}
                   {new Date(sorteoExistente.fecha).toLocaleString("es-CO", {
                     dateStyle: "long",
                     timeStyle: "short",
@@ -511,7 +511,7 @@ export default function AdminSorteo() {
               {/* Resumen financiero */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: "Cajas vendidas", valor: sorteoExistente.totalVendidas.toLocaleString("es-CO", { maximumFractionDigits: 0 }), icono: "📦" },
+                  { label: "Membresías vendidas", valor: sorteoExistente.totalVendidas.toLocaleString("es-CO", { maximumFractionDigits: 0 }), icono: "📦" },
                   { label: "Recaudo total",  valor: `$${(sorteoExistente.totalRecaudo / 1_000_000).toFixed(2)}M`, icono: "💰" },
                   { label: "Fondo premios",  valor: `$${(sorteoExistente.fondoPremios / 1_000_000).toFixed(2)}M`, icono: "🏆" },
                   { label: "Ganancia",       valor: `$${(sorteoExistente.ganancia / 1_000_000).toFixed(2)}M`,    icono: "🎪" },
@@ -527,7 +527,7 @@ export default function AdminSorteo() {
               {/* Resumen recién ejecutado */}
               {resumen && (
                 <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
-                  <h3 className="font-bold text-green-800 mb-3">✅ Sorteo ejecutado exitosamente</h3>
+                  <h3 className="font-bold text-green-800 mb-3">✅ Selección ejecutada exitosamente</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     {[
                       { label: "Ganadores 4 cifras", val: resumen.ganadores4, monto: resumen.monto4 },
@@ -568,14 +568,14 @@ export default function AdminSorteo() {
               <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
                 <h3 className="font-bold text-red-800 mb-1">Zona de peligro</h3>
                 <p className="text-red-600 text-sm mb-3">
-                  Solo para pruebas. Elimina el sorteo actual y permite ejecutar uno nuevo.
+                  Solo para pruebas. Elimina la selección actual y permite ejecutar una nueva.
                 </p>
                 <button
                   onClick={reiniciarSorteo}
                   disabled={reiniciando}
                   className="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
                 >
-                  {reiniciando ? "Eliminando..." : "🗑️ Reiniciar sorteo"}
+                  {reiniciando ? "Eliminando..." : "🗑️ Reiniciar selección"}
                 </button>
               </div>
             </div>
@@ -599,11 +599,11 @@ export default function AdminSorteo() {
             <div style={{ textAlign: "center", marginBottom: "14px" }}>
               {modoDemo ? (
                 <span style={badgeStyle("#1B4F8A", "rgba(27,79,138,0.4)")}>
-                  Modo demo — sin sorteo real
+                  Modo demo — sin selección real
                 </span>
               ) : (
                 <span style={badgeStyle("#F5A623", "rgba(245,166,35,0.15)")}>
-                  🎯 Sorteo {roundIndex + 1} de {totalRounds}
+                  🎯 Selección {roundIndex + 1} de {totalRounds}
                   {roundIndex === totalRounds - 1 ? " — Principal ⭐" : ""}
                 </span>
               )}
@@ -640,7 +640,7 @@ export default function AdminSorteo() {
                     color: "#4a90d9", fontSize: "13px", fontWeight: 600,
                     letterSpacing: "2px", textTransform: "uppercase", marginBottom: "8px",
                   }}>
-                    {roundIndex === totalRounds - 1 ? "Sorteo principal" : `Sorteo ${roundIndex + 1}`}
+                    {roundIndex === totalRounds - 1 ? "Selección principal" : `Selección ${roundIndex + 1}`}
                   </p>
                   <p style={{
                     color: "#F5A623", fontSize: "11px", fontWeight: 700,
@@ -668,7 +668,7 @@ export default function AdminSorteo() {
                   {roundIndex > 0 && (
                     <div style={{ marginBottom: "24px" }}>
                       <p style={{ color: "#4a90d9", fontSize: "11px", fontWeight: 600, letterSpacing: "2px", marginBottom: "8px" }}>
-                        SORTEOS ANTERIORES
+                        SELECCIONES ANTERIORES
                       </p>
                       <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "8px" }}>
                         {numerosAnimacion.slice(0, roundIndex).map((n, i) => (
@@ -699,7 +699,7 @@ export default function AdminSorteo() {
                   >
                     {esUltimoRound
                       ? (modoDemo ? "Ver resumen →" : "Ver resultados finales →")
-                      : `Sorteo ${roundIndex + 2} →`}
+                      : `Selección ${roundIndex + 2} →`}
                   </button>
                 </div>
               </div>
@@ -743,7 +743,7 @@ export default function AdminSorteo() {
                           letterSpacing: "2px", textTransform: "uppercase",
                           marginBottom: "6px",
                         }}>
-                          {esPrincipal ? "⭐ Principal" : `Sorteo ${i + 1}`}
+                          {esPrincipal ? "⭐ Principal" : `Selección ${i + 1}`}
                         </p>
                         <p style={{
                           fontFamily: "'Courier New', monospace",

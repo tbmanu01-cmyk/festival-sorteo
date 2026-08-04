@@ -1,7 +1,7 @@
 {
   "name": "Club 10K",
   "short_name": "Club 10K",
-  "description": "10,000 membresías numeradas. Coincide con la Lotería de Bogotá y gana.",
+  "description": "10,000 membresías numeradas. Coincide con la selección aleatoria y gana.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

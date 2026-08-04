@@ -47,7 +47,7 @@ export async function POST(
     usuariosElegiblesIds = new Set(ueRows.map((r) => r.userId));
     if (usuariosElegiblesIds.size === 0) {
       return NextResponse.json(
-        { mensaje: `No hay usuarios con ${minCajas}+ cajas compradas para esta selección.` },
+        { mensaje: `No hay usuarios con ${minCajas}+ membresías compradas para esta selección.` },
         { status: 400 }
       );
     }
@@ -69,7 +69,7 @@ export async function POST(
 
   if (cajasFiltradas.length === 0) {
     return NextResponse.json(
-      { mensaje: "No hay cajas elegibles para ejecutar esta selección." },
+      { mensaje: "No hay membresías elegibles para ejecutar esta selección." },
       { status: 400 }
     );
   }

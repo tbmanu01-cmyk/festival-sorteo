@@ -34,8 +34,8 @@ const CATEGORIA_COLOR: Record<string, { bg: string; color: string }> = {
   "3 Cifras": { bg: "rgba(47,95,223,0.12)", color: "#2f5fdf" },
   "2 Cifras": { bg: "rgba(47,95,223,0.12)", color: "#2f5fdf" },
   "1 Cifra":  { bg: "rgba(107,118,147,0.12)", color: "#6b7693" },
-  "Gran Sorteo": { bg: "rgba(124,58,237,0.12)", color: "#7c3aed" },
-  "Sorteo Previo": { bg: "rgba(124,58,237,0.10)", color: "#7c3aed" },
+  "Gran Selección": { bg: "rgba(124,58,237,0.12)", color: "#7c3aed" },
+  "Selección Previa": { bg: "rgba(124,58,237,0.10)", color: "#7c3aed" },
   "Selección Anticipada": { bg: "rgba(5,150,105,0.12)", color: "#059669" },
 };
 
@@ -144,7 +144,7 @@ export default function PaginaRanking() {
               Ranking de ganadores
             </h1>
             <p style={{ color: "#6b7693", fontSize: 15, margin: 0 }}>
-              Se actualiza con cada sorteo y selección aleatoria de membresías
+              Se actualiza con cada selección aleatoria de membresías
             </p>
             {ultimaActualizacion && (
               <p style={{ color: "#c5cbe0", fontSize: 12, marginTop: 6 }}>
@@ -166,7 +166,7 @@ export default function PaginaRanking() {
               <div style={{ fontSize: 52, marginBottom: 16 }}>🏆</div>
               <h3 style={{ fontWeight: 800, color: "#102463", fontSize: 20, margin: "0 0 8px" }}>¡Aún no hay ganadores!</h3>
               <p style={{ color: "#6b7693", fontSize: 14, margin: "0 0 24px" }}>
-                Esta lista se llenará apenas se ejecute el primer sorteo o selección aleatoria.
+                Esta lista se llenará apenas se ejecute la primera selección aleatoria.
               </p>
               <Link
                 href="/membresias"
@@ -245,7 +245,7 @@ export default function PaginaRanking() {
                     ¿Quieres ser el próximo ganador?
                   </p>
                   <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 14, margin: "0 0 20px" }}>
-                    Adquiere tu membresía y participa en los sorteos.
+                    Adquiere tu membresía y participa en las selecciones aleatorias.
                   </p>
                   <Link
                     href="/membresias"

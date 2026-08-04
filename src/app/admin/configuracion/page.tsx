@@ -149,14 +149,14 @@ export default function PaginaConfiguracion() {
           {/* Encabezado */}
           <div className="bg-gradient-to-r from-[#1B4F8A] to-[#1a5fa8] rounded-2xl p-6 text-white mb-6">
             <h1 className="text-2xl font-extrabold mb-0.5">Configuración</h1>
-            <p className="text-blue-200 text-sm">Ajusta los parámetros del sorteo</p>
+            <p className="text-blue-200 text-sm">Ajusta los parámetros de la selección aleatoria</p>
           </div>
 
           <form onSubmit={guardar} className="space-y-5">
 
             {/* ── Precio por caja ──────────────────────────────────────── */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="font-bold text-gray-800 mb-4">Precio por caja</h2>
+              <h2 className="font-bold text-gray-800 mb-4">Precio por membresía</h2>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none">$</span>
                 <input
@@ -169,7 +169,7 @@ export default function PaginaConfiguracion() {
                 />
               </div>
               <p className="text-xs text-gray-400 mt-1">
-                Recaudo estimado (10.000 cajas):{" "}
+                Recaudo estimado (10.000 membresías):{" "}
                 <strong>${(precioCaja * 10000).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</strong>
               </p>
             </div>
@@ -178,7 +178,7 @@ export default function PaginaConfiguracion() {
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <h2 className="font-bold text-gray-800 mb-1">Cantidad de ganadores de 4 cifras</h2>
               <p className="text-xs text-gray-400 mb-4">
-                Se ejecutarán este número de sorteos. El último determina también los ganadores de 3, 2 y 1 cifra.
+                Se ejecutarán este número de selecciones. La última determina también los ganadores de 3, 2 y 1 cifra.
               </p>
 
               <div className="flex items-center gap-4">
@@ -196,7 +196,7 @@ export default function PaginaConfiguracion() {
                 />
                 <div>
                   <p className="text-sm font-semibold text-gray-700">
-                    {n4Ok ? `${n4} sorteo${n4 !== 1 ? "s" : ""} de 4 cifras` : "Debe ser entre 1 y 10"}
+                    {n4Ok ? `${n4} selecci${n4 !== 1 ? "ones" : "ón"} de 4 cifras` : "Debe ser entre 1 y 10"}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     Distribución 2:1 — gran ganador recibe el doble que los previos
@@ -204,7 +204,7 @@ export default function PaginaConfiguracion() {
                 </div>
               </div>
 
-              {/* Mini preview de los sorteos con montos ponderados */}
+              {/* Mini preview de las selecciones con montos ponderados */}
               {n4Ok && (() => {
                 const fondo4 = precioCaja * 10000 * dec(pct4);
                 const montoEarly = n4 > 1 ? fondo4 / (n4 + 1)       : fondo4;
@@ -225,7 +225,7 @@ export default function PaginaConfiguracion() {
                         >
                           <span className="flex items-center gap-1">
                             <span>{esUltimo ? "🏆" : "🎯"}</span>
-                            Sorteo {i + 1}{esUltimo && " (gran ganador)"}
+                            Selección {i + 1}{esUltimo && " (gran ganador)"}
                           </span>
                           <span className={`mt-0.5 text-[11px] font-extrabold ${esUltimo ? "text-[#b87b00]" : "text-[#1B4F8A]"}`}>
                             ${Math.round(monto).toLocaleString("es-CO", { maximumFractionDigits: 0 })}
@@ -426,8 +426,8 @@ export default function PaginaConfiguracion() {
                 return (
                   <div className="mt-4 bg-gray-50 rounded-xl p-4 text-xs text-gray-600 space-y-1">
                     <p className="font-semibold text-gray-700 mb-2">Ejemplo con 10.000 membresías vendidas a ${fmt(precioCaja)}:</p>
-                    {n > 1 && <p>🎯 Sorteos previos de 4 cifras ({n - 1} ganadores): <strong>${fmt(ejEarly)}</strong> c/u</p>}
-                    <p>🏆 Gran ganador (4 cifras, sorteo {n}): <strong>${fmt(ejLast)}</strong></p>
+                    {n > 1 && <p>🎯 Selecciones previas de 4 cifras ({n - 1} ganadores): <strong>${fmt(ejEarly)}</strong> c/u</p>}
+                    <p>🏆 Gran ganador (4 cifras, selección {n}): <strong>${fmt(ejLast)}</strong></p>
                     <p>🥈 Premio 3 cifras: <strong>hasta ${Math.round(total * dec(pct3) / 9).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
                     <p>🥉 Premio 2 cifras: <strong>hasta ${Math.round(total * dec(pct2) / 90).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
                     <p>🎫 1 cifra → devuelve membresía: <strong>gift card ${fmt(precioCaja)}</strong> c/u (segunda oportunidad)</p>
@@ -436,9 +436,9 @@ export default function PaginaConfiguracion() {
               })()}
             </div>
 
-            {/* ── Fecha del sorteo ──────────────────────────────────────── */}
+            {/* ── Fecha de la selección aleatoria ──────────────────────── */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="font-bold text-gray-800 mb-4">Fecha y hora del sorteo</h2>
+              <h2 className="font-bold text-gray-800 mb-4">Fecha y hora de la selección aleatoria</h2>
               <input
                 type="datetime-local"
                 value={fechaSorteo}

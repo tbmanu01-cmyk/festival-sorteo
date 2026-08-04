@@ -101,7 +101,7 @@ function TarjetaAnticipada({
             <p className="text-xs text-gray-500 mb-0.5">Elegibles</p>
             <p className="font-extrabold text-gray-700 text-sm">{a.soloVendidas ? "Solo vendidas" : "Vendidas + reservadas"}</p>
             {a.minCajas > 0 && (
-              <p className="text-xs text-purple-600 font-semibold mt-0.5">⭐ {a.minCajas}+ cajas</p>
+              <p className="text-xs text-purple-600 font-semibold mt-0.5">⭐ {a.minCajas}+ membresías</p>
             )}
           </div>
           <div className="bg-gray-50 rounded-xl p-3">
@@ -320,7 +320,7 @@ export default function AdminAnticipadas() {
               </Link>
               <div>
                 <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Selecciones Anticipadas</h1>
-                <p className="text-gray-500 text-sm">Sorteos previos al evento principal</p>
+                <p className="text-gray-500 text-sm">Selecciones previas al evento principal</p>
               </div>
             </div>
             <button
@@ -427,7 +427,7 @@ export default function AdminAnticipadas() {
                   className="w-4 h-4 accent-[#1B4F8A]"
                 />
                 <label htmlFor="soloVendidas" className="text-sm font-medium text-gray-700">
-                  Solo cajas vendidas (recomendado — excluye reservas no completadas)
+                  Solo membresías vendidas (recomendado — excluye reservas no completadas)
                 </label>
               </div>
 
@@ -440,8 +440,8 @@ export default function AdminAnticipadas() {
                   className="w-4 h-4 accent-purple-600"
                 />
                 <label htmlFor="minCajas" className="text-sm font-medium text-gray-700">
-                  <span className="text-purple-700 font-bold">⭐ Exclusivo para compradores de 10+ cajas</span>
-                  <span className="text-gray-400 ml-1">(participan solo quienes hayan comprado 10 o más cajas)</span>
+                  <span className="text-purple-700 font-bold">⭐ Exclusivo para compradores de 10+ membresías</span>
+                  <span className="text-gray-400 ml-1">(participan solo quienes hayan comprado 10 o más membresías)</span>
                 </label>
               </div>
 
