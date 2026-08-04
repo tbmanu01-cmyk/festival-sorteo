@@ -1880,12 +1880,33 @@ function TabPrevios({ initialGranSorteoId }: { initialGranSorteoId: string }) {
 
 // ── Main component ─────────────────────────────────────────────────────────
 
-const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: "principal", label: "Selección Principal", icon: "🎲" },
-  { id: "anticipadas", label: "Anticipadas", icon: "🎯" },
-  { id: "grandes", label: "Grandes Selecciones", icon: "🏆" },
-  { id: "previos", label: "Selecciones Previas", icon: "📋" },
+const SECUNDARIOS: {
+  id: TabId; label: string; icon: string; desc: string;
+  iconBg: string; iconText: string; activeBorder: string;
+}[] = [
+  {
+    id: "anticipadas", label: "Anticipadas", icon: "⚡",
+    desc: "Selecciones rápidas antes del evento principal",
+    iconBg: "bg-teal-100", iconText: "text-teal-700", activeBorder: "border-teal-400 ring-2 ring-teal-100",
+  },
+  {
+    id: "grandes", label: "Grandes Selecciones", icon: "🏆",
+    desc: "Eventos especiales con premio mayor propio",
+    iconBg: "bg-violet-100", iconText: "text-violet-700", activeBorder: "border-violet-400 ring-2 ring-violet-100",
+  },
+  {
+    id: "previos", label: "Selecciones Previas", icon: "📋",
+    desc: "Rondas vinculadas a una Gran Selección",
+    iconBg: "bg-orange-100", iconText: "text-orange-700", activeBorder: "border-orange-400 ring-2 ring-orange-100",
+  },
 ];
+
+const ACTIVO_LABEL: Record<TabId, { icon: string; label: string }> = {
+  principal: { icon: "🎲", label: "Selección Principal" },
+  anticipadas: { icon: "⚡", label: "Anticipadas" },
+  grandes: { icon: "🏆", label: "Grandes Selecciones" },
+  previos: { icon: "📋", label: "Selecciones Previas" },
+};
 
 export default function MotorSorteos() {
   const { data: session, status } = useSession();
@@ -1916,7 +1937,7 @@ export default function MotorSorteos() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 bg-gray-50 py-8">
+      <main className="flex-1 bg-gray-50 py-8 pb-28 md:pb-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
           <div className="flex items-center gap-4 mb-6">
@@ -1924,28 +1945,58 @@ export default function MotorSorteos() {
               ← Panel Admin
             </Link>
             <div>
-              <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Motor de Selección Aleatoria</h1>
-              <p className="text-gray-500 text-sm">Gestión centralizada de todas las selecciones</p>
+              <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Centro de Selecciones</h1>
+              <p className="text-gray-500 text-sm">Principal, Anticipadas, Grandes y Previas — todo en un solo lugar</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-            <div className="flex border-b border-gray-100 overflow-x-auto">
-              {TABS.map((t) => (
+          {/* ── Selector: hero Principal + tarjetas secundarias ────────── */}
+          <div className="mb-6">
+            <button
+              onClick={() => setTabActivo("principal")}
+              className={`w-full text-left rounded-2xl p-6 mb-3 transition-all bg-gradient-to-br from-[#1B4F8A] to-[#102463] text-white ${
+                tabActivo === "principal" ? "ring-4 ring-[#F5A623]/60" : "opacity-90 hover:opacity-100"
+              }`}
+            >
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-widest bg-white/10 border border-white/20 px-3 py-1 rounded-full mb-3">
+                ⭐ Selección principal
+              </span>
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 className="text-xl font-extrabold">🎲 Selección Principal del evento</h2>
+                  <p className="text-blue-100 text-sm mt-1 max-w-md">
+                    Ejecuta la selección del evento principal, con reparto automático de premios de 4, 3, 2 y 1 cifra.
+                  </p>
+                </div>
+                <span className="text-sm font-bold bg-[#F5A623] text-[#1B4F8A] px-4 py-2 rounded-xl whitespace-nowrap flex-shrink-0">
+                  Abrir →
+                </span>
+              </div>
+            </button>
+
+            <div className="grid sm:grid-cols-3 gap-3">
+              {SECUNDARIOS.map((s) => (
                 <button
-                  key={t.id}
-                  onClick={() => setTabActivo(t.id)}
-                  className={`flex items-center gap-2 px-6 py-4 text-sm font-semibold whitespace-nowrap transition-colors ${
-                    tabActivo === t.id
-                      ? "border-b-2 border-[#1B4F8A] text-[#1B4F8A] bg-[#1B4F8A]/5"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                  key={s.id}
+                  onClick={() => setTabActivo(s.id)}
+                  className={`text-left rounded-2xl border-2 p-4 bg-white transition-all ${
+                    tabActivo === s.id ? s.activeBorder : "border-gray-100 hover:border-gray-200"
                   }`}
                 >
-                  <span>{t.icon}</span>
-                  {t.label}
+                  <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-2 ${s.iconBg} ${s.iconText}`}>
+                    {s.icon}
+                  </span>
+                  <p className="font-bold text-gray-900 text-sm">{s.label}</p>
+                  <p className="text-gray-400 text-xs mt-0.5">{s.desc}</p>
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* ── Panel activo ────────────────────────────────────────────── */}
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">
+            <span>{ACTIVO_LABEL[tabActivo].icon}</span>
+            <span>{ACTIVO_LABEL[tabActivo].label}</span>
           </div>
 
           {tabActivo === "principal"  && <TabPrincipal />}

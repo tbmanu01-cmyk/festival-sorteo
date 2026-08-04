@@ -695,7 +695,7 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 bg-gray-50 py-8">
+      <main className="flex-1 bg-gray-50 py-8 pb-28 md:pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Encabezado */}
           <div className="flex items-center justify-between mb-8">
@@ -774,24 +774,25 @@ export default function AdminPanel() {
           {/* ── Grid de módulos ─────────────────────────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
 
-            {/* Selección Aleatoria & Red */}
+            {/* Selecciones & Red */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-4 pt-4 pb-2">
-                <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Selección Aleatoria &amp; Red</p>
+              <div className="px-4 pt-4 pb-2.5 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#F5A623]" />
+                <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Selecciones &amp; Red</p>
               </div>
-              <div className="px-2 pb-3 space-y-0.5">
+              <div className="px-2 pb-3 space-y-1">
                 <Link href="/admin/motor-sorteos"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#F5A623]/10 hover:bg-[#F5A623]/20 transition-colors group">
-                  <span className="text-xl">🎲</span>
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#F5A623]/10 hover:bg-[#F5A623]/20 border border-[#F5A623]/30 transition-colors group">
+                  <span className="w-9 h-9 rounded-lg bg-[#F5A623] flex items-center justify-center text-lg flex-shrink-0">🎯</span>
                   <div>
-                    <p className="text-sm font-bold text-[#b87b00] leading-tight">Motor de Selección Aleatoria</p>
-                    <p className="text-[10px] text-yellow-700/60">Ejecutar y configurar selecciones</p>
+                    <p className="text-sm font-bold text-[#8a5a00] leading-tight">Centro de Selecciones</p>
+                    <p className="text-[10px] text-yellow-700/60">Principal, Anticipadas, Grandes y Previas</p>
                   </div>
-                  <span className="ml-auto text-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
+                  <span className="ml-auto text-[#b87b00] opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
                 </Link>
                 <Link href="/admin/bonos"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-                  <span className="text-xl">🏷️</span>
+                  <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">🏷️</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">Gestión de Bonos</p>
                     <p className="text-[10px] text-gray-400">Stock, precios y cashback multinivel</p>
@@ -800,19 +801,10 @@ export default function AdminPanel() {
                 </Link>
                 <Link href="/admin/red-multinivel"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-                  <span className="text-xl">🌐</span>
+                  <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">🌐</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">Red Multinivel</p>
                     <p className="text-[10px] text-gray-400">Referidos, niveles y gift cards</p>
-                  </div>
-                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
-                </Link>
-                <Link href="/admin/anticipadas"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-                  <span className="text-xl">⚡</span>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800 leading-tight">Selecciones Anticipadas</p>
-                    <p className="text-[10px] text-gray-400">Selecciones previas a la principal</p>
                   </div>
                   <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
                 </Link>
@@ -821,13 +813,14 @@ export default function AdminPanel() {
 
             {/* Finanzas */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-4 pt-4 pb-2">
+              <div className="px-4 pt-4 pb-2.5 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#1B4F8A]" />
                 <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Finanzas</p>
               </div>
-              <div className="px-2 pb-3 space-y-0.5">
+              <div className="px-2 pb-3 space-y-1">
                 <Link href="/admin/usuarios"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-                  <span className="text-xl">👤</span>
+                  <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">👤</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">Gestión de Usuarios</p>
                     <p className="text-[10px] text-gray-400">Roles, saldo, cuenta bancaria</p>
@@ -836,7 +829,7 @@ export default function AdminPanel() {
                 </Link>
                 <Link href="/admin/reportes"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-                  <span className="text-xl">📊</span>
+                  <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">📊</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">Reportes</p>
                     <p className="text-[10px] text-gray-400">Ventas, selecciones, usuarios CSV/PDF</p>
@@ -845,7 +838,7 @@ export default function AdminPanel() {
                 </Link>
                 <Link href="/admin/retenciones"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-                  <span className="text-xl">💰</span>
+                  <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">💰</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">Retenciones</p>
                     <p className="text-[10px] text-gray-400">Conceptos de descuento en retiros</p>
@@ -854,7 +847,7 @@ export default function AdminPanel() {
                 </Link>
                 <Link href="/admin/pagos-manuales"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-amber-50 transition-colors group">
-                  <span className="text-xl">📲</span>
+                  <span className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center text-lg flex-shrink-0">📲</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">Pagos por transferencia</p>
                     <p className="text-[10px] text-gray-400">Aprobar comprobantes Bre-b / QR</p>
@@ -866,13 +859,14 @@ export default function AdminPanel() {
 
             {/* Sistema */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-4 pt-4 pb-2">
+              <div className="px-4 pt-4 pb-2.5 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-gray-400" />
                 <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Sistema</p>
               </div>
-              <div className="px-2 pb-3 space-y-0.5">
+              <div className="px-2 pb-3 space-y-1">
                 <Link href="/admin/notificaciones"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-                  <span className="text-xl">🔔</span>
+                  <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">🔔</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">Notificaciones</p>
                     <p className="text-[10px] text-gray-400">Avisos en masa y recordatorios</p>
@@ -881,7 +875,7 @@ export default function AdminPanel() {
                 </Link>
                 <Link href="/admin/auditoria"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-                  <span className="text-xl">🔐</span>
+                  <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">🔐</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">Auditoría</p>
                     <p className="text-[10px] text-gray-400">Log de acciones del sistema</p>
@@ -890,7 +884,7 @@ export default function AdminPanel() {
                 </Link>
                 <Link href="/admin/configuracion"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-                  <span className="text-xl">⚙️</span>
+                  <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">⚙️</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">Configuración</p>
                     <p className="text-[10px] text-gray-400">Precios, selección aleatoria, gift cards</p>
@@ -902,7 +896,7 @@ export default function AdminPanel() {
                   disabled={descargandoBackup}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-green-50 transition-colors group disabled:opacity-50 text-left"
                 >
-                  <span className="text-xl">💾</span>
+                  <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">💾</span>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 leading-tight">
                       {descargandoBackup ? "Generando..." : "Backup ahora"}

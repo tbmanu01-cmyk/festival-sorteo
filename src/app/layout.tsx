@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import SwRegister from "@/components/SwRegister";
 import NavMobile from "@/components/NavMobile";
+import AdminNavMobile from "@/components/AdminNavMobile";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -61,6 +62,7 @@ export default function RootLayout({
         <Providers>
           {children}
           <NavMobile />
+          <AdminNavMobile />
         </Providers>
         <SwRegister />
       </body>
