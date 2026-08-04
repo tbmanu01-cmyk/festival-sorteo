@@ -64,7 +64,6 @@ function FormularioLogin() {
       const session = await getSession();
       const rol = (session?.user as { rol?: string })?.rol;
       if (rol === "ADMIN") router.push("/admin");
-      else if (rol === "ASISTENTE") router.push("/asistente/retiros");
       else router.push("/dashboard");
       router.refresh();
     }
