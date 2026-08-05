@@ -478,7 +478,7 @@ function MembresiasInner() {
               Tienda de membresías 10K
             </span>
             <h1 style={{ fontSize: "clamp(32px,4vw,52px)", fontWeight: 800, lineHeight: 1.08, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
-              Tu número,{" "}
+              Tu membresía,{" "}
               <span style={{ color: "#ffbd1f" }}>tu oportunidad</span>
             </h1>
             <p style={{ fontSize: 17, color: "rgba(255,255,255,0.85)", margin: "0 0 24px", maxWidth: 480, lineHeight: 1.65 }}>

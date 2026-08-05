@@ -27,7 +27,7 @@ export default function Footer() {
               <img src="/logo.png" alt="Tienda 10K" style={{ height: 40, width: "auto" }} />
             </div>
             <p className="text-sm leading-relaxed">
-              Tu número, tu oportunidad.
+              Tu membresía, tu oportunidad.
             </p>
           </div>
 

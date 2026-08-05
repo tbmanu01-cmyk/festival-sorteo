@@ -13,7 +13,7 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Tienda 10K | Tu número, tu oportunidad",
+  title: "Tienda 10K | Tu membresía, tu oportunidad",
   description:
     "10,000 membresías numeradas. Participa en la selección aleatoria de Tienda 10K y gana.",
   keywords: "tienda 10k, membresías, selección aleatoria, Colombia",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Tienda 10K | Tu número, tu oportunidad",
+    title: "Tienda 10K | Tu membresía, tu oportunidad",
     description:
       "10,000 membresías numeradas. Participa en la selección aleatoria de Tienda 10K y gana.",
     url: "https://tienda10k.com",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tienda 10K | Tu número, tu oportunidad",
+    title: "Tienda 10K | Tu membresía, tu oportunidad",
     description:
       "10,000 membresías numeradas. Participa en la selección aleatoria de Tienda 10K y gana.",
     images: ["/og-image.png"],
