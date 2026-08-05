@@ -38,7 +38,7 @@ export async function GET(req: Request) {
   const backup = {
     version: "2.0",
     fecha: new Date().toISOString(),
-    proyecto: "Club 10K — Backup Diario Automático",
+    proyecto: "Tienda 10K — Backup Diario Automático",
     resumen: {
       usuarios: usuarios.length,
       cajas: cajas.length,
@@ -79,11 +79,11 @@ export async function GET(req: Request) {
   });
 
   await transporter.sendMail({
-    from: `"Club 10K" <${process.env.EMAIL_USER}>`,
+    from: `"Tienda 10K" <${process.env.EMAIL_USER}>`,
     to: process.env.EMAIL_USER!,
-    subject: `[Backup] Club 10K — ${new Date().toLocaleDateString("es-CO")}`,
+    subject: `[Backup] Tienda 10K — ${new Date().toLocaleDateString("es-CO")}`,
     html: `
-      <h2>Backup diario automático — Club 10K</h2>
+      <h2>Backup diario automático — Tienda 10K</h2>
       <p>Fecha: <strong>${new Date().toLocaleString("es-CO")}</strong></p>
       <table style="border-collapse:collapse;font-size:14px">
         <tr><td style="padding:4px 12px 4px 0;color:#666">Usuarios</td><td><strong>${backup.resumen.usuarios}</strong></td></tr>

@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       }
     } else {
       return NextResponse.json(
-        { mensaje: "Necesitas un link de invitación o un código de referido para crear una cuenta en Club 10K." },
+        { mensaje: "Necesitas un link de invitación o un código de referido para crear una cuenta en Tienda 10K." },
         { status: 400 }
       );
     }

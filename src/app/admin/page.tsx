@@ -702,7 +702,7 @@ export default function AdminPanel() {
             <div>
               <h1 className="text-2xl font-extrabold text-[#1B4F8A]">Panel de Administración</h1>
               <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-gray-500 text-sm">Club 10K</p>
+                <p className="text-gray-500 text-sm">Tienda 10K</p>
                 {ultimaActualizacion && (
                   <span className="text-gray-400 text-xs">
                     · Actualizado {ultimaActualizacion.toLocaleTimeString("es-CO", { timeStyle: "short" })}

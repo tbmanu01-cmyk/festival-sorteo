@@ -96,7 +96,7 @@ export default function PaginaProbabilidades() {
             </span>
             <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-4">
               Probabilidades del<br />
-              <span style={{ color: "#F5A623" }}>Club 10K</span>
+              <span style={{ color: "#F5A623" }}>Tienda 10K</span>
             </h1>
             <p className="text-blue-200 text-xl md:text-2xl font-light max-w-2xl mx-auto mb-10">
               Matemática transparente: entiende tus chances de ganar
@@ -125,7 +125,7 @@ export default function PaginaProbabilidades() {
                 Fácil y transparente
               </span>
               <h2 className="text-3xl font-extrabold text-[#1B4F8A] mb-2">¿Cómo funciona?</h2>
-              <p className="text-gray-500 text-sm">En 3 simples pasos empiezas a participar por los premios del Club 10K.</p>
+              <p className="text-gray-500 text-sm">En 3 simples pasos empiezas a participar por los premios del Tienda 10K.</p>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {[

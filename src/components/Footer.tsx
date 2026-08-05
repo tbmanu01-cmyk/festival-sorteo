@@ -24,10 +24,10 @@ export default function Footer() {
           {/* Marca */}
           <div>
             <div className="mb-3">
-              <img src="/logo.png" alt="Club 10K" style={{ height: 40, width: "auto" }} />
+              <img src="/logo.png" alt="Tienda 10K" style={{ height: 40, width: "auto" }} />
             </div>
             <p className="text-sm leading-relaxed">
-              Compra bonos y gana cashback.
+              Tu número, tu oportunidad.
             </p>
           </div>
 
@@ -72,7 +72,7 @@ export default function Footer() {
         </div>
 
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.10)", marginTop: 32, paddingTop: 24, textAlign: "center", fontSize: 12, color: "rgba(255,255,255,0.40)" }}>
-          &copy; {new Date().getFullYear()} Club 10K. Todos los derechos reservados.
+          &copy; {new Date().getFullYear()} Tienda 10K. Todos los derechos reservados.
         </div>
       </div>
     </footer>

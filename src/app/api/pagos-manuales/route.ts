@@ -89,9 +89,9 @@ export async function POST(req: NextRequest) {
         const { Resend } = await import("resend");
         const r = new Resend(process.env.RESEND_API_KEY);
         await r.emails.send({
-          from: process.env.EMAIL_FROM ?? "Club 10K <noreply@tienda10k.com>",
+          from: process.env.EMAIL_FROM ?? "Tienda 10K <noreply@tienda10k.com>",
           to: adminEmail,
-          subject: `Nuevo pago pendiente: membresía #${numeroCaja} — Club 10K`,
+          subject: `Nuevo pago pendiente: membresía #${numeroCaja} — Tienda 10K`,
           html: `<p>Nuevo pago manual pendiente de aprobación.</p><p><strong>Usuario:</strong> ${usuarioCheck.nombre} (${usuarioCheck.correo})</p><p><strong>Membresía:</strong> #${numeroCaja}</p><p><strong>Monto:</strong> $${monto.toLocaleString("es-CO")} COP</p><p><strong>Ref bancaria:</strong> ${refBancaria}</p><p><a href="https://tienda10k.com/admin/pagos-manuales">Ver en el panel →</a></p>`,
         }).catch((e) => console.error("Email admin pago manual error:", e));
       }

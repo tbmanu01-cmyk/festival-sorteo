@@ -162,7 +162,7 @@ export default function PaginaLogin() {
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 c10-hero-wrap" style={{ background: "linear-gradient(135deg, #102463 0%, #173592 55%, #0a1845 100%)" }}>
       {/* Logo */}
       <Link href="/" className="mb-8" style={{ position: "relative", zIndex: 1 }}>
-        <img src="/logo.png" alt="Club 10K" style={{ height: 52, width: "auto" }} />
+        <img src="/logo.png" alt="Tienda 10K" style={{ height: 52, width: "auto" }} />
       </Link>
 
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden" style={{ position: "relative", zIndex: 1 }}>

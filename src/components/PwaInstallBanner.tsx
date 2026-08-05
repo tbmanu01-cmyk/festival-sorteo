@@ -105,7 +105,7 @@ export default function PwaInstallBanner() {
           {/* Texto */}
           <div style={{ flex: 1, minWidth: 0, position: "relative", zIndex: 1 }}>
             <p style={{ fontWeight: 700, fontSize: 14, color: "white", margin: "0 0 3px" }}>
-              📲 Instala Club 10K
+              📲 Instala Tienda 10K
             </p>
             {isIos ? (
               <p style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", margin: 0, lineHeight: 1.4 }}>
@@ -202,7 +202,7 @@ export default function PwaInstallBanner() {
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ fontWeight: 700, fontSize: 14, color: "#102463", margin: "0 0 2px" }}>
-            Instala Club 10K
+            Instala Tienda 10K
           </p>
           {isIos ? (
             <p style={{ fontSize: 12, color: "#6b7693", margin: 0 }}>

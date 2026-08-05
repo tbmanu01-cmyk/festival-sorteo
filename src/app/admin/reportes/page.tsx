@@ -115,11 +115,11 @@ function abrirPDF(titulo: string, subtitulo: string, tablaHTML: string) {
 </style>
 </head>
 <body>
-<div class="logo">🎁 Club 10K</div>
+<div class="logo">🎁 Tienda 10K</div>
 <div class="sub">${subtitulo}</div>
 <h1>${titulo}</h1>
 ${tablaHTML}
-<div class="footer">Generado el ${new Date().toLocaleString("es-CO")} · Club 10K</div>
+<div class="footer">Generado el ${new Date().toLocaleString("es-CO")} · Tienda 10K</div>
 <br>
 <button class="btn" onclick="window.print()">Imprimir / Guardar como PDF</button>
 </body></html>`);

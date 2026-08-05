@@ -53,7 +53,7 @@ export default function BotonPagoBold({ numeroCaja }: Props) {
           script.setAttribute("data-api-key", json.apiKey);
           script.setAttribute("data-integrity-signature", json.signature!);
           script.setAttribute("data-redirection-url", redirectionUrl);
-          script.setAttribute("data-description", `Membresía #${numeroCaja} — Club 10K`);
+          script.setAttribute("data-description", `Membresía #${numeroCaja} — Tienda 10K`);
           contenedorRef.current.appendChild(script);
         }
         setCargando(false);

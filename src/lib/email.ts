@@ -5,7 +5,7 @@ function resend() {
 }
 
 const FROM =
-  process.env.EMAIL_FROM ?? "Club 10K <noreply@tienda10k.com>";
+  process.env.EMAIL_FROM ?? "Tienda 10K <noreply@tienda10k.com>";
 
 function base(cuerpo: string, colorCabecera = "#1B4F8A") {
   return `<!DOCTYPE html>
@@ -14,7 +14,7 @@ function base(cuerpo: string, colorCabecera = "#1B4F8A") {
 <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;margin:24px auto;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08)">
   <tr><td style="background:${colorCabecera};padding:28px 32px;">
-    <p style="margin:0;color:#F5A623;font-size:22px;font-weight:900;letter-spacing:1px;">🎁 Club 10K</p>
+    <p style="margin:0;color:#F5A623;font-size:22px;font-weight:900;letter-spacing:1px;">🎁 Tienda 10K</p>
   </td></tr>
   <tr><td style="background:#ffffff;padding:32px;">
     ${cuerpo}
@@ -71,7 +71,7 @@ export async function enviarComprobante(opts: {
     </p>`;
   await enviarCorreo({
     to: correo,
-    subject: `¡Membresía activada! #${numeroCaja} — Club 10K`,
+    subject: `¡Membresía activada! #${numeroCaja} — Tienda 10K`,
     html: base(cuerpo),
   });
 }
@@ -107,7 +107,7 @@ export async function enviarPremio(opts: {
     </p>`;
   await enviarCorreo({
     to: correo,
-    subject: `¡Ganaste $${monto.toLocaleString("es-CO")} en Club 10K! 🏆`,
+    subject: `¡Ganaste $${monto.toLocaleString("es-CO")} en Tienda 10K! 🏆`,
     html: base(cuerpo, "#1B4F8A"),
   });
 }
@@ -136,7 +136,7 @@ export async function enviarPremioGiftCard(opts: {
     </p>`;
   await enviarCorreo({
     to: correo,
-    subject: `¡Ganaste una membresía gratis en Club 10K! 🎁`,
+    subject: `¡Ganaste una membresía gratis en Tienda 10K! 🎁`,
     html: base(cuerpo, "#16a34a"),
   });
 }
@@ -163,7 +163,7 @@ export async function enviarRetiroAprobado(opts: {
     </p>`;
   await enviarCorreo({
     to: correo,
-    subject: "Tu retiro fue aprobado — Club 10K",
+    subject: "Tu retiro fue aprobado — Tienda 10K",
     html: base(cuerpo, "#16a34a"),
   });
 }
@@ -192,7 +192,7 @@ export async function enviarPremioAnticipado(opts: {
     </p>`;
   await enviarCorreo({
     to: correo,
-    subject: `¡Ganaste en ${nombreEvento} — Club 10K! 🎉`,
+    subject: `¡Ganaste en ${nombreEvento} — Tienda 10K! 🎉`,
     html: base(cuerpo, "#1B4F8A"),
   });
 }
@@ -221,7 +221,7 @@ export async function enviarRecuperacionPassword(opts: {
     </p>`;
   await enviarCorreo({
     to: correo,
-    subject: "Restablece tu contraseña — Club 10K",
+    subject: "Restablece tu contraseña — Tienda 10K",
     html: base(cuerpo),
   });
 }
@@ -246,7 +246,7 @@ export async function enviarRetiroRechazado(opts: {
     </p>`;
   await enviarCorreo({
     to: correo,
-    subject: "Solicitud de retiro rechazada — Club 10K",
+    subject: "Solicitud de retiro rechazada — Tienda 10K",
     html: base(cuerpo, "#dc2626"),
   });
 }
@@ -281,7 +281,7 @@ export async function enviarCodigoVerificacion(opts: {
     </p>`;
   await enviarCorreo({
     to: correo,
-    subject: `${codigo} es tu código para activar tu cuenta — Club 10K`,
+    subject: `${codigo} es tu código para activar tu cuenta — Tienda 10K`,
     html: base(cuerpo),
   });
 }
@@ -315,7 +315,7 @@ export async function enviarCodigoRetiro(opts: {
   `;
   await enviarCorreo({
     to: correo,
-    subject: `${codigo} es tu código de retiro — Club 10K`,
+    subject: `${codigo} es tu código de retiro — Tienda 10K`,
     html: base(cuerpo, "#1B4F8A"),
   });
 }
@@ -343,7 +343,7 @@ export async function enviarComprobanteRecibido(opts: {
     </p>`;
   await enviarCorreo({
     to: correo,
-    subject: "Comprobante recibido — Club 10K",
+    subject: "Comprobante recibido — Tienda 10K",
     html: base(cuerpo),
   });
 }
@@ -369,7 +369,7 @@ export async function enviarPagoManualAprobado(opts: {
     </p>`;
   await enviarCorreo({
     to: correo,
-    subject: "¡Tu membresía fue aprobada! — Club 10K",
+    subject: "¡Tu membresía fue aprobada! — Tienda 10K",
     html: base(cuerpo, "#16a34a"),
   });
 }
@@ -391,7 +391,7 @@ export async function enviarPagoManualRechazado(opts: {
     </p>`;
   await enviarCorreo({
     to: correo,
-    subject: "Pago no aprobado — Club 10K",
+    subject: "Pago no aprobado — Tienda 10K",
     html: base(cuerpo, "#dc2626"),
   });
 }

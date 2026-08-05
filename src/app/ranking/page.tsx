@@ -138,7 +138,7 @@ export default function PaginaRanking() {
             </Link>
             <br />
             <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#102463", background: "rgba(16,36,99,0.08)", borderRadius: 999, padding: "4px 14px", marginBottom: 14 }}>
-              Comunidad Club 10K
+              Comunidad Tienda 10K
             </span>
             <h1 style={{ fontSize: "clamp(28px,3.2vw,36px)", fontWeight: 800, color: "#102463", letterSpacing: "-0.02em", margin: "0 0 10px" }}>
               Ranking de ganadores

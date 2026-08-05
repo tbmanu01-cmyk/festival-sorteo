@@ -475,7 +475,7 @@ function MembresiasInner() {
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#ffbd1f", background: "rgba(255,189,31,0.12)", border: "1px solid rgba(255,189,31,0.30)", borderRadius: 999, padding: "4px 14px", marginBottom: 16 }}>
-              Club de membresías 10K
+              Tienda de membresías 10K
             </span>
             <h1 style={{ fontSize: "clamp(32px,4vw,52px)", fontWeight: 800, lineHeight: 1.08, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
               Tu número,{" "}

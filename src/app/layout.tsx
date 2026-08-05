@@ -13,36 +13,36 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Club 10K | Compra bonos y gana cashback",
+  title: "Tienda 10K | Tu número, tu oportunidad",
   description:
-    "Compra bonos de supermercado con descuento y gana cashback en Club 10K.",
-  keywords: "club 10k, bonos supermercado, cashback, Colombia",
+    "10,000 membresías numeradas. Participa en la selección aleatoria de Tienda 10K y gana.",
+  keywords: "tienda 10k, membresías, selección aleatoria, Colombia",
   manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Club 10K | Compra bonos y gana cashback",
+    title: "Tienda 10K | Tu número, tu oportunidad",
     description:
-      "Compra bonos de supermercado con descuento y gana cashback en Club 10K.",
+      "10,000 membresías numeradas. Participa en la selección aleatoria de Tienda 10K y gana.",
     url: "https://tienda10k.com",
-    siteName: "Club 10K",
+    siteName: "Tienda 10K",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
     locale: "es_CO",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Club 10K | Compra bonos y gana cashback",
+    title: "Tienda 10K | Tu número, tu oportunidad",
     description:
-      "Compra bonos de supermercado con descuento y gana cashback en Club 10K.",
+      "10,000 membresías numeradas. Participa en la selección aleatoria de Tienda 10K y gana.",
     images: ["/og-image.png"],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Club 10K",
+    title: "Tienda 10K",
   },
 };
 

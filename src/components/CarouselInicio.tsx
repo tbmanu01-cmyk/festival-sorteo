@@ -46,7 +46,7 @@ export default function CarouselInicio({ vendidas, precioCaja, fechaSorteo, pct4
       >
         <div className="text-center text-white px-6 w-full max-w-3xl mx-auto">
           <p className="text-white font-extrabold text-3xl md:text-5xl leading-none mb-1">
-            Club 10K
+            Tienda 10K
           </p>
           <p className="text-[#F5A623] font-bold text-sm md:text-base mb-4">
             10,000 membresías numeradas

@@ -25,7 +25,7 @@ export default function Header() {
           <Link href="/" className="flex items-center group">
             <img
               src="/logo.png"
-              alt="Club 10K"
+              alt="Tienda 10K"
               className="h-10 w-auto group-hover:scale-110 transition-transform"
             />
           </Link>

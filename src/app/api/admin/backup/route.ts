@@ -39,7 +39,7 @@ export async function GET() {
   const backup = {
     version: "2.0",
     fecha: new Date().toISOString(),
-    proyecto: "Club 10K",
+    proyecto: "Tienda 10K",
     resumen: {
       usuarios: usuarios.length,
       cajas: cajas.length,

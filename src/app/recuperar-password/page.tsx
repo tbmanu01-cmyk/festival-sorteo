@@ -37,7 +37,7 @@ export default function RecuperarPassword() {
           10K
         </div>
         <div>
-          <p className="text-white font-bold text-xl">Club 10K</p>
+          <p className="text-white font-bold text-xl">Tienda 10K</p>
           <p style={{ color: "#ffbd1f", fontSize: 13 }}>10,000 membresías</p>
         </div>
       </Link>

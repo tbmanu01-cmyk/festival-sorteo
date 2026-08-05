@@ -104,7 +104,7 @@ function FormularioRegistro() {
   const [ciudades, setCiudades] = useState<string[]>([]);
   const [codigoManual, setCodigoManual] = useState("");
 
-  // Club 10K es solo por invitación: sin link/QR (?ref= o ?slot=) ni código
+  // Tienda 10K es solo por invitación: sin link/QR (?ref= o ?slot=) ni código
   // escrito a mano, no se puede crear cuenta.
   const refCode = refCodeUrl || codigoManual.trim().toUpperCase();
   const tieneInvitacion = Boolean(slotToken || refCode);
@@ -170,7 +170,7 @@ function FormularioRegistro() {
       {/* Header simple */}
       <div className="py-4 px-6" style={{ position: "relative", zIndex: 1 }}>
         <Link href="/" className="w-fit">
-          <img src="/logo.png" alt="Club 10K" style={{ height: 40, width: "auto" }} />
+          <img src="/logo.png" alt="Tienda 10K" style={{ height: 40, width: "auto" }} />
         </Link>
       </div>
 
@@ -204,7 +204,7 @@ function FormularioRegistro() {
             {!slotToken && !refCodeUrl && (
               <div className="bg-amber-50 border border-amber-300 rounded-lg px-4 py-3">
                 <p className="text-amber-900 text-sm font-bold mb-2">
-                  🔒 Club 10K es solo por invitación
+                  🔒 Tienda 10K es solo por invitación
                 </p>
                 <p className="text-amber-800 text-xs mb-3">
                   Necesitas el código de referido de quien te invitó (o su link/QR) para poder registrarte.
