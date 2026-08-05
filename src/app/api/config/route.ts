@@ -12,6 +12,7 @@ const DEFAULTS = {
   datosBancarios: "",
   linkPagoBoldUrl: "",
   tiendaActiva: true,
+  saldoGiftCardActivo: false,
 };
 
 export async function GET() {

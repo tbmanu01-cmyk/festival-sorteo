@@ -150,23 +150,31 @@ function ModalReserva({ caja, precio, giftCardId, giftCardValor, esSorpresa, onC
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={onCerrar}
-                className="flex-1 border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-semibold py-3 rounded-xl transition-colors"
+                disabled={cargando}
+                className="flex-1 border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm"
               >
-                Cancelar
+                Volver
+              </button>
+              <button
+                onClick={() => onConfirmar(caja.numero)}
+                disabled={cargando}
+                className="flex-1 border-2 border-[#102463] text-[#102463] hover:bg-[#102463]/5 font-bold py-3 rounded-xl transition-all disabled:opacity-50 text-sm"
+              >
+                {cargando ? "..." : "Reservar"}
               </button>
               <a
                 href={`/membresias/pagar?numero=${caja.numero}`}
-                className="flex-1 bg-[#ffbd1f] hover:bg-yellow-300 text-[#102463] font-bold py-3 rounded-full transition-all shadow-md text-center"
+                className="flex-1 bg-[#ffbd1f] hover:bg-yellow-300 text-[#102463] font-bold py-3 rounded-full transition-all shadow-md text-center text-sm"
               >
                 Pagar
               </a>
             </div>
 
             <p className="text-center text-gray-400 text-xs mt-4">
-              Al reservar aceptas los{" "}
+              Al reservar o pagar aceptas los{" "}
               <Link href="/terminos" className="underline">términos y condiciones</Link>
             </p>
           </>

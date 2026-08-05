@@ -15,6 +15,11 @@ export async function POST(
   const { prisma } = await import("@/lib/prisma");
   const userId = (session.user as unknown as { id: string }).id;
 
+  const config = await prisma.config.findUnique({ where: { id: "singleton" } });
+  if (!config?.saldoGiftCardActivo) {
+    return NextResponse.json({ mensaje: "Agregar gift cards al saldo no está disponible en este momento." }, { status: 403 });
+  }
+
   const usuario = await prisma.user.findUnique({ where: { id: userId }, select: { confirmado: true } });
   if (!usuario?.confirmado) {
     return NextResponse.json({ mensaje: "Solo usuarios con cuenta confirmada pueden convertir gift cards a saldo." }, { status: 403 });

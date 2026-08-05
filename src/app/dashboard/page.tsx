@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { esCustom, esPreset } from "@/lib/avatares";
+import ModalConfirmar from "@/components/ModalConfirmar";
 
 const QRCodeCanvas = dynamic(
   () => import("qrcode.react").then((m) => m.QRCodeCanvas),
@@ -114,22 +115,30 @@ interface GiftCardDisp { id: string; codigo: string; valor: number; }
 function TarjetaReserva({
   caja,
   precio,
+  saldo,
   giftCardsDisponibles,
   onComprar,
   comprando,
+  seleccionada,
+  onToggleSeleccion,
 }: {
   caja: CajaReservada;
   precio: number;
+  saldo: number;
   giftCardsDisponibles: GiftCardDisp[];
   onComprar: (numero: string, giftCardId?: string) => Promise<void>;
   comprando: boolean;
+  seleccionada: boolean;
+  onToggleSeleccion: (numero: string) => void;
 }) {
   const { min, seg, expirada, pct } = useCountdown(caja.expira);
   const [gcSeleccionada, setGcSeleccionada] = useState<string>("");
+  const [confirmando, setConfirmando] = useState(false);
 
   const gc = giftCardsDisponibles.find((g) => g.id === gcSeleccionada) ?? null;
   const descuento = gc ? Math.min(gc.valor, precio) : 0;
   const total = precio - descuento;
+  const alcanzaSaldo = total === 0 || saldo >= total;
 
   return (
     <div
@@ -141,14 +150,42 @@ function TarjetaReserva({
           : "border-orange-300 shadow-orange-100 shadow-sm"
       }`}
     >
+      {confirmando && (
+        <ModalConfirmar
+          titulo="Confirmar pago"
+          mensaje={
+            total === 0
+              ? `¿Deseas pagar la membresía #${caja.numero} usando tu gift card ${gc?.codigo}? Quedará totalmente cubierta.`
+              : gc
+              ? `¿Deseas pagar la membresía #${caja.numero} aplicando la gift card ${gc.codigo} y $${total.toLocaleString("es-CO", { maximumFractionDigits: 0 })} de tu saldo?`
+              : `¿Deseas pagar esta membresía #${caja.numero} con $${total.toLocaleString("es-CO", { maximumFractionDigits: 0 })} de tu saldo de cuenta?`
+          }
+          textoConfirmar="Sí, pagar"
+          cargando={comprando}
+          onConfirmar={async () => { await onComprar(caja.numero, gcSeleccionada || undefined); setConfirmando(false); }}
+          onCancelar={() => setConfirmando(false)}
+        />
+      )}
+
       <div className="flex items-start justify-between mb-4">
-        <div>
-          <p className="text-gray-500 text-xs font-medium uppercase tracking-wide mb-1">
-            Número reservado
-          </p>
-          <span className="text-4xl font-extrabold text-[#1B4F8A] tracking-widest">
-            {caja.numero}
-          </span>
+        <div className="flex items-start gap-3">
+          {!expirada && (
+            <input
+              type="checkbox"
+              checked={seleccionada}
+              onChange={() => onToggleSeleccion(caja.numero)}
+              className="mt-2 w-5 h-5 rounded accent-[#1B4F8A] cursor-pointer"
+              title="Seleccionar para pago múltiple"
+            />
+          )}
+          <div>
+            <p className="text-gray-500 text-xs font-medium uppercase tracking-wide mb-1">
+              Número reservado
+            </p>
+            <span className="text-4xl font-extrabold text-[#1B4F8A] tracking-widest">
+              {caja.numero}
+            </span>
+          </div>
         </div>
         <div className="text-right">
           {expirada ? (
@@ -227,17 +264,31 @@ function TarjetaReserva({
             </div>
           )}
 
-          <button
-            onClick={() => onComprar(caja.numero, gcSeleccionada || undefined)}
-            disabled={comprando}
-            className="w-full bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-bold py-3 rounded-xl transition-colors shadow-md text-sm"
-          >
-            {comprando
-              ? "Procesando..."
-              : total === 0
-              ? "✅ Completar compra — ¡Gratis!"
-              : `✅ Completar compra — $${total.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
-          </button>
+          {alcanzaSaldo ? (
+            <button
+              onClick={() => setConfirmando(true)}
+              disabled={comprando}
+              className="w-full bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-bold py-3 rounded-xl transition-colors shadow-md text-sm"
+            >
+              {comprando
+                ? "Procesando..."
+                : total === 0
+                ? "✅ Completar compra — ¡Gratis!"
+                : `✅ Pagar con saldo — $${total.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-red-600 font-medium text-center">
+                Tu saldo no alcanza (te faltan ${(total - saldo).toLocaleString("es-CO", { maximumFractionDigits: 0 })}).
+              </p>
+              <a
+                href={`/membresias/pagar?numero=${caja.numero}`}
+                className="block w-full text-center bg-[#102463] hover:bg-[#173592] text-white font-bold py-3 rounded-xl transition-colors shadow-md text-sm"
+              >
+                💳 Pagar con tarjeta, PSE o Nequi
+              </a>
+            </div>
+          )}
         </>
       )}
 
@@ -466,10 +517,12 @@ function SelectorGiftCards({
   cards,
   onAccion,
   cuentaConfirmada,
+  saldoGiftCardActivo,
 }: {
   cards: GiftCardItem[];
   onAccion: (id: string, accion: "retirar" | "regalar" | "usar") => void;
   cuentaConfirmada: boolean;
+  saldoGiftCardActivo: boolean;
 }) {
   const [idx, setIdx] = useState(0);
   const gc = cards[idx];
@@ -522,7 +575,7 @@ function SelectorGiftCards({
           >
             🎟️ Usar en membresía
           </button>
-          {cuentaConfirmada && (
+          {cuentaConfirmada && saldoGiftCardActivo && (
             <button
               onClick={() => onAccion(gc.id, "retirar")}
               className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 px-3 rounded-xl transition-colors text-left"
@@ -569,6 +622,7 @@ function ModalRegalar({
   const [correo, setCorreo] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmando, setConfirmando] = useState(false);
 
   async function enviar() {
     setEnviando(true);
@@ -580,8 +634,22 @@ function ModalRegalar({
     });
     const json = await res.json() as { mensaje: string };
     setEnviando(false);
+    setConfirmando(false);
     if (res.ok) onSuccess();
     else setError(json.mensaje);
+  }
+
+  if (confirmando) {
+    return (
+      <ModalConfirmar
+        titulo="Confirmar regalo"
+        mensaje={`¿Seguro que deseas regalar esta gift card a ${correo}? Esta acción no se puede deshacer.`}
+        textoConfirmar="Sí, regalar"
+        cargando={enviando}
+        onConfirmar={enviar}
+        onCancelar={() => setConfirmando(false)}
+      />
+    );
   }
 
   return (
@@ -605,11 +673,11 @@ function ModalRegalar({
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm">Cancelar</button>
           <button
-            onClick={enviar}
+            onClick={() => setConfirmando(true)}
             disabled={!correo || enviando}
             className="flex-1 py-2.5 rounded-xl bg-[#102463] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold text-sm"
           >
-            {enviando ? "Enviando..." : "Regalar"}
+            Regalar
           </button>
         </div>
       </div>
@@ -633,15 +701,20 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
   const [copiado, setCopiado] = useState(false);
   const [mostrarQR, setMostrarQR] = useState(false);
   const [modalRegalar, setModalRegalar] = useState<string | null>(null);
+  const [confirmarRetirar, setConfirmarRetirar] = useState<GiftCardItem | null>(null);
+  const [retirando, setRetirando] = useState(false);
+  const [saldoGiftCardActivo, setSaldoGiftCardActivo] = useState(false);
   const [toast, setToast] = useState<{ ok: boolean; texto: string } | null>(null);
 
   const cargarTodo = () => {
     Promise.all([
       fetch("/api/referidos").then((r) => r.ok ? r.json() : null),
       fetch("/api/gift-cards").then((r) => r.ok ? r.json() : null),
-    ]).then(([ref, gcs]) => {
+      fetch("/api/config").then((r) => r.ok ? r.json() : null),
+    ]).then(([ref, gcs, cfg]) => {
       if (ref) setDatos({ codigoRef: ref.codigoRef ?? null, comprados: ref.comprados ?? 0, progreso: ref.progreso ?? 0 });
       if (gcs?.giftCards) setGiftCards(gcs.giftCards);
+      if (cfg) setSaldoGiftCardActivo(cfg.saldoGiftCardActivo ?? false);
       setCargando(false);
     }).catch(() => setCargando(false));
   };
@@ -674,12 +747,21 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
     a.click();
   }
 
-  async function manejarAccion(id: string, accion: "retirar" | "regalar" | "usar") {
+  function manejarAccion(id: string, accion: "retirar" | "regalar" | "usar") {
     if (accion === "regalar") { setModalRegalar(id); return; }
     if (accion === "usar") { router.push("/membresias?giftCard=" + id); return; }
-    // retirar → añadir a saldo
-    const res = await fetch(`/api/gift-cards/${id}/retirar`, { method: "POST" });
+    // retirar → añadir a saldo (pide confirmación primero)
+    const gc = giftCards.find((g) => g.id === id) ?? null;
+    if (gc) setConfirmarRetirar(gc);
+  }
+
+  async function confirmarRetiro() {
+    if (!confirmarRetirar) return;
+    setRetirando(true);
+    const res = await fetch(`/api/gift-cards/${confirmarRetirar.id}/retirar`, { method: "POST" });
     const json = await res.json() as { mensaje: string };
+    setRetirando(false);
+    setConfirmarRetirar(null);
     mostrarToast(res.ok, json.mensaje);
     if (res.ok) cargarTodo();
   }
@@ -705,6 +787,18 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
           gcId={modalRegalar}
           onClose={() => setModalRegalar(null)}
           onSuccess={() => { setModalRegalar(null); mostrarToast(true, "Gift card enviada correctamente."); cargarTodo(); }}
+        />
+      )}
+
+      {/* Confirmar añadir gift card al saldo */}
+      {confirmarRetirar && (
+        <ModalConfirmar
+          titulo="Confirmar"
+          mensaje={`¿Deseas convertir la gift card ${confirmarRetirar.codigo} ($${confirmarRetirar.valor.toLocaleString("es-CO", { maximumFractionDigits: 0 })}) en saldo de tu cuenta? Esta acción no se puede deshacer.`}
+          textoConfirmar="Sí, añadir a saldo"
+          cargando={retirando}
+          onConfirmar={confirmarRetiro}
+          onCancelar={() => setConfirmarRetirar(null)}
         />
       )}
 
@@ -803,7 +897,7 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
 
           {/* Gift cards disponibles */}
           {!cargando && gcDisponibles.length > 0 && (
-            <SelectorGiftCards cards={gcDisponibles} onAccion={manejarAccion} cuentaConfirmada={cuentaConfirmada} />
+            <SelectorGiftCards cards={gcDisponibles} onAccion={manejarAccion} cuentaConfirmada={cuentaConfirmada} saldoGiftCardActivo={saldoGiftCardActivo} />
           )}
 
           {/* Sin gift cards */}
@@ -1361,6 +1455,9 @@ export default function Dashboard() {
   const [codigoVerif, setCodigoVerif] = useState("");
   const [verificando, setVerificando] = useState(false);
   const [tiendaActiva, setTiendaActiva] = useState(true);
+  const [seleccionadas, setSeleccionadas] = useState<Set<string>>(new Set());
+  const [confirmarLote, setConfirmarLote] = useState(false);
+  const [pagandoLote, setPagandoLote] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -1412,7 +1509,47 @@ export default function Dashboard() {
     const json = await res.json() as { mensaje: string };
     setComprando(null);
     setMensajeCompra({ ok: res.ok, texto: json.mensaje });
-    if (res.ok) cargarDatos();
+    if (res.ok) {
+      setSeleccionadas((prev) => {
+        if (!prev.has(numero)) return prev;
+        const next = new Set(prev);
+        next.delete(numero);
+        return next;
+      });
+      cargarDatos();
+    }
+  }
+
+  function toggleSeleccion(numero: string) {
+    setSeleccionadas((prev) => {
+      const next = new Set(prev);
+      if (next.has(numero)) next.delete(numero);
+      else next.add(numero);
+      return next;
+    });
+  }
+
+  async function pagarSeleccionadas() {
+    setPagandoLote(true);
+    setMensajeCompra(null);
+    const numeros = Array.from(seleccionadas);
+    let exitosas = 0;
+    let fallidas = 0;
+    for (const numero of numeros) {
+      const res = await fetch(`/api/cajas/${numero}/comprar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      if (res.ok) exitosas++;
+      else fallidas++;
+    }
+    setPagandoLote(false);
+    setConfirmarLote(false);
+    setSeleccionadas(new Set());
+    setMensajeCompra({
+      ok: fallidas === 0,
+      texto: fallidas === 0
+        ? `¡${exitosas} membresía${exitosas !== 1 ? "s" : ""} pagada${exitosas !== 1 ? "s" : ""} con tu saldo!`
+        : `${exitosas} pagada${exitosas !== 1 ? "s" : ""}, ${fallidas} no se pudo${fallidas !== 1 ? "ieron" : ""} procesar. Revisa tu saldo e inténtalo de nuevo.`,
+    });
+    cargarDatos();
   }
 
   if (status === "loading" || cargando) {
@@ -1609,28 +1746,88 @@ export default function Dashboard() {
           )}
 
           {/* Reservas activas */}
-          {reservadasActivas.length > 0 && (
-            <section>
-              <div className="flex items-center gap-2 mb-3">
-                <h2 className="text-lg font-bold text-gray-900">Mis reservas activas</h2>
-                <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">
-                  {reservadasActivas.length}
-                </span>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {reservadasActivas.map((caja) => (
-                  <TarjetaReserva
-                    key={caja.numero}
-                    caja={caja}
-                    precio={precioCaja}
-                    giftCardsDisponibles={giftCardsDisponibles}
-                    onComprar={completarCompra}
-                    comprando={comprando === caja.numero}
+          {reservadasActivas.length > 0 && (() => {
+            const activasNoExpiradas = reservadasActivas.filter(
+              (c) => new Date(c.expira).getTime() > Date.now()
+            );
+            const totalSeleccionado = seleccionadas.size * precioCaja;
+            const alcanzaLote = totalSeleccionado <= saldo;
+
+            return (
+              <section>
+                {confirmarLote && (
+                  <ModalConfirmar
+                    titulo="Confirmar pago múltiple"
+                    mensaje={`¿Deseas pagar ${seleccionadas.size} membresía${seleccionadas.size !== 1 ? "s" : ""} con tu saldo de cuenta?`}
+                    detalle={`Total a pagar: $${totalSeleccionado.toLocaleString("es-CO", { maximumFractionDigits: 0 })} · Tu saldo: $${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
+                    textoConfirmar="Sí, pagar todas"
+                    cargando={pagandoLote}
+                    onConfirmar={pagarSeleccionadas}
+                    onCancelar={() => setConfirmarLote(false)}
                   />
-                ))}
-              </div>
-            </section>
-          )}
+                )}
+
+                <div className="flex items-center gap-2 mb-3">
+                  <h2 className="text-lg font-bold text-gray-900">Mis reservas activas</h2>
+                  <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                    {reservadasActivas.length}
+                  </span>
+                </div>
+
+                {activasNoExpiradas.length > 1 && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={seleccionadas.size === activasNoExpiradas.length}
+                        onChange={() =>
+                          setSeleccionadas(
+                            seleccionadas.size === activasNoExpiradas.length
+                              ? new Set()
+                              : new Set(activasNoExpiradas.map((c) => c.numero))
+                          )
+                        }
+                        className="w-4 h-4 rounded accent-[#1B4F8A]"
+                      />
+                      Seleccionar todas
+                    </label>
+                    {seleccionadas.size > 0 && (
+                      <div className="flex items-center gap-3">
+                        <span className={`text-sm font-bold ${alcanzaLote ? "text-[#1B4F8A]" : "text-red-600"}`}>
+                          {seleccionadas.size} seleccionada{seleccionadas.size !== 1 ? "s" : ""} · $
+                          {totalSeleccionado.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                          {!alcanzaLote && " (saldo insuficiente)"}
+                        </span>
+                        <button
+                          onClick={() => setConfirmarLote(true)}
+                          disabled={!alcanzaLote}
+                          className="bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-bold text-sm px-4 py-2 rounded-xl transition-colors shadow-sm"
+                        >
+                          Pagar seleccionadas
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {reservadasActivas.map((caja) => (
+                    <TarjetaReserva
+                      key={caja.numero}
+                      caja={caja}
+                      precio={precioCaja}
+                      saldo={saldo}
+                      giftCardsDisponibles={giftCardsDisponibles}
+                      onComprar={completarCompra}
+                      comprando={comprando === caja.numero}
+                      seleccionada={seleccionadas.has(caja.numero)}
+                      onToggleSeleccion={toggleSeleccion}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })()}
 
           {/* Sin reservas → CTA comprar */}
           {reservadasActivas.length === 0 && (

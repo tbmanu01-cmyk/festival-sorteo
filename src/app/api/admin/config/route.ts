@@ -35,6 +35,7 @@ export async function PUT(req: NextRequest) {
     datosBancarios?: string;
     linkPagoBoldUrl?: string;
     tiendaActiva?: boolean;
+    saldoGiftCardActivo?: boolean;
   };
 
   const { pct4Cifras, pct3Cifras, pct2Cifras, pct1Cifra, margenGanancia } = body;

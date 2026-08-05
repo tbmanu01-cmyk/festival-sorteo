@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SubirImagen from "@/components/SubirImagen";
+import ModalConfirmar from "@/components/ModalConfirmar";
 
 interface Config {
   precioCaja:            number;
@@ -23,6 +24,7 @@ interface Config {
   brebKey:               string | null;
   datosBancarios:        string | null;
   linkPagoBoldUrl:       string | null;
+  saldoGiftCardActivo:   boolean;
 }
 
 function pct(v: number) { return +(v * 100).toFixed(2); }
@@ -54,6 +56,13 @@ export default function PaginaConfiguracion() {
   const [mpgc,          setMpgc]          = useState(5);
   const [gcActivo,      setGcActivo]      = useState(true);
   const [tiendaActiva,  setTiendaActiva]  = useState(true);
+  const [saldoGcActivo, setSaldoGcActivo] = useState(false);
+  const [confirmarToggle, setConfirmarToggle] = useState<{
+    campo: "gc" | "tienda" | "saldoGc";
+    activar: boolean;
+    titulo: string;
+    mensaje: string;
+  } | null>(null);
   const [fechaSorteo,   setFechaSorteo]   = useState("");
   const [qrPagoUrl,     setQrPagoUrl]     = useState("");
   const [brebKey,       setBrebKey]       = useState("");
@@ -90,6 +99,7 @@ export default function PaginaConfiguracion() {
         setMpgc(c.membresiasPorGiftCard ?? 5);
         setGcActivo(c.giftCardActivo ?? true);
         setTiendaActiva(c.tiendaActiva ?? true);
+        setSaldoGcActivo(c.saldoGiftCardActivo ?? false);
         setFechaSorteo(
           c.fechaSorteo ? new Date(c.fechaSorteo).toISOString().slice(0, 16) : ""
         );
@@ -126,6 +136,7 @@ export default function PaginaConfiguracion() {
           membresiasPorGiftCard: mpgc,
           giftCardActivo:        gcActivo,
           tiendaActiva:          tiendaActiva,
+          saldoGiftCardActivo:   saldoGcActivo,
           fechaSorteo:           fechaSorteo || null,
           qrPagoUrl:             qrPagoUrl || "",
           brebKey:               brebKey || "",
@@ -143,6 +154,29 @@ export default function PaginaConfiguracion() {
     }
   }
 
+  function pedirConfirmacionToggle(
+    campo: "gc" | "tienda" | "saldoGc",
+    estadoActual: boolean,
+    nombreOpcion: string
+  ) {
+    const activar = !estadoActual;
+    setConfirmarToggle({
+      campo,
+      activar,
+      titulo: activar ? "Activar opción" : "Desactivar opción",
+      mensaje: `¿Seguro que deseas ${activar ? "activar" : "desactivar"} la opción de ${nombreOpcion}? Recuerda que el cambio se aplica al guardar la configuración.`,
+    });
+  }
+
+  function confirmarToggleAccion() {
+    if (!confirmarToggle) return;
+    const { campo, activar } = confirmarToggle;
+    if (campo === "gc") setGcActivo(activar);
+    if (campo === "tienda") setTiendaActiva(activar);
+    if (campo === "saldoGc") setSaldoGcActivo(activar);
+    setConfirmarToggle(null);
+  }
+
   if (status === "loading" || cargando) return null;
 
   const fondoPremiosPct = Math.max(0, 100 - margen);
@@ -157,6 +191,17 @@ export default function PaginaConfiguracion() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+
+      {confirmarToggle && (
+        <ModalConfirmar
+          titulo={confirmarToggle.titulo}
+          mensaje={confirmarToggle.mensaje}
+          textoConfirmar={confirmarToggle.activar ? "Sí, activar" : "Sí, desactivar"}
+          onConfirmar={confirmarToggleAccion}
+          onCancelar={() => setConfirmarToggle(null)}
+        />
+      )}
+
       <main className="flex-1 bg-gray-50 py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6">
 
@@ -317,7 +362,7 @@ export default function PaginaConfiguracion() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setGcActivo((v) => !v)}
+                  onClick={() => pedirConfirmacionToggle("gc", gcActivo, "el sistema de gift cards")}
                   className={`relative flex-shrink-0 w-14 h-7 rounded-full transition-colors duration-200 focus:outline-none ${
                     gcActivo ? "bg-green-500" : "bg-gray-300"
                   }`}
@@ -336,6 +381,38 @@ export default function PaginaConfiguracion() {
               )}
             </div>
 
+            {/* ── Activar / desactivar gift card → saldo ──────────────── */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-bold text-gray-800">Añadir gift cards al saldo</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {saldoGcActivo
+                      ? "Activo — usuarios con correo verificado pueden convertir sus gift cards en saldo de cuenta."
+                      : "Inactivo — la opción \"Añadir a saldo\" está oculta para todos los usuarios."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => pedirConfirmacionToggle("saldoGc", saldoGcActivo, "añadir gift cards al saldo")}
+                  className={`relative flex-shrink-0 w-14 h-7 rounded-full transition-colors duration-200 focus:outline-none ${
+                    saldoGcActivo ? "bg-green-500" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform duration-200 ${
+                      saldoGcActivo ? "translate-x-7" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+              {!saldoGcActivo && (
+                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs text-amber-700 font-medium">
+                  ⚠️ Deshabilitada por defecto. Solo usuarios con correo verificado podrán usarla al activarla.
+                </div>
+              )}
+            </div>
+
             {/* ── Activar / desactivar tienda de bonos ─────────────────── */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <div className="flex items-center justify-between gap-4">
@@ -349,7 +426,7 @@ export default function PaginaConfiguracion() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setTiendaActiva((v) => !v)}
+                  onClick={() => pedirConfirmacionToggle("tienda", tiendaActiva, "la tienda de bonos")}
                   className={`relative flex-shrink-0 w-14 h-7 rounded-full transition-colors duration-200 focus:outline-none ${
                     tiendaActiva ? "bg-green-500" : "bg-gray-300"
                   }`}

@@ -70,12 +70,39 @@ export async function POST(
     const montoDescuento = giftCard ? Math.min(giftCard.valor, precioCaja) : 0;
     const montoCobrado = precioCaja - montoDescuento;
 
-    const [cajaActualizada] = await prisma.$transaction([
-      prisma.caja.update({
+    // El resto (si lo hay tras la gift card) se paga con saldo de la cuenta —
+    // esta ruta es solo para pago interno (saldo/gift card); si no alcanza,
+    // el frontend debe ofrecer pagar con Bold en vez de reintentar aquí.
+    if (montoCobrado > 0) {
+      const usuarioSaldo = await prisma.user.findUnique({ where: { id: userId }, select: { saldoPuntos: true } });
+      if (!usuarioSaldo || usuarioSaldo.saldoPuntos < montoCobrado) {
+        return NextResponse.json(
+          {
+            mensaje: `Saldo insuficiente. Te faltan $${(montoCobrado - (usuarioSaldo?.saldoPuntos ?? 0)).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP. Puedes pagar con tarjeta, PSE o Nequi.`,
+            codigo: "SALDO_INSUFICIENTE",
+            montoFaltante: montoCobrado - (usuarioSaldo?.saldoPuntos ?? 0),
+          },
+          { status: 402 }
+        );
+      }
+    }
+
+    const cajaActualizada = await prisma.$transaction(async (tx) => {
+      if (montoCobrado > 0) {
+        // Descuento atómico — el WHERE saldoPuntos >= montoCobrado evita saldo negativo por condición de carrera
+        const deducido = await tx.user.updateMany({
+          where: { id: userId, saldoPuntos: { gte: montoCobrado } },
+          data: { saldoPuntos: { decrement: montoCobrado } },
+        });
+        if (deducido.count === 0) throw new Error("SALDO_INSUFICIENTE");
+      }
+
+      const actualizada = await tx.caja.update({
         where: { numero },
         data: { estado: "VENDIDA", userId, fechaCompra: new Date(), idCompra },
-      }),
-      prisma.transaccion.create({
+      });
+
+      await tx.transaccion.create({
         data: {
           userId,
           tipo: "COMPRA",
@@ -85,14 +112,27 @@ export async function POST(
             : `Compra de membresía #${numero}`,
           referencia: idCompra,
         },
-      }),
-      ...(giftCard
-        ? [prisma.giftCard.update({
-            where: { id: giftCard.id },
-            data: { estado: "USADA", usadaEn: new Date(), nota: `Usada en compra membresía #${numero}` },
-          })]
-        : []),
-    ]);
+      });
+
+      if (giftCard) {
+        await tx.giftCard.update({
+          where: { id: giftCard.id },
+          data: { estado: "USADA", usadaEn: new Date(), nota: `Usada en compra membresía #${numero}` },
+        });
+      }
+
+      return actualizada;
+    }).catch((err) => {
+      if (err instanceof Error && err.message === "SALDO_INSUFICIENTE") return null;
+      throw err;
+    });
+
+    if (!cajaActualizada) {
+      return NextResponse.json(
+        { mensaje: "Saldo insuficiente al momento de procesar. Intenta de nuevo o paga con tarjeta.", codigo: "SALDO_INSUFICIENTE" },
+        { status: 402 }
+      );
+    }
 
     // Email comprobante — fire and forget
     prisma.user.findUnique({ where: { id: userId }, select: { nombre: true, correo: true } })

@@ -295,6 +295,7 @@ model Config {
   datosBancarios   String?   @default("")
   linkPagoBoldUrl  String?   @default("")
   tiendaActiva     Boolean   @default(true)
+  saldoGiftCardActivo Boolean @default(false)
 
   @@map("config")
 }
