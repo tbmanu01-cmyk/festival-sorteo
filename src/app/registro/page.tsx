@@ -109,6 +109,16 @@ function FormularioRegistro() {
   const refCode = refCodeUrl || codigoManual.trim().toUpperCase();
   const tieneInvitacion = Boolean(slotToken || refCode);
 
+  const [invitadoPor, setInvitadoPor] = useState<{ nombre: string; apellido: string } | null>(null);
+
+  useEffect(() => {
+    if (!refCodeUrl) { setInvitadoPor(null); return; }
+    fetch(`/api/referidos/quien-invita?codigo=${encodeURIComponent(refCodeUrl)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setInvitadoPor)
+      .catch(() => setInvitadoPor(null));
+  }, [refCodeUrl]);
+
   const {
     register,
     handleSubmit,
@@ -197,7 +207,11 @@ function FormularioRegistro() {
               <div className="bg-[#102463]/5 border border-[#1B4F8A]/20 rounded-lg px-4 py-3 flex items-center gap-2">
                 <span className="text-lg">🎁</span>
                 <p className="text-[#102463] text-sm font-medium">
-                  Fuiste invitado con el código <span className="font-extrabold">{refCodeUrl}</span> — ¡bienvenido!
+                  {invitadoPor ? (
+                    <>Fuiste invitado por <span className="font-extrabold">{invitadoPor.nombre} {invitadoPor.apellido}</span> con el código <span className="font-extrabold">{refCodeUrl}</span> — ¡bienvenido!</>
+                  ) : (
+                    <>Fuiste invitado con el código <span className="font-extrabold">{refCodeUrl}</span> — ¡bienvenido!</>
+                  )}
                 </p>
               </div>
             )}
