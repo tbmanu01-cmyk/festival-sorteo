@@ -108,7 +108,13 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 8 * 60 * 60, // 8 horas
+    // maxAge (30 días) debe ser MAYOR que updateAge (1 día) — si no, la
+    // sesión nunca alcanza a renovarse sola y expira duro sin importar que
+    // el usuario esté activo. Con 8h de maxAge y el updateAge por defecto
+    // de 24h (mayor que la propia sesión) esto pasaba siempre: cualquiera
+    // que volviera más tarde el mismo día quedaba deslogueado sin motivo.
+    maxAge: 30 * 24 * 60 * 60, // 30 días
+    updateAge: 24 * 60 * 60,   // renueva la sesión si hay actividad tras 1 día
   },
   secret: process.env.NEXTAUTH_SECRET,
   // tienda10k.com (sin www) sirve la app directamente en vez de redirigir a
