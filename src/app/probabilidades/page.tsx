@@ -151,7 +151,12 @@ export default function PaginaProbabilidades() {
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-10">
               <h2 className="text-3xl font-extrabold text-[#1B4F8A] mb-2">Con 1 membresía</h2>
-              <p className="text-gray-500 text-sm">Probabilidades exactas — universo de 10.000 números (0000–9999)</p>
+              <p className="text-gray-500 text-sm">
+                Probabilidades exactas calculadas para 10.000 membresías con un valor de $50.000 cada una (0000–9999)
+              </p>
+              <p className="text-gray-500 text-sm mt-1">
+                Comprando una sola membresía numerada participas en las siguientes modalidades de selección de membresías:
+              </p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
