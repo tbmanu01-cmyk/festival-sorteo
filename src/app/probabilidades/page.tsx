@@ -125,13 +125,13 @@ export default function PaginaProbabilidades() {
                 Fácil y transparente
               </span>
               <h2 className="text-3xl font-extrabold text-[#1B4F8A] mb-2">¿Cómo funciona?</h2>
-              <p className="text-gray-500 text-sm">En 3 simples pasos empiezas a participar por los premios del Tienda 10K.</p>
+              <p className="text-gray-500 text-sm">En 3 simples pasos empiezas a participar por los premios de la Tienda 10K.</p>
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {[
                 { n: "01", icono: "📝", titulo: "Regístrate gratis", texto: "Crea tu cuenta en 2 minutos. Solo necesitas tus datos básicos para empezar." },
-                { n: "02", icono: "🎟️", titulo: "Elige tu membresía", texto: "Compra uno o varios números (0000–9999). Cada membresía es una oportunidad distinta de ganar." },
-                { n: "03", icono: "🏆", titulo: "Participa y gana", texto: "Si tu número coincide con las cifras ganadoras de la selección aleatoria, tu premio llega directo a tu billetera." },
+                { n: "02", icono: "🎟️", titulo: "Elige tu membresía", texto: "Compra una o varias membresías (0000–9999). Cada membresía es una oportunidad distinta de ganar." },
+                { n: "03", icono: "🏆", titulo: "Participa y gana", texto: "Si tu membresía numerada coincide con la membresía ganadora, tu premio llega directo a tu billetera." },
               ].map((paso) => (
                 <div key={paso.n} className="relative bg-white rounded-2xl border border-gray-100 shadow-sm px-6 pt-9 pb-6">
                   <div className="absolute -top-5 left-6 w-10 h-10 rounded-full bg-[#1B4F8A] text-white flex items-center justify-center font-extrabold text-sm shadow-md">
