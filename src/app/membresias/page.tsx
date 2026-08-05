@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import CountdownHero from "@/components/CountdownHero";
+import ModalConfirmar from "@/components/ModalConfirmar";
 
 type EstadoCaja = "DISPONIBLE" | "RESERVADA" | "VENDIDA";
 type Filtro = "todos" | "disponibles" | "ocupados";
@@ -32,14 +33,17 @@ interface ModalProps {
   precio: number;
   giftCardId: string | null;
   giftCardValor: number;
+  giftCardCodigo: string | null;
   esSorpresa: boolean;
   onCerrar: () => void;
   onConfirmar: (numero: string) => Promise<void>;
+  onComprarConGiftCard: (numero: string) => Promise<void>;
   cargando: boolean;
-  resultado: { ok: boolean; mensaje: string; expira?: string } | null;
+  resultado: { ok: boolean; mensaje: string; expira?: string; compra?: boolean } | null;
 }
 
-function ModalReserva({ caja, precio, giftCardId, giftCardValor, esSorpresa, onCerrar, onConfirmar, cargando, resultado }: ModalProps) {
+function ModalReserva({ caja, precio, giftCardId, giftCardValor, giftCardCodigo, esSorpresa, onCerrar, onConfirmar, onComprarConGiftCard, cargando, resultado }: ModalProps) {
+  const [confirmandoPago, setConfirmandoPago] = useState(false);
   if (!caja) return null;
   const descuento = giftCardId ? Math.min(giftCardValor, precio) : 0;
   const total = precio - descuento;
@@ -61,7 +65,9 @@ function ModalReserva({ caja, precio, giftCardId, giftCardValor, esSorpresa, onC
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">¡Membresía reservada!</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {resultado.compra ? "¡Membresía comprada!" : "¡Membresía reservada!"}
+              </h3>
               <div className="text-6xl font-extrabold text-[#102463] mb-3">{caja.numero}</div>
               <p className="text-gray-600 text-sm mb-1">{resultado.mensaje}</p>
               {resultado.expira && (
@@ -165,18 +171,43 @@ function ModalReserva({ caja, precio, giftCardId, giftCardValor, esSorpresa, onC
               >
                 {cargando ? "..." : "Reservar"}
               </button>
-              <a
-                href={`/membresias/pagar?numero=${caja.numero}`}
-                className="flex-1 bg-[#ffbd1f] hover:bg-yellow-300 text-[#102463] font-bold py-3 rounded-full transition-all shadow-md text-center text-sm"
-              >
-                Pagar
-              </a>
+              {giftCardId ? (
+                <button
+                  onClick={() => setConfirmandoPago(true)}
+                  disabled={cargando}
+                  className="flex-1 bg-[#ffbd1f] hover:bg-yellow-300 disabled:opacity-50 text-[#102463] font-bold py-3 rounded-full transition-all shadow-md text-center text-sm"
+                >
+                  {cargando ? "..." : "Pagar"}
+                </button>
+              ) : (
+                <a
+                  href={`/membresias/pagar?numero=${caja.numero}`}
+                  className="flex-1 bg-[#ffbd1f] hover:bg-yellow-300 text-[#102463] font-bold py-3 rounded-full transition-all shadow-md text-center text-sm"
+                >
+                  Pagar
+                </a>
+              )}
             </div>
 
             <p className="text-center text-gray-400 text-xs mt-4">
               Al reservar o pagar aceptas los{" "}
               <Link href="/terminos" className="underline">términos y condiciones</Link>
             </p>
+
+            {confirmandoPago && (
+              <ModalConfirmar
+                titulo="Confirmar pago con gift card"
+                mensaje={
+                  total === 0
+                    ? `¿Deseas usar tu gift card ${giftCardCodigo ?? ""} para pagar la membresía #${caja.numero} por completo? Quedará en $0.`
+                    : `¿Deseas aplicar tu gift card ${giftCardCodigo ?? ""} (−$${descuento.toLocaleString("es-CO", { maximumFractionDigits: 0 })}) y pagar los $${total.toLocaleString("es-CO", { maximumFractionDigits: 0 })} restantes con tu saldo de cuenta?`
+                }
+                textoConfirmar="Sí, pagar"
+                cargando={cargando}
+                onConfirmar={async () => { await onComprarConGiftCard(caja.numero); setConfirmandoPago(false); }}
+                onCancelar={() => setConfirmandoPago(false)}
+              />
+            )}
           </>
         )}
       </div>
@@ -326,6 +357,7 @@ function MembresiasInner() {
   const [vendidasTotal, setVendidasTotal] = useState(0);
   const [giftCardId, setGiftCardId] = useState<string | null>(null);
   const [giftCardValor, setGiftCardValor] = useState(0);
+  const [giftCardCodigo, setGiftCardCodigo] = useState<string | null>(null);
   const [datos, setDatos] = useState<RespuestaCajas | null>(null);
   const [cargando, setCargando] = useState(true);
   const [pagina, setPagina] = useState(1);
@@ -339,6 +371,7 @@ function MembresiasInner() {
     ok: boolean;
     mensaje: string;
     expira?: string;
+    compra?: boolean;
   } | null>(null);
   const [buscandoAleatoria, setBuscandoAleatoria] = useState(false);
   const [esSorpresa, setEsSorpresa] = useState(false);
@@ -364,9 +397,9 @@ function MembresiasInner() {
     if (!gcId || !session) return;
     fetch("/api/gift-cards")
       .then((r) => r.json())
-      .then((data: { giftCards: { id: string; valor: number; estado: string }[] }) => {
+      .then((data: { giftCards: { id: string; codigo: string; valor: number; estado: string }[] }) => {
         const gc = data.giftCards.find((g) => g.id === gcId && g.estado === "DISPONIBLE");
-        if (gc) { setGiftCardId(gc.id); setGiftCardValor(gc.valor); }
+        if (gc) { setGiftCardId(gc.id); setGiftCardValor(gc.valor); setGiftCardCodigo(gc.codigo); }
       })
       .catch(() => undefined);
   }, [searchParams, session]);
@@ -464,6 +497,25 @@ function MembresiasInner() {
       });
     } catch {
       setResultadoReserva({ ok: false, mensaje: "Error de conexión. Intenta nuevamente." });
+    } finally {
+      setReservandoCaja(false);
+    }
+  };
+
+  const comprarConGiftCard = async (numero: string) => {
+    if (!giftCardId) return;
+    setReservandoCaja(true);
+    try {
+      const res = await fetch(`/api/cajas/${numero}/comprar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ giftCardId }),
+      });
+      const json = await res.json();
+      setResultadoReserva({ ok: res.ok, mensaje: json.mensaje, compra: true });
+      if (res.ok) { setGiftCardId(null); setGiftCardValor(0); setGiftCardCodigo(null); }
+    } catch {
+      setResultadoReserva({ ok: false, mensaje: "Error de conexión. Intenta nuevamente.", compra: true });
     } finally {
       setReservandoCaja(false);
     }
@@ -672,9 +724,11 @@ function MembresiasInner() {
         precio={precioCaja}
         giftCardId={giftCardId}
         giftCardValor={giftCardValor}
+        giftCardCodigo={giftCardCodigo}
         esSorpresa={esSorpresa}
         onCerrar={cerrarModal}
         onConfirmar={confirmarReserva}
+        onComprarConGiftCard={comprarConGiftCard}
         cargando={reservandoCaja}
         resultado={resultadoReserva}
       />
