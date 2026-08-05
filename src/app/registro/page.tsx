@@ -96,12 +96,18 @@ function CampoSelect({
 function FormularioRegistro() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const refCode   = searchParams.get("ref")  ?? "";
-  const slotToken = searchParams.get("slot") ?? "";
+  const refCodeUrl = searchParams.get("ref")  ?? "";
+  const slotToken  = searchParams.get("slot") ?? "";
 
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [ciudades, setCiudades] = useState<string[]>([]);
+  const [codigoManual, setCodigoManual] = useState("");
+
+  // Club 10K es solo por invitación: sin link/QR (?ref= o ?slot=) ni código
+  // escrito a mano, no se puede crear cuenta.
+  const refCode = refCodeUrl || codigoManual.trim().toUpperCase();
+  const tieneInvitacion = Boolean(slotToken || refCode);
 
   const {
     register,
@@ -121,6 +127,10 @@ function FormularioRegistro() {
   }, [departamentoSeleccionado]);
 
   async function onSubmit(data: RegistroFormData) {
+    if (!tieneInvitacion) {
+      setError("Necesitas un código de invitación o un link de referido para crear una cuenta.");
+      return;
+    }
     setCargando(true);
     setError("");
     try {
@@ -183,12 +193,28 @@ function FormularioRegistro() {
                 </p>
               </div>
             )}
-            {!slotToken && refCode && (
+            {!slotToken && refCodeUrl && (
               <div className="bg-[#102463]/5 border border-[#1B4F8A]/20 rounded-lg px-4 py-3 flex items-center gap-2">
                 <span className="text-lg">🎁</span>
                 <p className="text-[#102463] text-sm font-medium">
-                  Fuiste invitado con el código <span className="font-extrabold">{refCode}</span> — ¡bienvenido!
+                  Fuiste invitado con el código <span className="font-extrabold">{refCodeUrl}</span> — ¡bienvenido!
                 </p>
+              </div>
+            )}
+            {!slotToken && !refCodeUrl && (
+              <div className="bg-amber-50 border border-amber-300 rounded-lg px-4 py-3">
+                <p className="text-amber-900 text-sm font-bold mb-2">
+                  🔒 Club 10K es solo por invitación
+                </p>
+                <p className="text-amber-800 text-xs mb-3">
+                  Necesitas el código de referido de quien te invitó (o su link/QR) para poder registrarte.
+                </p>
+                <CampoTexto
+                  label="Código de invitación *"
+                  placeholder="Ej: A1B2C3"
+                  value={codigoManual}
+                  onChange={(e) => setCodigoManual(e.target.value.toUpperCase())}
+                />
               </div>
             )}
 
@@ -367,10 +393,10 @@ function FormularioRegistro() {
             {/* Botón */}
             <button
               type="submit"
-              disabled={cargando}
+              disabled={cargando || !tieneInvitacion}
               className="w-full bg-[#102463] disabled:bg-gray-400 text-white font-bold py-3.5 rounded-full text-lg transition-all shadow-lg hover:bg-[#173592]"
             >
-              {cargando ? "Registrando..." : "Registrarse"}
+              {cargando ? "Registrando..." : !tieneInvitacion ? "Ingresa tu código de invitación" : "Registrarse"}
             </button>
 
             <p className="text-center text-gray-500 text-sm">

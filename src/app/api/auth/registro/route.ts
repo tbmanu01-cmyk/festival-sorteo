@@ -52,6 +52,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Registro cerrado: solo se puede entrar con invitación real (link/QR
+    // con slotToken, o un código de referido de un usuario existente). Se
+    // valida ANTES de crear el usuario para no dejar cuentas huérfanas.
+    if (slotToken) {
+      const slotValido = await prisma.referido.findFirst({
+        where: { slotToken, slotExpiry: { gt: new Date() } },
+      });
+      if (!slotValido) {
+        return NextResponse.json(
+          { mensaje: "Ese link de invitación ya expiró o no es válido. Pide uno nuevo a quien te invitó." },
+          { status: 400 }
+        );
+      }
+    } else if (refCode) {
+      const [referidorValido] = await prisma.$queryRaw<{ id: string }[]>`
+        SELECT id FROM users WHERE "codigoRef" = ${refCode} LIMIT 1
+      `;
+      if (!referidorValido) {
+        return NextResponse.json(
+          { mensaje: "Ese código de referido no existe. Verifica que esté bien escrito." },
+          { status: 400 }
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { mensaje: "Necesitas un link de invitación o un código de referido para crear una cuenta en Club 10K." },
+        { status: 400 }
+      );
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
 
     // Generate unique referral code
@@ -138,15 +168,9 @@ export async function POST(req: NextRequest) {
           }
         }
       }
-    } else if (adminUser) {
-      // Sin código de referido → hijo directo del admin
-      const refId = crypto.randomUUID();
-      await prisma.$executeRaw`
-        INSERT INTO referidos (id, "referidorId", "referidoId", fecha, compro)
-        VALUES (${refId}, ${adminUser.id}, ${nuevoId}, NOW(), false)
-        ON CONFLICT ("referidoId") DO NOTHING
-      `;
     }
+    // No hay rama "sin código" — ya se validó arriba que slotToken o refCode
+    // vienen presentes y son válidos antes de llegar hasta acá.
 
     // Enviar código de verificación (6 dígitos, 10 min) — más robusto que un
     // link: no depende de que sobreviva un clic real ni el escaneo previo
