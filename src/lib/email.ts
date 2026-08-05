@@ -252,28 +252,36 @@ export async function enviarRetiroRechazado(opts: {
 }
 
 // ── Verificación de correo al registrarse ────────────────────────────────
+// Código de 6 dígitos en vez de link — un link puede quedar invalidado por
+// el escaneo automático que hacen algunos clientes de correo antes de que
+// el usuario le dé clic. El código lo escribe el usuario ya con sesión
+// activa en la app, sin depender de que el link sobreviva ese salto.
 
-export async function enviarVerificacionCorreo(opts: {
+export async function enviarCodigoVerificacion(opts: {
   correo: string;
   nombre: string;
-  enlace: string;
+  codigo: string;
+  expiraMin: number;
 }) {
-  const { correo, nombre, enlace } = opts;
+  const { correo, nombre, codigo, expiraMin } = opts;
+  const digitos = codigo.split("").map(d =>
+    `<span style="display:inline-block;width:44px;height:56px;line-height:56px;text-align:center;background:#f0f4ff;border:2px solid #c7d2fe;border-radius:10px;font-size:28px;font-weight:900;color:#1B4F8A;margin:0 4px;">${d}</span>`
+  ).join("");
+
   const cuerpo = `
     <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">Confirma tu correo 📧</h2>
-    <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, ya casi terminas. Haz clic en el botón para activar tu cuenta.</p>
-    <div style="text-align:center;margin:32px 0;">
-      <a href="${enlace}" style="display:inline-block;background:#1B4F8A;color:#ffffff;font-weight:700;font-size:16px;padding:16px 40px;border-radius:999px;text-decoration:none;letter-spacing:0.3px;">
-        ✅ Verificar mi correo
-      </a>
+    <p style="margin:0 0 20px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, ingresa este código en la app para activar tu cuenta.</p>
+    <div style="text-align:center;padding:24px 0;">
+      <p style="margin:0 0 12px;color:#888;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Tu código</p>
+      <div>${digitos}</div>
+      <p style="margin:16px 0 0;color:#999;font-size:13px;">Válido por <strong>${expiraMin} minutos</strong>.</p>
     </div>
-    <p style="margin:0;color:#999;font-size:13px;line-height:1.6;text-align:center;">
-      Este enlace es válido por <strong>24 horas</strong>.<br>
+    <p style="margin:16px 0 0;color:#999;font-size:13px;line-height:1.6;text-align:center;">
       Si no creaste esta cuenta, ignora este correo.
     </p>`;
   await enviarCorreo({
     to: correo,
-    subject: "Verifica tu correo para activar tu cuenta — Club 10K",
+    subject: `${codigo} es tu código para activar tu cuenta — Club 10K`,
     html: base(cuerpo),
   });
 }

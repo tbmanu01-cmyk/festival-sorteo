@@ -1358,6 +1358,8 @@ export default function Dashboard() {
   const [modalRetiro, setModalRetiro] = useState(false);
   const [reenviando, setReenviando] = useState(false);
   const [mensajeVerify, setMensajeVerify] = useState<{ texto: string; ok: boolean } | null>(null);
+  const [codigoVerif, setCodigoVerif] = useState("");
+  const [verificando, setVerificando] = useState(false);
   const [tiendaActiva, setTiendaActiva] = useState(true);
 
   useEffect(() => {
@@ -1459,21 +1461,52 @@ export default function Dashboard() {
                     {mensajeVerify.ok ? "✅ " : "⚠️ "}{mensajeVerify.texto}
                   </p>
                 )}
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-3">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={codigoVerif}
+                    onChange={(e) => setCodigoVerif(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="Código de 6 dígitos"
+                    className="w-full sm:w-44 text-center tracking-[0.3em] font-bold text-lg border-2 border-amber-300 rounded-xl px-3 py-2.5 bg-white focus:outline-none focus:border-amber-500"
+                  />
+                  <button
+                    onClick={async () => {
+                      setVerificando(true);
+                      setMensajeVerify(null);
+                      const res = await fetch("/api/auth/verificar-codigo", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ codigo: codigoVerif }),
+                      });
+                      const j = await res.json() as { mensaje: string };
+                      setMensajeVerify({ texto: j.mensaje, ok: res.ok });
+                      setVerificando(false);
+                      if (res.ok) { setCodigoVerif(""); cargarDatos(); }
+                    }}
+                    disabled={verificando || codigoVerif.length !== 6}
+                    className="flex-shrink-0 bg-[#1B4F8A] hover:bg-[#1a5fa8] disabled:opacity-40 text-white font-bold text-sm px-6 py-2.5 rounded-xl transition-colors shadow-sm"
+                  >
+                    {verificando ? "Verificando..." : "Verificar código"}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setReenviando(true);
+                      setMensajeVerify(null);
+                      const res = await fetch("/api/auth/reenviar-verificacion", { method: "POST" });
+                      const j = await res.json() as { mensaje: string };
+                      setMensajeVerify({ texto: j.mensaje, ok: res.ok });
+                      setReenviando(false);
+                    }}
+                    disabled={reenviando}
+                    className="flex-shrink-0 text-amber-800 hover:text-amber-900 underline disabled:opacity-50 font-semibold text-xs px-2 py-2.5 transition-colors"
+                  >
+                    {reenviando ? "Enviando..." : "Reenviar código"}
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={async () => {
-                  setReenviando(true);
-                  setMensajeVerify(null);
-                  const res = await fetch("/api/auth/reenviar-verificacion", { method: "POST" });
-                  const j = await res.json() as { mensaje: string };
-                  setMensajeVerify({ texto: j.mensaje, ok: res.ok });
-                  setReenviando(false);
-                }}
-                disabled={reenviando}
-                className="flex-shrink-0 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold text-sm px-6 py-3 rounded-xl transition-colors shadow-sm"
-              >
-                {reenviando ? "Enviando..." : "✉️ Reenviar correo de verificación"}
-              </button>
             </div>
           </div>
         )}

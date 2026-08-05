@@ -148,23 +148,23 @@ export async function POST(req: NextRequest) {
       `;
     }
 
-    // Enviar correo de verificación
-    const verifyToken  = crypto.randomUUID();
-    const verifyExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    // Enviar código de verificación (6 dígitos, 10 min) — más robusto que un
+    // link: no depende de que sobreviva un clic real ni el escaneo previo
+    // que hacen algunos clientes de correo.
+    const codigoVerificacion = String(Math.floor(100000 + Math.random() * 900000));
+    const verifyExpiry = new Date(Date.now() + 10 * 60 * 1000);
     await (await import("@/lib/prisma")).prisma.user.update({
       where: { id: nuevoId },
-      data: { verifyToken, verifyTokenExpiry: verifyExpiry },
+      data: { verifyToken: codigoVerificacion, verifyTokenExpiry: verifyExpiry },
     });
-    const base   = process.env.NEXTAUTH_URL ?? "https://tienda10k.com";
-    const enlace = `${base}/api/auth/verificar-correo?token=${verifyToken}`;
     // No bloqueamos la respuesta del registro por el correo, pero sí lo
     // esperamos y registramos el error real (antes era fire-and-forget con
     // .catch(console.error) sobre una función que nunca lanzaba en fallos
     // de la API de Resend — ver enviarCorreo() en src/lib/email.ts).
-    import("@/lib/email").then(({ enviarVerificacionCorreo }) =>
-      enviarVerificacionCorreo({ correo, nombre, enlace })
+    import("@/lib/email").then(({ enviarCodigoVerificacion }) =>
+      enviarCodigoVerificacion({ correo, nombre, codigo: codigoVerificacion, expiraMin: 10 })
     ).catch((error) => {
-      console.error(`Error enviando correo de verificación a ${correo}:`, error);
+      console.error(`Error enviando código de verificación a ${correo}:`, error);
     });
 
     return NextResponse.json({ mensaje: "Cuenta creada exitosamente. Revisa tu correo para verificar tu cuenta." }, { status: 201 });

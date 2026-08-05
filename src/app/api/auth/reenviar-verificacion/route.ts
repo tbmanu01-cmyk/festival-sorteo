@@ -22,27 +22,24 @@ export async function POST() {
   if (!user) return NextResponse.json({ mensaje: "Usuario no encontrado." }, { status: 404 });
   if (user.confirmado) return NextResponse.json({ mensaje: "Tu correo ya está verificado." }, { status: 409 });
 
-  const token  = crypto.randomUUID();
-  const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const codigo = String(Math.floor(100000 + Math.random() * 900000));
+  const expiry = new Date(Date.now() + 10 * 60 * 1000);
 
   await prisma.user.update({
     where: { id: userId },
-    data: { verifyToken: token, verifyTokenExpiry: expiry },
+    data: { verifyToken: codigo, verifyTokenExpiry: expiry },
   });
 
-  const base   = process.env.NEXTAUTH_URL ?? "https://tienda10k.com";
-  const enlace = `${base}/api/auth/verificar-correo?token=${token}`;
-
   try {
-    const { enviarVerificacionCorreo } = await import("@/lib/email");
-    await enviarVerificacionCorreo({ correo: user.correo, nombre: user.nombre, enlace });
+    const { enviarCodigoVerificacion } = await import("@/lib/email");
+    await enviarCodigoVerificacion({ correo: user.correo, nombre: user.nombre, codigo, expiraMin: 10 });
   } catch (error) {
-    console.error("Error enviando correo de verificación:", error);
+    console.error("Error enviando código de verificación:", error);
     return NextResponse.json(
       { mensaje: "No pudimos enviar el correo. Intenta de nuevo en unos minutos o contáctanos." },
       { status: 502 }
     );
   }
 
-  return NextResponse.json({ ok: true, mensaje: "Correo de verificación enviado. Revisa tu bandeja (y spam)." });
+  return NextResponse.json({ ok: true, mensaje: "Código enviado. Revisa tu bandeja (y spam) — válido por 10 minutos." });
 }
