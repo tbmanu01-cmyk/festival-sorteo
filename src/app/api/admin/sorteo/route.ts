@@ -210,8 +210,11 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // UNA_CIFRA → gift card (segunda oportunidad); demás categorías → saldo
-      const unaCifraUserIds = new Set(g1.map((c) => c.userId!));
+      // UNA_CIFRA: con pct1Cifra = 0% se devuelve una membresía (gift card, sin
+      // saldo); con pct1Cifra > 0% el admin decidió repartir dinero real y se
+      // acredita como saldo igual que las demás categorías.
+      const otorgaMembresia1Cifra = PCT_1 === 0;
+      const unaCifraUserIds = otorgaMembresia1Cifra ? new Set(g1.map((c) => c.userId!)) : new Set<string>();
 
       const saldosPorUsuario = new Map<string, number>();
       for (const p of premiosData) {
@@ -234,17 +237,20 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Gift cards para ganadores de 1 cifra (una por membresía ganadora)
-      for (const c of g1) {
-        const gcCodigo = `GC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-        await tx.giftCard.create({
-          data: {
-            codigo: gcCodigo,
-            valor: PRECIO_CAJA,
-            propietarioId: c.userId!,
-            nota: `Premio 1 cifra selección ${nuevoSorteo.id} — membresía #${c.numero}`,
-          },
-        });
+      // Gift cards para ganadores de 1 cifra (una por membresía ganadora) —
+      // solo cuando pct1Cifra está en 0% (devuelve membresía)
+      if (otorgaMembresia1Cifra) {
+        for (const c of g1) {
+          const gcCodigo = `GC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+          await tx.giftCard.create({
+            data: {
+              codigo: gcCodigo,
+              valor: PRECIO_CAJA,
+              propietarioId: c.userId!,
+              nota: `Premio 1 cifra selección ${nuevoSorteo.id} — membresía #${c.numero}`,
+            },
+          });
+        }
       }
 
       return nuevoSorteo;
@@ -263,21 +269,23 @@ export async function POST(req: NextRequest) {
     // Emails a ganadores — fire and forget
     if (sorteoCompleto?.premios) {
       import("@/lib/email").then(async ({ enviarPremio, enviarPremioGiftCard }) => {
-        // Recuperar gift cards recién emitidas para los de 1 cifra
+        // Recuperar gift cards recién emitidas para los de 1 cifra (solo aplica con pct1Cifra = 0%)
         const gcPor1Cifra = new Map<string, { codigo: string; valor: number }>();
-        for (const p of sorteoCompleto.premios.filter((p) => p.categoria === "UNA_CIFRA")) {
-          const gc = await prisma.giftCard.findFirst({
-            where: {
-              propietarioId: p.userId,
-              nota: { contains: sorteo.id },
-            },
-            orderBy: { creadaEn: "desc" },
-          });
-          if (gc) gcPor1Cifra.set(p.userId, { codigo: gc.codigo, valor: gc.valor });
+        if (PCT_1 === 0) {
+          for (const p of sorteoCompleto.premios.filter((p) => p.categoria === "UNA_CIFRA")) {
+            const gc = await prisma.giftCard.findFirst({
+              where: {
+                propietarioId: p.userId,
+                nota: { contains: sorteo.id },
+              },
+              orderBy: { creadaEn: "desc" },
+            });
+            if (gc) gcPor1Cifra.set(p.userId, { codigo: gc.codigo, valor: gc.valor });
+          }
         }
 
         for (const p of sorteoCompleto.premios) {
-          if (p.categoria === "UNA_CIFRA") {
+          if (p.categoria === "UNA_CIFRA" && PCT_1 === 0) {
             const gc = gcPor1Cifra.get(p.userId);
             if (gc) {
               enviarPremioGiftCard({

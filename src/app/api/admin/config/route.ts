@@ -56,9 +56,9 @@ export async function PUT(req: NextRequest) {
 
   if (body.ganadores4Cifras !== undefined) {
     const n = body.ganadores4Cifras;
-    if (!Number.isInteger(n) || n < 1 || n > 10) {
+    if (!Number.isInteger(n) || n < 1 || n > 4) {
       return NextResponse.json(
-        { mensaje: "La cantidad de ganadores de 4 cifras debe ser un número entero entre 1 y 10." },
+        { mensaje: "La cantidad de ganadores de 4 cifras debe ser un número entero entre 1 y 4." },
         { status: 400 }
       );
     }

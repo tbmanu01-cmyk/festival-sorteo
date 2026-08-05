@@ -6,7 +6,7 @@ export async function GET() {
   const ganadores = await prisma.ganadorPublico.findMany({
     orderBy: { fecha: "desc" },
     take: 50,
-    include: { user: { select: { nombre: true, apellido: true, ciudad: true } } },
+    include: { user: { select: { nombre: true, apellido: true, ciudad: true, avatar: true } } },
   });
 
   return NextResponse.json({
@@ -15,6 +15,7 @@ export async function GET() {
       nombre: g.user.nombre,
       apellido: g.user.apellido,
       ciudad: g.user.ciudad,
+      avatar: g.user.avatar,
       categoria: g.categoria,
       origen: g.origen,
       numeroCaja: g.numeroCaja,

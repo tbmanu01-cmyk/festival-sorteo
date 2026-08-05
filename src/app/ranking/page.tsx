@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
+import { esImagen } from "@/lib/avatares";
 
 interface Ganador {
   id: string;
@@ -15,6 +16,7 @@ interface Ganador {
   numeroCaja: string | null;
   monto: number | null;
   fecha: string;
+  avatar: string | null;
 }
 
 function mask(s: string): string {
@@ -39,7 +41,20 @@ const CATEGORIA_COLOR: Record<string, { bg: string; color: string }> = {
   "Selección Anticipada": { bg: "rgba(5,150,105,0.12)", color: "#059669" },
 };
 
-function Avatar({ initials: ini, size = 44 }: { initials: string; size?: number }) {
+function Avatar({ initials: ini, avatar, size = 44 }: { initials: string; avatar?: string | null; size?: number }) {
+  if (avatar && esImagen(avatar)) {
+    return (
+      <img
+        src={avatar}
+        alt=""
+        style={{
+          width: size, height: size, borderRadius: 999,
+          objectFit: "cover", flexShrink: 0,
+          border: "1px solid #e3e7f2",
+        }}
+      />
+    );
+  }
   return (
     <div
       style={{
@@ -55,6 +70,10 @@ function Avatar({ initials: ini, size = 44 }: { initials: string; size?: number 
   );
 }
 
+function etiquetaSinMonto(categoria: string): string {
+  return categoria === "1 Cifra" ? "Membresía devuelta" : "Premio especial";
+}
+
 function FilaGanador({ g }: { g: Ganador }) {
   const cat = CATEGORIA_COLOR[g.categoria] ?? { bg: "rgba(16,36,99,0.08)", color: "#102463" };
   return (
@@ -68,7 +87,7 @@ function FilaGanador({ g }: { g: Ganador }) {
         boxShadow: "0 2px 6px rgba(16,36,99,0.04)",
       }}
     >
-      <Avatar initials={initials(g)} size={38} />
+      <Avatar initials={initials(g)} avatar={g.avatar} size={38} />
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -90,7 +109,7 @@ function FilaGanador({ g }: { g: Ganador }) {
             +${g.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
           </p>
         ) : (
-          <p style={{ fontWeight: 700, fontSize: 12, color: "#98a2bf", margin: 0 }}>Premio especial</p>
+          <p style={{ fontWeight: 700, fontSize: 12, color: "#98a2bf", margin: 0 }}>{etiquetaSinMonto(g.categoria)}</p>
         )}
         <p style={{ fontSize: 11, color: "#98a2bf", margin: 0 }}>
           {new Date(g.fecha).toLocaleDateString("es-CO", { day: "2-digit", month: "short" })}
@@ -196,7 +215,7 @@ export default function PaginaRanking() {
                       🎉 Último ganador
                     </p>
                     <div style={{ marginBottom: 6 }}>
-                      <Avatar initials={initials(destacado)} size={56} />
+                      <Avatar initials={initials(destacado)} avatar={destacado.avatar} size={56} />
                     </div>
                     <p style={{ fontWeight: 800, color: "white", fontSize: 18, margin: "8px 0 4px" }}>
                       {nombreOculto(destacado)}
@@ -209,7 +228,7 @@ export default function PaginaRanking() {
                         +${destacado.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
                       </p>
                     ) : (
-                      <p style={{ fontWeight: 700, color: "#ffbd1f", fontSize: 16, margin: 0 }}>Premio especial</p>
+                      <p style={{ fontWeight: 700, color: "#ffbd1f", fontSize: 16, margin: 0 }}>{etiquetaSinMonto(destacado.categoria)}</p>
                     )}
                   </div>
                 </div>

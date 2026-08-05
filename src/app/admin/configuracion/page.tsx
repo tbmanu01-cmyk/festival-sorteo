@@ -64,8 +64,17 @@ export default function PaginaConfiguracion() {
   const sumaPremios = pct4 + pct3 + pct2 + pct1;
   const sumaTotal   = margen + sumaPremios;
   const sumaOk      = Math.abs(sumaTotal - 100) < 0.1;
-  const n4Ok        = Number.isInteger(n4) && n4 >= 1 && n4 <= 10;
+  const n4Ok        = Number.isInteger(n4) && n4 >= 1 && n4 <= 4;
   const mpgcOk      = Number.isInteger(mpgc) && mpgc >= 1 && mpgc <= 100;
+
+  const [vendidasTotal, setVendidasTotal] = useState<number | null>(null);
+
+  function ganadoresRecomendados(vendidas: number): number {
+    if (vendidas <= 2500) return 1;
+    if (vendidas <= 5000) return 2;
+    if (vendidas <= 7500) return 3;
+    return 4;
+  }
 
   useEffect(() => {
     fetch("/api/admin/config")
@@ -90,6 +99,11 @@ export default function PaginaConfiguracion() {
         setLinkPagoBoldUrl(c.linkPagoBoldUrl ?? "");
       })
       .finally(() => setCargando(false));
+
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((c: { vendidasTotal?: number }) => setVendidasTotal(c.vendidasTotal ?? 0))
+      .catch(() => undefined);
   }, []);
 
   async function guardar(e: React.FormEvent) {
@@ -137,7 +151,7 @@ export default function PaginaConfiguracion() {
     { label: "Premio 4 cifras exactas 🏆", value: pct4, set: setPct4, color: "bg-yellow-400" },
     { label: "Premio 3 últimas cifras 🥈",  value: pct3, set: setPct3, color: "bg-gray-400"   },
     { label: "Premio 2 últimas cifras 🥉",  value: pct2, set: setPct2, color: "bg-amber-600"  },
-    { label: "Fondo 1 cifra → devuelve membresía 🎫", value: pct1, set: setPct1, color: "bg-blue-400" },
+    { label: "Premio 1 cifra 🎫", value: pct1, set: setPct1, color: "bg-blue-400" },
   ];
 
   return (
@@ -185,7 +199,7 @@ export default function PaginaConfiguracion() {
                 <input
                   type="number"
                   min={1}
-                  max={10}
+                  max={4}
                   value={n4}
                   onChange={(e) => setN4(Math.round(Number(e.target.value)))}
                   className={`w-28 text-center text-3xl font-extrabold tracking-widest border-2 rounded-xl py-3 focus:outline-none focus:ring-2 transition-colors ${
@@ -196,12 +210,37 @@ export default function PaginaConfiguracion() {
                 />
                 <div>
                   <p className="text-sm font-semibold text-gray-700">
-                    {n4Ok ? `${n4} selecci${n4 !== 1 ? "ones" : "ón"} de 4 cifras` : "Debe ser entre 1 y 10"}
+                    {n4Ok ? `${n4} selecci${n4 !== 1 ? "ones" : "ón"} de 4 cifras` : "Debe ser entre 1 y 4"}
                   </p>
                   <p className="text-xs text-gray-400 mt-0.5">
                     Distribución 2:1 — gran ganador recibe el doble que los previos
                   </p>
                 </div>
+              </div>
+
+              {/* Advertencia: los ganadores deben ser proporcionales a las membresías vendidas */}
+              <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800">
+                <p className="font-bold mb-1.5">⚠️ La cantidad de ganadores debe ir acorde a las membresías vendidas</p>
+                <p className="text-amber-700 mb-2">
+                  Para garantizar que haya membresías suficientes vendidas y así diversificar el premio mayor:
+                </p>
+                <ul className="space-y-0.5 text-amber-700">
+                  <li>De 1 a 2.500 membresías vendidas → <strong>1 ganador</strong></li>
+                  <li>De 2.501 a 5.000 → <strong>2 ganadores</strong></li>
+                  <li>De 5.001 a 7.500 → <strong>3 ganadores</strong></li>
+                  <li>De 7.501 a 10.000 → <strong>4 ganadores</strong></li>
+                </ul>
+                {vendidasTotal !== null && (
+                  <p className="mt-2.5 pt-2.5 border-t border-amber-200 font-semibold">
+                    Ahora mismo hay <strong>{vendidasTotal.toLocaleString("es-CO")}</strong> membresías vendidas
+                    → recomendado: <strong>{ganadoresRecomendados(vendidasTotal)} ganador{ganadoresRecomendados(vendidasTotal) !== 1 ? "es" : ""}</strong>.
+                    {n4Ok && n4 !== ganadoresRecomendados(vendidasTotal) && (
+                      <span className="block mt-1 text-red-700">
+                        Tienes {n4} configurado{n4 !== 1 ? "s" : ""} — no coincide con lo recomendado para el volumen actual de ventas.
+                      </span>
+                    )}
+                  </p>
+                )}
               </div>
 
               {/* Mini preview de las selecciones con montos ponderados */}
@@ -211,7 +250,7 @@ export default function PaginaConfiguracion() {
                 const montoLast  = n4 > 1 ? (2 * fondo4) / (n4 + 1) : fondo4;
                 return (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {Array.from({ length: Math.min(n4, 10) }, (_, i) => {
+                    {Array.from({ length: Math.min(n4, 4) }, (_, i) => {
                       const esUltimo = i === n4 - 1;
                       const monto = esUltimo ? montoLast : montoEarly;
                       return (
@@ -377,6 +416,17 @@ export default function PaginaConfiguracion() {
                     <div className="w-full bg-gray-100 rounded-full h-2">
                       <div className={`${item.color} h-2 rounded-full transition-all`} style={{ width: `${Math.min(item.value, 100)}%` }} />
                     </div>
+                    {item.label.includes("1 cifra") && (
+                      <p className={`text-xs mt-1.5 rounded-lg px-3 py-2 font-medium ${
+                        item.value === 0
+                          ? "bg-blue-50 text-blue-700 border border-blue-100"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                      }`}>
+                        {item.value === 0
+                          ? "🎫 En 0% el ganador de 1 cifra recibe una membresía de regalo (gift card), no dinero."
+                          : `⚠️ Con ${item.value}% el ganador de 1 cifra recibe dinero en su saldo en vez de una membresía de regalo. Vuelve a 0% para regresar a la membresía de regalo.`}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -412,7 +462,7 @@ export default function PaginaConfiguracion() {
                 <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-400 mr-1" />4 cifras {pct4.toFixed(1)}%</span>
                 <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-gray-400 mr-1" />3 cifras {pct3.toFixed(1)}%</span>
                 <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-amber-600 mr-1" />2 cifras {pct2.toFixed(1)}%</span>
-                <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-blue-400 mr-1" />1 cifra {pct1.toFixed(1)}% (membresía)</span>
+                <span><span className="inline-block w-2.5 h-2.5 rounded-sm bg-blue-400 mr-1" />1 cifra {pct1.toFixed(1)}% {pct1 === 0 ? "(membresía)" : "(dinero)"}</span>
               </div>
 
               {/* Ejemplo con precios reales */}
@@ -430,7 +480,11 @@ export default function PaginaConfiguracion() {
                     <p>🏆 Gran ganador (4 cifras, selección {n}): <strong>${fmt(ejLast)}</strong></p>
                     <p>🥈 Premio 3 cifras: <strong>hasta ${Math.round(total * dec(pct3) / 9).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
                     <p>🥉 Premio 2 cifras: <strong>hasta ${Math.round(total * dec(pct2) / 90).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
-                    <p>🎫 1 cifra → devuelve membresía: <strong>gift card ${fmt(precioCaja)}</strong> c/u (segunda oportunidad)</p>
+                    {pct1 === 0 ? (
+                      <p>🎫 1 cifra → devuelve membresía: <strong>gift card ${fmt(precioCaja)}</strong> c/u (segunda oportunidad)</p>
+                    ) : (
+                      <p>🎫 1 cifra → premio en dinero: <strong>hasta ${Math.round(total * dec(pct1) / 10).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</strong> c/u</p>
+                    )}
                   </div>
                 );
               })()}

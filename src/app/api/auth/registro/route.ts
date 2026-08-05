@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { registroSchema } from "@/lib/validaciones";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { AVATAR_PRESETS } from "@/lib/avatares";
 
 function generarCodigoRef(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXY23456789";
@@ -94,16 +95,18 @@ export async function POST(req: NextRequest) {
       if (!dup) { codigoRef = candidato; break; }
     }
 
+    const avatarPorDefecto = AVATAR_PRESETS[Math.floor(Math.random() * AVATAR_PRESETS.length)].id;
+
     const nuevoId = crypto.randomUUID();
     await prisma.$executeRaw`
       INSERT INTO users (
         id, nombre, apellido, documento, correo, celular,
         ciudad, departamento, banco, "tipoCuenta", "cuentaBancaria",
-        password, rol, "saldoPuntos", activo, confirmado, "fechaRegistro", "codigoRef"
+        password, rol, "saldoPuntos", activo, confirmado, "fechaRegistro", "codigoRef", avatar
       ) VALUES (
         ${nuevoId}, ${nombre}, ${apellido}, ${documento}, ${correo}, ${celular},
         ${ciudad}, ${departamento}, ${banco}, ${tipoCuenta}, ${cuentaBancaria},
-        ${passwordHash}, 'USER'::"Rol", 0, true, false, NOW(), ${codigoRef}
+        ${passwordHash}, 'USER'::"Rol", 0, true, false, NOW(), ${codigoRef}, ${avatarPorDefecto}
       )
     `;
 

@@ -1775,44 +1775,47 @@ export default function Dashboard() {
             <section>
               <h2 className="text-lg font-bold text-gray-900 mb-3">Beneficios ganados 🏆</h2>
               <div className="grid sm:grid-cols-2 gap-4">
-                {premios.map((p, i) => (
-                  <div key={i} className={`border rounded-xl p-4 flex items-center gap-4 ${
-                    p.categoria === "UNA_CIFRA"
-                      ? "bg-green-50 border-green-200"
-                      : "bg-yellow-50 border-yellow-200"
-                  }`}>
-                    <div className="text-3xl">
-                      {p.categoria === "CUATRO_CIFRAS" ? "🏆"
-                        : p.categoria === "TRES_CIFRAS" ? "🥈"
-                        : p.categoria === "DOS_CIFRAS" ? "🥉"
-                        : "🎁"}
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900">
-                        {p.categoria === "CUATRO_CIFRAS" ? "4 cifras"
-                          : p.categoria === "TRES_CIFRAS" ? "3 cifras"
-                          : p.categoria === "DOS_CIFRAS" ? "2 cifras"
-                          : "1 cifra"}
-                      </p>
-                      {p.categoria === "UNA_CIFRA" ? (
-                        <p className="text-green-700 font-extrabold text-base">
-                          🎫 Membresía gratis (gift card)
+                {premios.map((p, i) => {
+                  const esMembresiaDevuelta = p.categoria === "UNA_CIFRA" && !p.monto;
+                  return (
+                    <div key={i} className={`border rounded-xl p-4 flex items-center gap-4 ${
+                      esMembresiaDevuelta
+                        ? "bg-green-50 border-green-200"
+                        : "bg-yellow-50 border-yellow-200"
+                    }`}>
+                      <div className="text-3xl">
+                        {p.categoria === "CUATRO_CIFRAS" ? "🏆"
+                          : p.categoria === "TRES_CIFRAS" ? "🥈"
+                          : p.categoria === "DOS_CIFRAS" ? "🥉"
+                          : "🎁"}
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">
+                          {p.categoria === "CUATRO_CIFRAS" ? "4 cifras"
+                            : p.categoria === "TRES_CIFRAS" ? "3 cifras"
+                            : p.categoria === "DOS_CIFRAS" ? "2 cifras"
+                            : "1 cifra"}
                         </p>
-                      ) : (
-                        <p className="text-[#F5A623] font-extrabold text-lg">
-                          ${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
-                        </p>
-                      )}
-                      {p.categoria !== "UNA_CIFRA" && (
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                          p.pagado ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
-                        }`}>
-                          {p.pagado ? "Pagado" : "Pendiente de pago"}
-                        </span>
-                      )}
+                        {esMembresiaDevuelta ? (
+                          <p className="text-green-700 font-extrabold text-base">
+                            🎫 Membresía gratis (gift card)
+                          </p>
+                        ) : (
+                          <p className="text-[#F5A623] font-extrabold text-lg">
+                            ${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                          </p>
+                        )}
+                        {!esMembresiaDevuelta && (
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            p.pagado ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                          }`}>
+                            {p.pagado ? "Pagado" : "Pendiente de pago"}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           )}
