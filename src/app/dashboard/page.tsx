@@ -724,6 +724,7 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
   const [mostrarQR, setMostrarQR] = useState(false);
   const [modalRegalar, setModalRegalar] = useState<string | null>(null);
   const [confirmarRetirar, setConfirmarRetirar] = useState<GiftCardItem | null>(null);
+  const [confirmarUsar, setConfirmarUsar] = useState<GiftCardItem | null>(null);
   const [retirando, setRetirando] = useState(false);
   const [saldoGiftCardActivo, setSaldoGiftCardActivo] = useState(false);
   const [toast, setToast] = useState<{ ok: boolean; texto: string } | null>(null);
@@ -771,10 +772,11 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
 
   function manejarAccion(id: string, accion: "retirar" | "regalar" | "usar") {
     if (accion === "regalar") { setModalRegalar(id); return; }
-    if (accion === "usar") { router.push("/membresias?giftCard=" + id); return; }
-    // retirar → añadir a saldo (pide confirmación primero)
     const gc = giftCards.find((g) => g.id === id) ?? null;
-    if (gc) setConfirmarRetirar(gc);
+    if (!gc) return;
+    if (accion === "usar") { setConfirmarUsar(gc); return; }
+    // retirar → añadir a saldo (pide confirmación primero)
+    setConfirmarRetirar(gc);
   }
 
   async function confirmarRetiro() {
@@ -821,6 +823,18 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
           cargando={retirando}
           onConfirmar={confirmarRetiro}
           onCancelar={() => setConfirmarRetirar(null)}
+        />
+      )}
+
+      {/* Confirmar usar gift card en una membresía */}
+      {confirmarUsar && (
+        <ModalConfirmar
+          titulo="Usar gift card"
+          mensaje={`¿Estás seguro que deseas usar la gift card ${confirmarUsar.codigo} ($${confirmarUsar.valor.toLocaleString("es-CO", { maximumFractionDigits: 0 })}) en una membresía?`}
+          detalle="Al confirmar irás a Membresías para elegir el número donde se aplicará."
+          textoConfirmar="Sí, elegir membresía"
+          onConfirmar={() => { const id = confirmarUsar.id; setConfirmarUsar(null); router.push("/membresias?giftCard=" + id); }}
+          onCancelar={() => setConfirmarUsar(null)}
         />
       )}
 

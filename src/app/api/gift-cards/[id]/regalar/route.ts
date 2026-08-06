@@ -40,12 +40,17 @@ export async function POST(
     return NextResponse.json({ mensaje: "No puedes regalar una gift card a ti mismo." }, { status: 400 });
   }
 
-  // Marcar la original como regalada y crear una nueva para el destinatario
+  // Marcar la original como regalada y crear una nueva para el destinatario.
+  // No se toca "nota": ahí queda el origen del premio ("Premio por compras
+  // propias" / "Premio por referidos"), que usa emitirGiftCardsPorMembresias()
+  // para contar cuántas ya se pagaron — sobrescribirlo aquí borraba ese
+  // rastro y permitía regalar una gift card una y otra vez para generar
+  // premios nuevos sin comprar nada.
   const nuevoCodigo = `GC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
   await prisma.$transaction([
     prisma.giftCard.update({
       where: { id },
-      data: { estado: "REGALADA", usadaEn: new Date(), nota: `Regalada a ${correoDestino}` },
+      data: { estado: "REGALADA", usadaEn: new Date() },
     }),
     prisma.giftCard.create({
       data: {

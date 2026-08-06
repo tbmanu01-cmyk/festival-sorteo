@@ -115,9 +115,14 @@ export async function POST(
       });
 
       if (giftCard) {
+        // No se toca "nota": ahí queda el origen del premio ("Premio por
+        // compras propias" / "Premio por referidos"), que es lo que usa
+        // emitirGiftCardsPorMembresias() para contar cuántas ya se pagaron.
+        // Sobrescribirlo aquí borraba ese rastro y hacía que cada canje
+        // pareciera "nunca entregado", regalando otra gift card sin fin.
         await tx.giftCard.update({
           where: { id: giftCard.id },
-          data: { estado: "USADA", usadaEn: new Date(), nota: `Usada en compra membresía #${numero}` },
+          data: { estado: "USADA", usadaEn: new Date() },
         });
       }
 
