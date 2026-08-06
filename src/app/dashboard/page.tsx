@@ -118,6 +118,7 @@ function TarjetaReserva({
   saldo,
   giftCardsDisponibles,
   onComprar,
+  onLiberar,
   comprando,
   seleccionada,
   onToggleSeleccion,
@@ -127,6 +128,7 @@ function TarjetaReserva({
   saldo: number;
   giftCardsDisponibles: GiftCardDisp[];
   onComprar: (numero: string, giftCardId?: string) => Promise<void>;
+  onLiberar: (numero: string) => Promise<void>;
   comprando: boolean;
   seleccionada: boolean;
   onToggleSeleccion: (numero: string) => void;
@@ -134,6 +136,7 @@ function TarjetaReserva({
   const { min, seg, expirada, pct } = useCountdown(caja.expira);
   const [gcSeleccionada, setGcSeleccionada] = useState<string>("");
   const [confirmando, setConfirmando] = useState(false);
+  const [confirmandoLiberar, setConfirmandoLiberar] = useState(false);
 
   const gc = giftCardsDisponibles.find((g) => g.id === gcSeleccionada) ?? null;
   const descuento = gc ? Math.min(gc.valor, precio) : 0;
@@ -164,6 +167,18 @@ function TarjetaReserva({
           cargando={comprando}
           onConfirmar={async () => { await onComprar(caja.numero, gcSeleccionada || undefined); setConfirmando(false); }}
           onCancelar={() => setConfirmando(false)}
+        />
+      )}
+
+      {confirmandoLiberar && (
+        <ModalConfirmar
+          titulo="Liberar reserva"
+          mensaje={`¿Seguro que deseas dejar de reservar la membresía #${caja.numero}? Quedará disponible para que cualquier otro usuario la elija.`}
+          textoConfirmar="Sí, liberar"
+          peligroso
+          cargando={comprando}
+          onConfirmar={async () => { await onLiberar(caja.numero); setConfirmandoLiberar(false); }}
+          onCancelar={() => setConfirmandoLiberar(false)}
         />
       )}
 
@@ -265,28 +280,48 @@ function TarjetaReserva({
           )}
 
           {alcanzaSaldo ? (
-            <button
-              onClick={() => setConfirmando(true)}
-              disabled={comprando}
-              className="w-full bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-bold py-3 rounded-xl transition-colors shadow-md text-sm"
-            >
-              {comprando
-                ? "Procesando..."
-                : total === 0
-                ? "✅ Completar compra — ¡Gratis!"
-                : `✅ Pagar con saldo — $${total.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmando(true)}
+                disabled={comprando}
+                className="flex-1 bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-bold py-3 rounded-xl transition-colors shadow-md text-sm"
+              >
+                {comprando
+                  ? "Procesando..."
+                  : total === 0
+                  ? "✅ Completar compra — ¡Gratis!"
+                  : `✅ Pagar con saldo — $${total.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
+              </button>
+              <button
+                onClick={() => setConfirmandoLiberar(true)}
+                disabled={comprando}
+                title="Dejar de reservar esta membresía"
+                className="flex-shrink-0 border-2 border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 font-bold py-3 px-3 rounded-xl transition-colors text-sm"
+              >
+                ✕ Liberar
+              </button>
+            </div>
           ) : (
             <div className="space-y-2">
               <p className="text-xs text-red-600 font-medium text-center">
                 Tu saldo no alcanza (te faltan ${(total - saldo).toLocaleString("es-CO", { maximumFractionDigits: 0 })}).
               </p>
-              <a
-                href={`/membresias/pagar?numero=${caja.numero}`}
-                className="block w-full text-center bg-[#102463] hover:bg-[#173592] text-white font-bold py-3 rounded-xl transition-colors shadow-md text-sm"
-              >
-                💳 Pagar con tarjeta, PSE o Nequi
-              </a>
+              <div className="flex gap-2">
+                <a
+                  href={`/membresias/pagar?numero=${caja.numero}`}
+                  className="flex-1 text-center bg-[#102463] hover:bg-[#173592] text-white font-bold py-3 rounded-xl transition-colors shadow-md text-sm"
+                >
+                  💳 Pagar con tarjeta, PSE o Nequi
+                </a>
+                <button
+                  onClick={() => setConfirmandoLiberar(true)}
+                  disabled={comprando}
+                  title="Dejar de reservar esta membresía"
+                  className="flex-shrink-0 border-2 border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 font-bold py-3 px-3 rounded-xl transition-colors text-sm"
+                >
+                  ✕ Liberar
+                </button>
+              </div>
             </div>
           )}
         </>
@@ -1533,23 +1568,37 @@ export default function Dashboard() {
     setPagandoLote(true);
     setMensajeCompra(null);
     const numeros = Array.from(seleccionadas);
-    let exitosas = 0;
-    let fallidas = 0;
-    for (const numero of numeros) {
-      const res = await fetch(`/api/cajas/${numero}/comprar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-      if (res.ok) exitosas++;
-      else fallidas++;
+    try {
+      const res = await fetch("/api/cajas/comprar-lote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ numeros }),
+      });
+      const json = await res.json() as { mensaje: string };
+      setMensajeCompra({ ok: res.ok, texto: json.mensaje });
+      if (res.ok) setSeleccionadas(new Set());
+    } catch {
+      setMensajeCompra({ ok: false, texto: "Error de conexión. Intenta de nuevo." });
+    } finally {
+      setPagandoLote(false);
+      setConfirmarLote(false);
+      cargarDatos();
     }
-    setPagandoLote(false);
-    setConfirmarLote(false);
-    setSeleccionadas(new Set());
-    setMensajeCompra({
-      ok: fallidas === 0,
-      texto: fallidas === 0
-        ? `¡${exitosas} membresía${exitosas !== 1 ? "s" : ""} pagada${exitosas !== 1 ? "s" : ""} con tu saldo!`
-        : `${exitosas} pagada${exitosas !== 1 ? "s" : ""}, ${fallidas} no se pudo${fallidas !== 1 ? "ieron" : ""} procesar. Revisa tu saldo e inténtalo de nuevo.`,
+  }
+
+  async function liberarReserva(numero: string) {
+    setComprando(numero);
+    const res = await fetch(`/api/cajas/${numero}/reservar`, { method: "DELETE" });
+    const json = await res.json() as { mensaje: string };
+    setComprando(null);
+    setMensajeCompra({ ok: res.ok, texto: json.mensaje });
+    setSeleccionadas((prev) => {
+      if (!prev.has(numero)) return prev;
+      const next = new Set(prev);
+      next.delete(numero);
+      return next;
     });
-    cargarDatos();
+    if (res.ok) cargarDatos();
   }
 
   if (status === "loading" || cargando) {
@@ -1819,6 +1868,7 @@ export default function Dashboard() {
                       saldo={saldo}
                       giftCardsDisponibles={giftCardsDisponibles}
                       onComprar={completarCompra}
+                      onLiberar={liberarReserva}
                       comprando={comprando === caja.numero}
                       seleccionada={seleccionadas.has(caja.numero)}
                       onToggleSeleccion={toggleSeleccion}

@@ -76,3 +76,42 @@ export async function POST(
     return NextResponse.json({ mensaje: "Error interno del servidor." }, { status: 500 });
   }
 }
+
+// DELETE: liberar una reserva propia antes de que expire (el usuario ya no quiere pagarla)
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ numero: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ mensaje: "Debes iniciar sesión." }, { status: 401 });
+    }
+
+    const { numero } = await params;
+    if (!/^\d{4}$/.test(numero)) {
+      return NextResponse.json({ mensaje: "Número de membresía inválido." }, { status: 400 });
+    }
+
+    const { prisma } = await import("@/lib/prisma");
+    const userId = (session.user as unknown as { id: string }).id;
+
+    const caja = await prisma.caja.findUnique({ where: { numero } });
+    if (!caja) {
+      return NextResponse.json({ mensaje: "Membresía no encontrada." }, { status: 404 });
+    }
+    if (caja.estado !== "RESERVADA" || caja.userId !== userId) {
+      return NextResponse.json({ mensaje: "Esta membresía no está reservada por ti." }, { status: 409 });
+    }
+
+    await prisma.caja.update({
+      where: { numero },
+      data: { estado: "DISPONIBLE", userId: null, fechaCompra: null, idCompra: null },
+    });
+
+    return NextResponse.json({ mensaje: `Reserva de la membresía #${numero} cancelada. Queda disponible de nuevo.` });
+  } catch (error) {
+    console.error("DELETE /api/cajas/[numero]/reservar error:", error);
+    return NextResponse.json({ mensaje: "Error interno del servidor." }, { status: 500 });
+  }
+}
