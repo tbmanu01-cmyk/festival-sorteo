@@ -120,8 +120,6 @@ function TarjetaReserva({
   onComprar,
   onLiberar,
   comprando,
-  seleccionada,
-  onToggleSeleccion,
 }: {
   caja: CajaReservada;
   precio: number;
@@ -130,8 +128,6 @@ function TarjetaReserva({
   onComprar: (numero: string, giftCardId?: string) => Promise<void>;
   onLiberar: (numero: string) => Promise<void>;
   comprando: boolean;
-  seleccionada: boolean;
-  onToggleSeleccion: (numero: string) => void;
 }) {
   const { min, seg, expirada, pct } = useCountdown(caja.expira);
   const [gcSeleccionada, setGcSeleccionada] = useState<string>("");
@@ -184,15 +180,6 @@ function TarjetaReserva({
 
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-3">
-          {!expirada && (
-            <input
-              type="checkbox"
-              checked={seleccionada}
-              onChange={() => onToggleSeleccion(caja.numero)}
-              className="mt-2 w-5 h-5 rounded accent-[#1B4F8A] cursor-pointer"
-              title="Seleccionar para pago múltiple"
-            />
-          )}
           <div>
             <p className="text-gray-500 text-xs font-medium uppercase tracking-wide mb-1">
               Número reservado
@@ -1490,9 +1477,6 @@ export default function Dashboard() {
   const [codigoVerif, setCodigoVerif] = useState("");
   const [verificando, setVerificando] = useState(false);
   const [tiendaActiva, setTiendaActiva] = useState(true);
-  const [seleccionadas, setSeleccionadas] = useState<Set<string>>(new Set());
-  const [confirmarLote, setConfirmarLote] = useState(false);
-  const [pagandoLote, setPagandoLote] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -1544,46 +1528,7 @@ export default function Dashboard() {
     const json = await res.json() as { mensaje: string };
     setComprando(null);
     setMensajeCompra({ ok: res.ok, texto: json.mensaje });
-    if (res.ok) {
-      setSeleccionadas((prev) => {
-        if (!prev.has(numero)) return prev;
-        const next = new Set(prev);
-        next.delete(numero);
-        return next;
-      });
-      cargarDatos();
-    }
-  }
-
-  function toggleSeleccion(numero: string) {
-    setSeleccionadas((prev) => {
-      const next = new Set(prev);
-      if (next.has(numero)) next.delete(numero);
-      else next.add(numero);
-      return next;
-    });
-  }
-
-  async function pagarSeleccionadas() {
-    setPagandoLote(true);
-    setMensajeCompra(null);
-    const numeros = Array.from(seleccionadas);
-    try {
-      const res = await fetch("/api/cajas/comprar-lote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ numeros }),
-      });
-      const json = await res.json() as { mensaje: string };
-      setMensajeCompra({ ok: res.ok, texto: json.mensaje });
-      if (res.ok) setSeleccionadas(new Set());
-    } catch {
-      setMensajeCompra({ ok: false, texto: "Error de conexión. Intenta de nuevo." });
-    } finally {
-      setPagandoLote(false);
-      setConfirmarLote(false);
-      cargarDatos();
-    }
+    if (res.ok) cargarDatos();
   }
 
   async function liberarReserva(numero: string) {
@@ -1592,12 +1537,6 @@ export default function Dashboard() {
     const json = await res.json() as { mensaje: string };
     setComprando(null);
     setMensajeCompra({ ok: res.ok, texto: json.mensaje });
-    setSeleccionadas((prev) => {
-      if (!prev.has(numero)) return prev;
-      const next = new Set(prev);
-      next.delete(numero);
-      return next;
-    });
     if (res.ok) cargarDatos();
   }
 
@@ -1796,74 +1735,14 @@ export default function Dashboard() {
 
           {/* Reservas activas */}
           {reservadasActivas.length > 0 && (() => {
-            const activasNoExpiradas = reservadasActivas.filter(
-              (c) => new Date(c.expira).getTime() > Date.now()
-            );
-            const totalSeleccionado = seleccionadas.size * precioCaja;
-            const alcanzaLote = totalSeleccionado <= saldo;
-
             return (
               <section>
-                {confirmarLote && (
-                  <ModalConfirmar
-                    titulo="Confirmar pago múltiple"
-                    mensaje={`¿Deseas pagar ${seleccionadas.size} membresía${seleccionadas.size !== 1 ? "s" : ""} con tu saldo de cuenta?`}
-                    detalle={`Total a pagar: $${totalSeleccionado.toLocaleString("es-CO", { maximumFractionDigits: 0 })} · Tu saldo: $${saldo.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
-                    textoConfirmar="Sí, pagar todas"
-                    cargando={pagandoLote}
-                    onConfirmar={pagarSeleccionadas}
-                    onCancelar={() => setConfirmarLote(false)}
-                  />
-                )}
-
                 <div className="flex items-center gap-2 mb-3">
                   <h2 className="text-lg font-bold text-gray-900">Mis reservas activas</h2>
                   <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">
                     {reservadasActivas.length}
                   </span>
                 </div>
-
-                {activasNoExpiradas.length > 1 && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={seleccionadas.size === activasNoExpiradas.length}
-                        onChange={() =>
-                          setSeleccionadas(
-                            seleccionadas.size === activasNoExpiradas.length
-                              ? new Set()
-                              : new Set(activasNoExpiradas.map((c) => c.numero))
-                          )
-                        }
-                        className="w-4 h-4 rounded accent-[#1B4F8A]"
-                      />
-                      Seleccionar todas
-                    </label>
-                    {seleccionadas.size > 0 && (
-                      <div className="flex items-center gap-3">
-                        <span className={`text-sm font-bold ${alcanzaLote ? "text-[#1B4F8A]" : "text-red-600"}`}>
-                          {seleccionadas.size} seleccionada{seleccionadas.size !== 1 ? "s" : ""} · $
-                          {totalSeleccionado.toLocaleString("es-CO", { maximumFractionDigits: 0 })}
-                          {!alcanzaLote && " (saldo insuficiente)"}
-                        </span>
-                        <button
-                          onClick={() => setConfirmarLote(true)}
-                          disabled={!alcanzaLote}
-                          className={`font-bold text-sm px-5 py-2.5 rounded-xl shadow-sm transition-colors ${
-                            alcanzaLote
-                              ? "bg-[#1B4F8A] hover:bg-[#173592] text-[#ffbd1f] cursor-pointer"
-                              : "bg-[#1B4F8A]/40 text-[#ffbd1f]/70 cursor-not-allowed"
-                          }`}
-                        >
-                          {seleccionadas.size === activasNoExpiradas.length
-                            ? "Pagar todas"
-                            : `Pagar todas (${seleccionadas.size})`}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 <div className="grid sm:grid-cols-2 gap-4">
                   {reservadasActivas.map((caja) => (
@@ -1876,8 +1755,6 @@ export default function Dashboard() {
                       onComprar={completarCompra}
                       onLiberar={liberarReserva}
                       comprando={comprando === caja.numero}
-                      seleccionada={seleccionadas.has(caja.numero)}
-                      onToggleSeleccion={toggleSeleccion}
                     />
                   ))}
                 </div>
