@@ -121,22 +121,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Email comprobante por cada membresía — fire and forget
+    // Email comprobante único con todas las membresías del lote — fire and forget
     prisma.user.findUnique({ where: { id: userId }, select: { nombre: true, correo: true } })
       .then((u) => {
         if (!u) return;
-        import("@/lib/email").then(({ enviarComprobante }) => {
-          for (const numero of compradas) {
-            enviarComprobante({
-              correo: u.correo,
-              nombre: u.nombre,
-              numeroCaja: numero,
-              idCompra: `${idLote}-${numero}`,
-              fecha: new Date(),
-              precio: precioCaja,
-            }).catch((err) => console.error("Email comprobante error:", err));
-          }
-        });
+        import("@/lib/email").then(({ enviarComprobanteLote }) =>
+          enviarComprobanteLote({
+            correo: u.correo,
+            nombre: u.nombre,
+            numerosCaja: compradas,
+            idLote,
+            fecha: new Date(),
+            precioTotal: precioCaja * compradas.length,
+          }).catch((err) => console.error("Email comprobante lote error:", err))
+        );
       })
       .catch(() => undefined);
 
@@ -146,8 +144,9 @@ export async function POST(req: NextRequest) {
     ).catch((err) => console.error("Gift cards por membresías error:", err));
 
     return NextResponse.json({
-      mensaje: `¡${compradas.length} membresía${compradas.length !== 1 ? "s" : ""} pagada${compradas.length !== 1 ? "s" : ""} con tu saldo!`,
+      mensaje: `¡${compradas.length} membresía${compradas.length !== 1 ? "s" : ""} pagada${compradas.length !== 1 ? "s" : ""} con tu saldo! (${compradas.map((n) => "#" + n).join(", ")}) · Referencia: ${idLote}`,
       numeros: compradas,
+      referencia: idLote,
     });
   } catch (error) {
     console.error("POST comprar-lote error:", error);

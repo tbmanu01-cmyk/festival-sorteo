@@ -1,4 +1,4 @@
-const CACHE = 'c10k-v4';
+const CACHE = 'c10k-v5';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

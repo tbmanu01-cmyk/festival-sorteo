@@ -1852,7 +1852,9 @@ export default function Dashboard() {
                           disabled={!alcanzaLote}
                           className="bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-bold text-sm px-4 py-2 rounded-xl transition-colors shadow-sm"
                         >
-                          Pagar seleccionadas
+                          {seleccionadas.size === activasNoExpiradas.length
+                            ? "Pagar todas"
+                            : `Pagar todas (${seleccionadas.size})`}
                         </button>
                       </div>
                     )}

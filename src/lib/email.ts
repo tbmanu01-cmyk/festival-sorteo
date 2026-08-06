@@ -76,6 +76,39 @@ export async function enviarComprobante(opts: {
   });
 }
 
+export async function enviarComprobanteLote(opts: {
+  correo: string;
+  nombre: string;
+  numerosCaja: string[];
+  idLote: string;
+  fecha: Date;
+  precioTotal: number;
+}) {
+  const { correo, nombre, numerosCaja, idLote, fecha, precioTotal } = opts;
+  const listaNumeros = numerosCaja
+    .map((n) => `<span style="display:inline-block;margin:2px 6px 2px 0;padding:4px 10px;background:#eef2ff;border-radius:6px;font-weight:900;color:#1B4F8A;">#${n}</span>`)
+    .join("");
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">¡Compra exitosa! 🎉</h2>
+    <p style="margin:0 0 20px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, tus ${numerosCaja.length} membresías fueron registradas.</p>
+    <div style="margin:0 0 20px;">${listaNumeros}</div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;">
+      ${fila("Referencia", `<code style="font-size:12px;color:#888;">${idLote}</code>`)}
+      ${fila("Fecha", fecha.toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }))}
+      ${fila("Cantidad", `${numerosCaja.length} membresías`)}
+      ${fila("Valor pagado (total)", `$${precioTotal.toLocaleString("es-CO")} COP`)}
+    </table>
+    <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
+      Guarda esta referencia. El resultado se determinará mediante selección aleatoria de membresías.
+      ¡Mucha suerte! 🍀
+    </p>`;
+  await enviarCorreo({
+    to: correo,
+    subject: `¡${numerosCaja.length} membresías activadas! — Tienda 10K`,
+    html: base(cuerpo),
+  });
+}
+
 // ── Notificación de premio ────────────────────────────────────────────────
 
 const NOMBRE_CATEGORIA: Record<string, string> = {
