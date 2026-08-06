@@ -35,47 +35,10 @@ export async function confirmarCompraMembresia(opts: {
     }),
   ]);
 
-  // Lógica de referidos y gift cards — no bloquea la respuesta principal
-  Promise.resolve().then(async () => {
-    type RefRow = { id: string; referidorId: string };
-    const refs = await prisma.$queryRaw<RefRow[]>`
-      SELECT id, "referidorId" FROM referidos WHERE "referidoId" = ${usuarioId} LIMIT 1
-    `;
-    if (!refs.length) return;
-    const ref = refs[0];
-
-    await prisma.$executeRaw`UPDATE referidos SET compro = true WHERE id = ${ref.id} AND compro = false`;
-
-    const [{ totalMembresias }] = await prisma.$queryRaw<{ totalMembresias: bigint }[]>`
-      SELECT COUNT(c.id) AS "totalMembresias"
-      FROM referidos r
-      INNER JOIN cajas c ON c."userId" = r."referidoId" AND c.estado = 'VENDIDA'
-      WHERE r."referidorId" = ${ref.referidorId}
-    `;
-    const totalNum = Number(totalMembresias);
-    if (!(config?.giftCardActivo ?? true)) return;
-    const mpgc = config?.membresiasPorGiftCard ?? 5;
-    const debeHaber = Math.floor(totalNum / mpgc);
-    if (debeHaber === 0) return;
-
-    const yaEmitidas = await prisma.giftCard.count({
-      where: { propietarioId: ref.referidorId, nota: { contains: "referidos" } },
-    });
-    const porEmitir = debeHaber - yaEmitidas;
-    if (porEmitir <= 0) return;
-
-    for (let i = 0; i < porEmitir; i++) {
-      const gcCodigo = `GC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-      await prisma.giftCard.create({
-        data: {
-          codigo: gcCodigo,
-          valor: config?.precioCaja ?? 10_000,
-          propietarioId: ref.referidorId,
-          nota: "Premio por referidos",
-        },
-      });
-    }
-  }).catch((e) => console.error("Referidos post-aprobacion error:", e));
+  // Gift cards automáticas por umbral de membresías (propias o de la red de referidos) + notificación
+  import("@/lib/giftCardsPorMembresias").then(({ emitirGiftCardsPorMembresias }) =>
+    emitirGiftCardsPorMembresias({ usuarioCompradorId: usuarioId, precioCaja: config?.precioCaja ?? 10_000 })
+  ).catch((e) => console.error("Gift cards por membresías (aprobación) error:", e));
 
   // Email al usuario — fire and forget
   const usuario = await prisma.user.findUnique({

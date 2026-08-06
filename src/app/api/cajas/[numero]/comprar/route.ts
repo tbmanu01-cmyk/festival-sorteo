@@ -151,84 +151,10 @@ export async function POST(
       })
       .catch(() => undefined);
 
-    // Referidos: emitir gift cards según total de membresías compradas por todos los referidos
-    Promise.resolve().then(async () => {
-      type RefRow = { id: string; referidorId: string };
-      const refs = await prisma.$queryRaw<RefRow[]>`
-        SELECT id, "referidorId" FROM referidos WHERE "referidoId" = ${userId} LIMIT 1
-      `;
-      if (!refs.length) return;
-      const ref = refs[0];
-
-      // Marcar como "compró" para el dashboard (solo si aún no estaba)
-      await prisma.$executeRaw`UPDATE referidos SET compro = true WHERE id = ${ref.id} AND compro = false`;
-
-      // Total de membresías vendidas a TODOS los referidos de este referidor
-      const [{ totalMembresias }] = await prisma.$queryRaw<{ totalMembresias: bigint }[]>`
-        SELECT COUNT(c.id) AS "totalMembresias"
-        FROM referidos r
-        INNER JOIN cajas c ON c."userId" = r."referidoId" AND c.estado = 'VENDIDA'
-        WHERE r."referidorId" = ${ref.referidorId}
-      `;
-      const totalNum = Number(totalMembresias);
-      if (!(config?.giftCardActivo ?? true)) return;
-      const mpgc = config?.membresiasPorGiftCard ?? 5;
-      const debeHaber = Math.floor(totalNum / mpgc);
-      if (debeHaber === 0) return;
-
-      // Gift cards ya emitidas por referidos (evita duplicar)
-      const yaEmitidas = await prisma.giftCard.count({
-        where: { propietarioId: ref.referidorId, nota: { contains: "referidos" } },
-      });
-
-      const porEmitir = debeHaber - yaEmitidas;
-      if (porEmitir <= 0) return;
-
-      for (let i = 0; i < porEmitir; i++) {
-        const gcCodigo = `GC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-        await prisma.giftCard.create({
-          data: {
-            codigo: gcCodigo,
-            valor: precioCaja,
-            propietarioId: ref.referidorId,
-            nota: "Premio por referidos",
-          },
-        });
-      }
-    }).catch((err) => console.error("Referidos post-compra error:", err));
-
-    // Compras propias: emitir gift cards según total de membresías compradas por el mismo usuario
-    Promise.resolve().then(async () => {
-      if (!(config?.giftCardActivo ?? true)) return;
-
-      const totalPropias = await prisma.caja.count({
-        where: { userId, estado: "VENDIDA" },
-      });
-
-      const mpgc = config?.membresiasPorGiftCard ?? 5;
-      const debeHaber = Math.floor(totalPropias / mpgc);
-      if (debeHaber === 0) return;
-
-      // Gift cards ya emitidas por compras propias (evita duplicar)
-      const yaEmitidas = await prisma.giftCard.count({
-        where: { propietarioId: userId, nota: { contains: "compras propias" } },
-      });
-
-      const porEmitir = debeHaber - yaEmitidas;
-      if (porEmitir <= 0) return;
-
-      for (let i = 0; i < porEmitir; i++) {
-        const gcCodigo = `GC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
-        await prisma.giftCard.create({
-          data: {
-            codigo: gcCodigo,
-            valor: precioCaja,
-            propietarioId: userId,
-            nota: "Premio por compras propias",
-          },
-        });
-      }
-    }).catch((err) => console.error("Compras propias post-compra error:", err));
+    // Gift cards automáticas por umbral de membresías (propias o de la red de referidos) + notificación
+    import("@/lib/giftCardsPorMembresias").then(({ emitirGiftCardsPorMembresias }) =>
+      emitirGiftCardsPorMembresias({ usuarioCompradorId: userId, precioCaja })
+    ).catch((err) => console.error("Gift cards por membresías error:", err));
 
     return NextResponse.json({
       mensaje: `¡Membresía ${numero} comprada exitosamente!`,
