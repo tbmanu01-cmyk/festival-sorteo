@@ -1850,7 +1850,11 @@ export default function Dashboard() {
                         <button
                           onClick={() => setConfirmarLote(true)}
                           disabled={!alcanzaLote}
-                          className="bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-bold text-sm px-4 py-2 rounded-xl transition-colors shadow-sm"
+                          className={`font-bold text-sm px-5 py-2.5 rounded-xl shadow-sm transition-colors ${
+                            alcanzaLote
+                              ? "bg-[#1B4F8A] hover:bg-[#173592] text-[#ffbd1f] cursor-pointer"
+                              : "bg-[#1B4F8A]/40 text-[#ffbd1f]/70 cursor-not-allowed"
+                          }`}
                         >
                           {seleccionadas.size === activasNoExpiradas.length
                             ? "Pagar todas"
