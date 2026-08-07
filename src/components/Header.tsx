@@ -118,8 +118,8 @@ export default function Header() {
             <Link href="/membresias" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
               Membresías
             </Link>
-            <Link href="/ranking" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
-              Ranking
+            <Link href="/notificaciones" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
+              Notificaciones
             </Link>
             {tiendaActiva && (
               <Link href="/tienda" className="block text-blue-200 hover:text-white px-2 py-2 text-sm" onClick={() => setMenuAbierto(false)}>
