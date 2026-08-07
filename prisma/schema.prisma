@@ -116,6 +116,7 @@ model User {
   notificaciones     Notificacion[]
   notifLecturas      NotifLectura[]
   notifReacciones    NotifReaccion[]
+  notifEliminadas    NotifEliminada[]
   bonoCompras        BonoCompra[]
   bonoComisionesN1   BonoCompra[] @relation("BonoNivel1")
   bonoComisionesN2   BonoCompra[] @relation("BonoNivel2")
@@ -378,6 +379,7 @@ model Notificacion {
 
   lecturas     NotifLectura[]
   reacciones   NotifReaccion[]
+  eliminadas   NotifEliminada[]
   usuario      User?          @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
 
   @@map("notificaciones")
@@ -406,6 +408,20 @@ model NotifLectura {
 
   @@id([notificacionId, usuarioId])
   @@map("notif_lecturas")
+}
+
+// Notificacion "eliminada" desde la bandeja de UN usuario — no borra el
+// registro global (una notificacion broadcast la siguen viendo los demas).
+model NotifEliminada {
+  notificacionId String
+  usuarioId      String
+  eliminadaEn    DateTime     @default(now())
+
+  notificacion   Notificacion @relation(fields: [notificacionId], references: [id], onDelete: Cascade)
+  usuario        User         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@id([notificacionId, usuarioId])
+  @@map("notif_eliminadas")
 }
 
 model ConceptoRetencion {

@@ -76,10 +76,11 @@ function ReactionPicker({
 
 // ── Fila de notificación ─────────────────────────────────────────────────────
 function NotifItem({
-  n, onReact,
+  n, onReact, onDelete,
 }: {
   n: Notif;
   onReact: (id: string, emoji: string) => void;
+  onDelete: (id: string) => void;
 }) {
   function tiempoRelativo(iso: string) {
     const diff = Date.now() - new Date(iso).getTime();
@@ -132,8 +133,21 @@ function NotifItem({
           )}
         </div>
 
-        {/* Picker */}
-        <ReactionPicker notifId={n.id} miReaccion={n.miReaccion} onReact={onReact} />
+        {/* Picker + eliminar */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <ReactionPicker notifId={n.id} miReaccion={n.miReaccion} onReact={onReact} />
+          <button
+            onClick={() => onDelete(n.id)}
+            aria-label="Eliminar notificación"
+            title="Eliminar"
+            className="w-6 h-6 flex items-center justify-center rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-.87 14.14A2 2 0 0 1 16.14 22H7.86a2 2 0 0 1-1.99-1.86L5 6" />
+              <path d="M10 11v6M14 11v6" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -213,6 +227,13 @@ export default function NotifBell() {
     }));
   }
 
+  async function eliminar(notifId: string) {
+    const objetivo = notifs.find((n) => n.id === notifId);
+    setNotifs((prev) => prev.filter((n) => n.id !== notifId));
+    if (objetivo && !objetivo.leida) setNoLeidas((prev) => Math.max(0, prev - 1));
+    await fetch(`/api/notificaciones/${notifId}`, { method: "DELETE" }).catch(() => undefined);
+  }
+
   // Cerrar al hacer click fuera
   useEffect(() => {
     function handler(e: MouseEvent) {
@@ -271,7 +292,7 @@ export default function NotifBell() {
               </div>
             ) : (
               notifs.map((n) => (
-                <NotifItem key={n.id} n={n} onReact={reaccionar} />
+                <NotifItem key={n.id} n={n} onReact={reaccionar} onDelete={eliminar} />
               ))
             )}
           </div>

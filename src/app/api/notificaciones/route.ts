@@ -13,7 +13,7 @@ export async function GET() {
   const rol    = (session.user as unknown as { rol?: string }).rol ?? "USER";
   const esStaff = rol === "ADMIN" || rol === "ASISTENTE";
 
-  // Notificaciones relevantes para este usuario
+  // Notificaciones relevantes para este usuario, sin las que ya eliminó de su bandeja
   const notifs = await prisma.notificacion.findMany({
     where: {
       OR: [
@@ -21,6 +21,7 @@ export async function GET() {
         { paraUsuarios: true },
         ...(esStaff ? [{ paraAdmins: true }] : []),
       ],
+      eliminadas: { none: { usuarioId: userId } },
     },
     include: {
       lecturas:   { where: { usuarioId: userId }, select: { leidaEn: true } },
@@ -77,6 +78,7 @@ export async function PATCH(req: NextRequest) {
             ...(esStaff ? [{ paraAdmins: true }] : []),
           ],
           lecturas: { none: { usuarioId: userId } },
+          eliminadas: { none: { usuarioId: userId } },
         },
     select: { id: true },
   });

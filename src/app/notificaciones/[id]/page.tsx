@@ -38,6 +38,7 @@ export default function DetalleNotificacion() {
   const [cargando, setCargando] = useState(true);
   const [noEncontrada, setNoEncontrada] = useState(false);
   const [pickerAbierto, setPickerAbierto] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -93,6 +94,13 @@ export default function DetalleNotificacion() {
     });
   }
 
+  async function eliminar() {
+    if (!notif) return;
+    setEliminando(true);
+    await fetch(`/api/notificaciones/${notif.id}`, { method: "DELETE" }).catch(() => undefined);
+    router.push("/notificaciones");
+  }
+
   if (status === "loading" || cargando) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -137,15 +145,28 @@ export default function DetalleNotificacion() {
 
       <main className="flex-1 bg-gray-50 py-8">
         <div className="max-w-xl mx-auto px-4 sm:px-6">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1B4F8A] font-medium mb-4 transition-colors"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-            Volver
-          </button>
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#1B4F8A] font-medium transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              Volver
+            </button>
+            <button
+              onClick={eliminar}
+              disabled={eliminando}
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-500 font-medium transition-colors disabled:opacity-50"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-.87 14.14A2 2 0 0 1 16.14 22H7.86a2 2 0 0 1-1.99-1.86L5 6" />
+                <path d="M10 11v6M14 11v6" />
+              </svg>
+              {eliminando ? "Eliminando..." : "Eliminar"}
+            </button>
+          </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-6 pt-6 pb-5">

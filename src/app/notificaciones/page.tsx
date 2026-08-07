@@ -64,6 +64,12 @@ export default function ListaNotificaciones() {
     setNoLeidas(0);
   }
 
+  async function eliminar(n: Notif) {
+    setNotifs((prev) => prev.filter((x) => x.id !== n.id));
+    if (!n.leida) setNoLeidas((prev) => Math.max(0, prev - 1));
+    await fetch(`/api/notificaciones/${n.id}`, { method: "DELETE" }).catch(() => undefined);
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -92,24 +98,37 @@ export default function ListaNotificaciones() {
               </div>
             ) : (
               notifs.map((n) => (
-                <Link
+                <div
                   key={n.id}
-                  href={`/notificaciones/${n.id}`}
-                  className={`flex gap-3 px-4 py-3.5 border-b border-gray-50 last:border-0 hover:bg-black/[0.02] transition-colors ${
-                    n.leida ? "bg-white" : "bg-blue-50"
-                  }`}
+                  className={`group flex items-stretch border-b border-gray-50 last:border-0 ${n.leida ? "bg-white" : "bg-blue-50"}`}
                 >
-                  <span className="text-xl flex-shrink-0 mt-0.5">{n.icono}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm font-semibold leading-snug ${n.leida ? "text-gray-700" : "text-gray-900"}`}>
-                        {n.titulo}
-                      </p>
-                      <span className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">{tiempoRelativo(n.createdAt)}</span>
+                  <Link
+                    href={`/notificaciones/${n.id}`}
+                    className="flex flex-1 min-w-0 gap-3 px-4 py-3.5 hover:bg-black/[0.02] transition-colors"
+                  >
+                    <span className="text-xl flex-shrink-0 mt-0.5">{n.icono}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`text-sm font-semibold leading-snug ${n.leida ? "text-gray-700" : "text-gray-900"}`}>
+                          {n.titulo}
+                        </p>
+                        <span className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">{tiempoRelativo(n.createdAt)}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{n.cuerpo}</p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{n.cuerpo}</p>
-                  </div>
-                </Link>
+                  </Link>
+                  <button
+                    onClick={() => eliminar(n)}
+                    aria-label="Eliminar notificación"
+                    title="Eliminar"
+                    className="flex-shrink-0 w-11 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-.87 14.14A2 2 0 0 1 16.14 22H7.86a2 2 0 0 1-1.99-1.86L5 6" />
+                      <path d="M10 11v6M14 11v6" />
+                    </svg>
+                  </button>
+                </div>
               ))
             )}
           </div>
