@@ -14,7 +14,8 @@
     "db:studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
     "seed:admin": "tsx prisma/seed-admin.ts",
-    "seed:realistic": "tsx prisma/seed-realistic.ts"
+    "seed:realistic": "tsx prisma/seed-realistic.ts",
+    "seed:faqs": "tsx prisma/seed-faqs.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed-realistic.ts"

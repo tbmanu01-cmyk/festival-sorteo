@@ -117,6 +117,8 @@ model User {
   notifLecturas      NotifLectura[]
   notifReacciones    NotifReaccion[]
   notifEliminadas    NotifEliminada[]
+  conversaciones     ChatConversacion[] @relation("ConversacionesUsuario")
+  conversacionesAsesor ChatConversacion[] @relation("ConversacionesAsesor")
   bonoCompras        BonoCompra[]
   bonoComisionesN1   BonoCompra[] @relation("BonoNivel1")
   bonoComisionesN2   BonoCompra[] @relation("BonoNivel2")
@@ -422,6 +424,68 @@ model NotifEliminada {
 
   @@id([notificacionId, usuarioId])
   @@map("notif_eliminadas")
+}
+
+enum EstadoConversacion {
+  BOT              // el bot está respondiendo con FAQs
+  ESPERANDO_ASESOR // el usuario pidió hablar con alguien, nadie la ha tomado
+  EN_ATENCION      // un admin/asistente la tomó y está respondiendo en vivo
+  CERRADA
+}
+
+enum AutorMensaje {
+  USER
+  BOT
+  ADMIN
+}
+
+// Pregunta frecuente que el bot puede reconocer y responder. Administrable
+// desde /admin/chats/faqs — no está hardcodeada en el código.
+model FaqItem {
+  id           String   @id @default(cuid())
+  categoria    String
+  pregunta     String
+  palabrasClave String[] @default([])
+  respuesta    String
+  orden        Int      @default(0)
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([categoria])
+  @@map("faq_items")
+}
+
+model ChatConversacion {
+  id          String             @id @default(cuid())
+  usuarioId   String
+  usuario     User               @relation("ConversacionesUsuario", fields: [usuarioId], references: [id], onDelete: Cascade)
+  estado      EstadoConversacion @default(BOT)
+  asesorId    String?
+  asesor      User?              @relation("ConversacionesAsesor", fields: [asesorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  mensajes    ChatMensaje[]
+
+  @@index([usuarioId])
+  @@index([estado])
+  @@map("chat_conversaciones")
+}
+
+model ChatMensaje {
+  id               String           @id @default(cuid())
+  conversacionId   String
+  conversacion     ChatConversacion @relation(fields: [conversacionId], references: [id], onDelete: Cascade)
+  autor            AutorMensaje
+  autorId          String?
+  contenido        String
+  leidoPorUsuario  Boolean          @default(false)
+  leidoPorAdmin    Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+
+  @@index([conversacionId])
+  @@map("chat_mensajes")
 }
 
 model ConceptoRetencion {

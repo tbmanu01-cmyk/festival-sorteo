@@ -5,6 +5,7 @@ import { Providers } from "./providers";
 import SwRegister from "@/components/SwRegister";
 import NavMobile from "@/components/NavMobile";
 import AdminNavMobile from "@/components/AdminNavMobile";
+import ChatWidget from "@/components/ChatWidget";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -63,6 +64,7 @@ export default function RootLayout({
           {children}
           <NavMobile />
           <AdminNavMobile />
+          <ChatWidget />
         </Providers>
         <SwRegister />
       </body>

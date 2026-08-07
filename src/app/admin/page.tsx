@@ -864,6 +864,15 @@ export default function AdminPanel() {
                 <p className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Sistema</p>
               </div>
               <div className="px-2 pb-3 space-y-1">
+                <Link href="/admin/chats"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
+                  <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">💬</span>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">Chats de soporte</p>
+                    <p className="text-[10px] text-gray-400">Bot de FAQs + atención en vivo</p>
+                  </div>
+                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
+                </Link>
                 <Link href="/admin/notificaciones"
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
                   <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">🔔</span>
