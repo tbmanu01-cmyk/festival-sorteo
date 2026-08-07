@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 
 const EMOJIS = ["👍", "❤️", "😮", "😂", "🙏", "🔥"];
 
@@ -94,8 +95,8 @@ function NotifItem({
 
   return (
     <div className={`border-b border-gray-50 last:border-0 ${n.leida ? "bg-white" : "bg-blue-50"}`}>
-      {/* Texto */}
-      <div className="flex gap-3 px-4 pt-3 pb-2">
+      {/* Texto — clickeable, abre el detalle en una página independiente */}
+      <Link href={`/notificaciones/${n.id}`} className="flex gap-3 px-4 pt-3 pb-2 hover:bg-black/[0.02] transition-colors">
         <span className="text-xl flex-shrink-0 mt-0.5">{n.icono}</span>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
@@ -104,9 +105,9 @@ function NotifItem({
             </p>
             <span className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">{tiempoRelativo(n.createdAt)}</span>
           </div>
-          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{n.cuerpo}</p>
+          <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{n.cuerpo}</p>
         </div>
-      </div>
+      </Link>
 
       {/* Footer: reacciones existentes + picker */}
       <div className="flex items-center justify-between px-4 pb-2.5 gap-2">
