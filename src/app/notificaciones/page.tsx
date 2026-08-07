@@ -17,6 +17,14 @@ interface Notif {
   leida: boolean;
 }
 
+const TIPO_LABEL: Record<string, string> = {
+  SISTEMA: "Sistema",
+  SORTEO: "Selección",
+  RETIRO: "Retiro",
+  PROMO: "Promoción",
+  MEMBRESIA: "Membresía",
+};
+
 function tiempoRelativo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const min = Math.floor(diff / 60000);
@@ -27,6 +35,15 @@ function tiempoRelativo(iso: string) {
   return `${Math.floor(h / 24)}d`;
 }
 
+function TrashIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-.87 14.14A2 2 0 0 1 16.14 22H7.86a2 2 0 0 1-1.99-1.86L5 6" />
+      <path d="M10 11v6M14 11v6" />
+    </svg>
+  );
+}
+
 export default function ListaNotificaciones() {
   const { status } = useSession();
   const router = useRouter();
@@ -34,6 +51,8 @@ export default function ListaNotificaciones() {
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [cargando, setCargando] = useState(true);
   const [noLeidas, setNoLeidas] = useState(0);
+  const [seleccion, setSeleccion] = useState<Set<string>>(new Set());
+  const [procesando, setProcesando] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -54,6 +73,20 @@ export default function ListaNotificaciones() {
     if (status === "authenticated") cargar();
   }, [status, cargar]);
 
+  const todasSeleccionadas = notifs.length > 0 && seleccion.size === notifs.length;
+
+  function alternarTodas() {
+    setSeleccion(todasSeleccionadas ? new Set() : new Set(notifs.map((n) => n.id)));
+  }
+
+  function alternarUna(id: string) {
+    setSeleccion((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
   async function marcarTodas() {
     await fetch("/api/notificaciones", {
       method: "PATCH",
@@ -64,26 +97,92 @@ export default function ListaNotificaciones() {
     setNoLeidas(0);
   }
 
+  async function marcarSeleccionadasLeidas() {
+    const ids = Array.from(seleccion);
+    setProcesando(true);
+    await fetch("/api/notificaciones", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    }).catch(() => undefined);
+    setNotifs((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, leida: true } : n)));
+    setNoLeidas((prev) => Math.max(0, prev - notifs.filter((n) => ids.includes(n.id) && !n.leida).length));
+    setSeleccion(new Set());
+    setProcesando(false);
+  }
+
   async function eliminar(n: Notif) {
     setNotifs((prev) => prev.filter((x) => x.id !== n.id));
     if (!n.leida) setNoLeidas((prev) => Math.max(0, prev - 1));
+    setSeleccion((prev) => {
+      if (!prev.has(n.id)) return prev;
+      const next = new Set(prev);
+      next.delete(n.id);
+      return next;
+    });
     await fetch(`/api/notificaciones/${n.id}`, { method: "DELETE" }).catch(() => undefined);
   }
+
+  async function eliminarSeleccionadas() {
+    const ids = Array.from(seleccion);
+    setProcesando(true);
+    setNotifs((prev) => prev.filter((n) => !seleccion.has(n.id)));
+    setNoLeidas((prev) => Math.max(0, prev - notifs.filter((n) => seleccion.has(n.id) && !n.leida).length));
+    setSeleccion(new Set());
+    await Promise.all(ids.map((id) => fetch(`/api/notificaciones/${id}`, { method: "DELETE" }).catch(() => undefined)));
+    setProcesando(false);
+  }
+
+  const encabezado =
+    seleccion.size > 0 ? (
+      <div className="flex items-center gap-3 bg-[#102463] text-white px-3.5 sm:px-4 py-2.5 rounded-t-2xl">
+        <input
+          type="checkbox"
+          checked={todasSeleccionadas}
+          onChange={alternarTodas}
+          className="w-4 h-4 rounded accent-[#ffbd1f] cursor-pointer flex-shrink-0"
+        />
+        <span className="text-sm font-semibold flex-1">{seleccion.size} seleccionada{seleccion.size === 1 ? "" : "s"}</span>
+        <button
+          onClick={marcarSeleccionadasLeidas}
+          disabled={procesando}
+          className="text-xs font-medium text-blue-200 hover:text-white disabled:opacity-50"
+        >
+          Marcar leídas
+        </button>
+        <button
+          onClick={eliminarSeleccionadas}
+          disabled={procesando}
+          className="flex items-center gap-1 text-xs font-medium text-red-300 hover:text-red-100 disabled:opacity-50"
+        >
+          <TrashIcon /> Eliminar
+        </button>
+      </div>
+    ) : (
+      <div className="flex items-center gap-3 px-3.5 sm:px-4 py-2.5 border-b border-gray-100">
+        <input
+          type="checkbox"
+          checked={todasSeleccionadas}
+          onChange={alternarTodas}
+          disabled={notifs.length === 0}
+          className="w-4 h-4 rounded accent-[#1B4F8A] cursor-pointer flex-shrink-0"
+        />
+        <span className="text-sm text-gray-400 flex-1">Seleccionar todas</span>
+        {noLeidas > 0 && (
+          <button onClick={marcarTodas} className="text-xs text-[#1B4F8A] hover:underline font-medium">
+            Marcar todas leídas
+          </button>
+        )}
+      </div>
+    );
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
 
       <main className="flex-1 bg-gray-50 py-8">
-        <div className="max-w-xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-lg font-bold text-gray-900">🔔 Notificaciones</h1>
-            {noLeidas > 0 && (
-              <button onClick={marcarTodas} className="text-xs text-[#1B4F8A] hover:underline font-medium">
-                Marcar todas leídas
-              </button>
-            )}
-          </div>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <h1 className="text-lg font-bold text-gray-900 mb-4">🔔 Notificaciones</h1>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             {cargando ? (
@@ -97,39 +196,51 @@ export default function ListaNotificaciones() {
                 <p className="text-sm">Sin notificaciones por ahora</p>
               </div>
             ) : (
-              notifs.map((n) => (
-                <div
-                  key={n.id}
-                  className={`group flex items-stretch border-b border-gray-50 last:border-0 ${n.leida ? "bg-white" : "bg-blue-50"}`}
-                >
-                  <Link
-                    href={`/notificaciones/${n.id}`}
-                    className="flex flex-1 min-w-0 gap-3 px-4 py-3.5 hover:bg-black/[0.02] transition-colors"
-                  >
-                    <span className="text-xl flex-shrink-0 mt-0.5">{n.icono}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={`text-sm font-semibold leading-snug ${n.leida ? "text-gray-700" : "text-gray-900"}`}>
-                          {n.titulo}
+              <>
+                {encabezado}
+                {notifs.map((n) => {
+                  const marcada = seleccion.has(n.id);
+                  return (
+                    <div
+                      key={n.id}
+                      className={`flex items-center gap-3 px-3.5 sm:px-4 py-3 border-b border-gray-50 last:border-0 transition-colors ${
+                        marcada ? "bg-blue-50" : n.leida ? "bg-white hover:bg-black/[0.02]" : "bg-blue-50/40 hover:bg-blue-50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={marcada}
+                        onChange={() => alternarUna(n.id)}
+                        className="w-4 h-4 rounded accent-[#1B4F8A] cursor-pointer flex-shrink-0"
+                      />
+
+                      <Link
+                        href={`/notificaciones/${n.id}`}
+                        className="flex items-center gap-3 flex-1 min-w-0"
+                      >
+                        <span className="text-lg flex-shrink-0 w-6 text-center">{n.icono}</span>
+                        <span className={`text-xs flex-shrink-0 w-20 truncate hidden sm:inline ${n.leida ? "text-gray-400" : "text-[#102463] font-bold"}`}>
+                          {TIPO_LABEL[n.tipo] ?? n.tipo}
+                        </span>
+                        <p className="text-sm truncate min-w-0 flex-1">
+                          <span className={n.leida ? "text-gray-600 font-normal" : "text-gray-900 font-bold"}>{n.titulo}</span>
+                          <span className="text-gray-400 font-normal"> — {n.cuerpo}</span>
                         </p>
-                        <span className="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">{tiempoRelativo(n.createdAt)}</span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{n.cuerpo}</p>
+                      </Link>
+
+                      <span className="text-xs text-gray-400 flex-shrink-0 w-9 text-right">{tiempoRelativo(n.createdAt)}</span>
+                      <button
+                        onClick={() => eliminar(n)}
+                        aria-label="Eliminar notificación"
+                        title="Eliminar"
+                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <TrashIcon />
+                      </button>
                     </div>
-                  </Link>
-                  <button
-                    onClick={() => eliminar(n)}
-                    aria-label="Eliminar notificación"
-                    title="Eliminar"
-                    className="flex-shrink-0 w-11 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-.87 14.14A2 2 0 0 1 16.14 22H7.86a2 2 0 0 1-1.99-1.86L5 6" />
-                      <path d="M10 11v6M14 11v6" />
-                    </svg>
-                  </button>
-                </div>
-              ))
+                  );
+                })}
+              </>
             )}
           </div>
         </div>
