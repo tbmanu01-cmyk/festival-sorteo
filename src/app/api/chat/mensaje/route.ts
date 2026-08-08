@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { buscarRespuesta, agruparPorCategoria, type FaqLike } from "@/lib/chatbot";
+import { obtenerConversacionActiva } from "@/lib/chatConversacion";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +25,7 @@ export async function POST(req: NextRequest) {
   const texto = (body.texto ?? "").trim();
   if (!texto) return NextResponse.json({ mensaje: "Escribe un mensaje." }, { status: 400 });
 
-  let conversacion = await prisma.chatConversacion.findFirst({
-    where: { usuarioId: userId, estado: { not: "CERRADA" } },
-    orderBy: { updatedAt: "desc" },
-  });
+  let conversacion = await obtenerConversacionActiva(prisma, userId);
   if (!conversacion) {
     conversacion = await prisma.chatConversacion.create({ data: { usuarioId: userId } });
   }

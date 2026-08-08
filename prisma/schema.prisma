@@ -461,6 +461,7 @@ model ChatConversacion {
   usuarioId   String
   usuario     User               @relation("ConversacionesUsuario", fields: [usuarioId], references: [id], onDelete: Cascade)
   estado      EstadoConversacion @default(BOT)
+  escalada    Boolean            @default(false) // true en cuanto se pidió un asesor alguna vez
   asesorId    String?
   asesor      User?              @relation("ConversacionesAsesor", fields: [asesorId], references: [id], onDelete: SetNull)
   createdAt   DateTime           @default(now())
@@ -470,6 +471,7 @@ model ChatConversacion {
 
   @@index([usuarioId])
   @@index([estado])
+  @@index([escalada])
   @@map("chat_conversaciones")
 }
 

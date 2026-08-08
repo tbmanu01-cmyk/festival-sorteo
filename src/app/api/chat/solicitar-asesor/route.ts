@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { crearNotificacion } from "@/lib/notificaciones";
+import { obtenerConversacionActiva } from "@/lib/chatConversacion";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +20,7 @@ export async function POST() {
   const userId = (session.user as unknown as { id: string }).id;
   const nombre = session.user.name ?? "Un usuario";
 
-  let conversacion = await prisma.chatConversacion.findFirst({
-    where: { usuarioId: userId, estado: { not: "CERRADA" } },
-    orderBy: { updatedAt: "desc" },
-  });
+  let conversacion = await obtenerConversacionActiva(prisma, userId);
   if (!conversacion) {
     conversacion = await prisma.chatConversacion.create({ data: { usuarioId: userId } });
   }
@@ -30,7 +28,7 @@ export async function POST() {
   if (conversacion.estado === "BOT") {
     conversacion = await prisma.chatConversacion.update({
       where: { id: conversacion.id },
-      data: { estado: "ESPERANDO_ASESOR" },
+      data: { estado: "ESPERANDO_ASESOR", escalada: true },
     });
     await prisma.chatMensaje.create({
       data: { conversacionId: conversacion.id, autor: "BOT", contenido: MENSAJE_ESCALACION },

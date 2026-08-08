@@ -12,6 +12,9 @@ export async function GET() {
   const { prisma } = await import("@/lib/prisma");
 
   const conversaciones = await prisma.chatConversacion.findMany({
+    // Solo las que alguna vez pidieron un asesor — las que se resolvieron
+    // solas con el bot no necesitan aparecer aquí.
+    where: { escalada: true },
     orderBy: { updatedAt: "desc" },
     take: 100,
     include: {
