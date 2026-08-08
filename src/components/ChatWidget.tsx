@@ -28,7 +28,7 @@ interface ConversacionInfo {
 }
 
 const ESTADO_LABEL: Record<ConversacionInfo["estado"], string> = {
-  BOT: "Bolbot 10K • en línea",
+  BOT: "Asistente 10K • en línea",
   ESPERANDO_ASESOR: "Esperando un asesor...",
   EN_ATENCION: "En atención",
   CERRADA: "Conversación cerrada",
@@ -201,7 +201,7 @@ export default function ChatWidget() {
                 {mensajes.length === 0 && (
                   <div className="flex justify-start">
                     <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-sm text-gray-700 shadow-sm max-w-[85%]">
-                      Hola 👋 soy Bolbot, tu asistente de Tienda 10K. Elige un tema o escribe tu pregunta.
+                      Hola 👋 soy el Asistente 10K de Tienda 10K. Elige un tema o escribe tu pregunta.
                     </div>
                   </div>
                 )}

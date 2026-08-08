@@ -258,7 +258,7 @@ export default function AdminChats() {
                                 : "bg-white border border-gray-100 text-gray-700 rounded-bl-sm"
                           }`}
                         >
-                          {m.autor === "BOT" && <p className="text-[10px] font-bold text-gray-400 mb-0.5">Bolbot</p>}
+                          {m.autor === "BOT" && <p className="text-[10px] font-bold text-gray-400 mb-0.5">Asistente 10K</p>}
                           {m.contenido}
                         </div>
                       </div>
