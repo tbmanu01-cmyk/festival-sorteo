@@ -13,13 +13,14 @@ import { mascararCuenta } from "@/lib/mascara";
 interface UsuarioLista {
   id: string; nombre: string; apellido: string; documento: string;
   correo: string; celular: string; ciudad: string; departamento: string;
-  saldoPuntos: number; activo: boolean; confirmado: boolean; rol: string;
+  saldoPuntos: number; activo: boolean; confirmado: boolean; eliminado: boolean; rol: string;
   fechaRegistro: string; _count: { cajas: number };
 }
 
 interface UsuarioDetalle extends UsuarioLista {
   banco: string | null; tipoCuenta: string | null; cuentaBancaria: string | null;
   codigoRef: string | null; loginIntentos: number; bloqueadoHasta: string | null;
+  eliminadoEn: string | null;
   _count: { cajas: number; retiros: number; giftCards: number };
 }
 
@@ -97,6 +98,57 @@ function ModalConfirmacionRol({
   );
 }
 
+// ── Modal confirmación de eliminación ────────────────────────────────────────
+
+function ModalConfirmacionEliminar({
+  nombreUsuario,
+  eliminando,
+  error,
+  onConfirmar,
+  onCancelar,
+}: {
+  nombreUsuario: string;
+  eliminando: boolean;
+  error: string;
+  onConfirmar: () => void;
+  onCancelar: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+        <div className="w-14 h-14 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 bg-red-100">
+          🗑️
+        </div>
+        <h3 className="text-lg font-extrabold text-gray-900 mb-2">Eliminar usuario</h3>
+        <p className="text-gray-500 text-sm mb-1">Estás a punto de eliminar a</p>
+        <p className="font-bold text-gray-900 mb-4">{nombreUsuario}</p>
+        <p className="text-xs text-gray-600 bg-gray-50 rounded-xl px-4 py-3 mb-5 text-left space-y-1.5">
+          <span className="block">✓ Se bloqueará su acceso de inmediato.</span>
+          <span className="block">✓ Su correo y documento quedan libres — puede registrarse de nuevo si quiere volver.</span>
+          <span className="block">✓ Su historial (compras, retiros, referidos de otros) se conserva intacto.</span>
+        </p>
+        {error && <p className="text-xs text-red-600 font-semibold mb-3">⚠ {error}</p>}
+        <div className="flex gap-3">
+          <button
+            onClick={onCancelar}
+            disabled={eliminando}
+            className="flex-1 py-2.5 border border-gray-200 rounded-xl text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirmar}
+            disabled={eliminando}
+            className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm transition-colors bg-red-600 hover:bg-red-700 disabled:opacity-50"
+          >
+            {eliminando ? "Eliminando..." : "Sí, eliminar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Modal de edición ─────────────────────────────────────────────────────────
 
 function ModalEdicion({
@@ -134,6 +186,9 @@ function ModalEdicion({
   const [verPassword, setVerPassword] = useState(false);
   const [desbloquear, setDesbloquear] = useState(false);
   const [pendingRol, setPendingRol] = useState<string | null>(null);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
+  const [errorEliminar, setErrorEliminar] = useState("");
 
   useEffect(() => {
     fetch(`/api/admin/usuarios/${userId}`)
@@ -175,6 +230,17 @@ function ModalEdicion({
     setDesbloquear(false);
     onGuardado();
     setTimeout(() => setExito(""), 3000);
+  }
+
+  async function eliminarUsuario() {
+    setEliminando(true); setErrorEliminar("");
+    const res = await fetch(`/api/admin/usuarios/${userId}`, { method: "DELETE" });
+    const json = await res.json() as { mensaje: string };
+    setEliminando(false);
+    if (!res.ok) { setErrorEliminar(json.mensaje); return; }
+    setConfirmandoEliminar(false);
+    onGuardado();
+    onClose();
   }
 
   const esBloqueado = user?.bloqueadoHasta && new Date(user.bloqueadoHasta) > new Date();
@@ -310,6 +376,18 @@ function ModalEdicion({
               {/* ── Tab: Cuenta ── */}
               {tab === "cuenta" && (
                 <div className="space-y-5">
+                  {user.eliminado && (
+                    <div className="bg-gray-800 text-white rounded-xl px-4 py-3">
+                      <p className="text-sm font-bold">🗑️ Este usuario fue eliminado</p>
+                      {user.eliminadoEn && (
+                        <p className="text-xs text-gray-300 mt-1">
+                          El {new Date(user.eliminadoEn).toLocaleString("es-CO")}. Su correo y documento quedaron
+                          libres para un nuevo registro; el historial se conservó.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Estado y rol */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -402,6 +480,24 @@ function ModalEdicion({
                       Positivo (+) suma al saldo. Negativo (-) descuenta. Se registra en el historial de transacciones.
                     </p>
                   </div>
+
+                  {/* Zona de peligro */}
+                  {!user.eliminado && (
+                    <div className="border border-red-200 rounded-xl p-4 space-y-2">
+                      <p className="text-sm font-bold text-red-700">Zona de peligro</p>
+                      <p className="text-xs text-gray-500">
+                        Elimina esta cuenta: bloquea su acceso y libera su correo/documento para un nuevo registro,
+                        conservando su historial.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => { setErrorEliminar(""); setConfirmandoEliminar(true); }}
+                        className="text-xs font-bold text-red-600 hover:text-red-700 border border-red-200 hover:bg-red-50 rounded-xl px-3 py-2 transition-colors"
+                      >
+                        🗑️ Eliminar usuario
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -466,10 +562,11 @@ function ModalEdicion({
             </button>
             <button
               onClick={guardar}
-              disabled={guardando || !user}
+              disabled={guardando || !user || user.eliminado}
+              title={user?.eliminado ? "Este usuario fue eliminado — no se puede editar." : undefined}
               className="flex-1 py-2.5 bg-[#102463] disabled:bg-gray-300 text-white font-bold text-sm rounded-xl hover:bg-[#173592] transition-colors"
             >
-              {guardando ? "Guardando..." : "Guardar cambios"}
+              {guardando ? "Guardando..." : user?.eliminado ? "Usuario eliminado" : "Guardar cambios"}
             </button>
           </div>
         </div>
@@ -483,6 +580,17 @@ function ModalEdicion({
           rolNuevo={pendingRol}
           onConfirmar={() => { setRol(pendingRol); setPendingRol(null); }}
           onCancelar={() => setPendingRol(null)}
+        />
+      )}
+
+      {/* Confirmación de eliminación */}
+      {confirmandoEliminar && user && (
+        <ModalConfirmacionEliminar
+          nombreUsuario={`${user.nombre} ${user.apellido}`}
+          eliminando={eliminando}
+          error={errorEliminar}
+          onConfirmar={eliminarUsuario}
+          onCancelar={() => setConfirmandoEliminar(false)}
         />
       )}
     </div>
@@ -651,9 +759,9 @@ export default function AdminUsuarios() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          u.activo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                          u.eliminado ? "bg-gray-800 text-white" : u.activo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                         }`}>
-                          {u.activo ? "Activo" : "Inactivo"}
+                          {u.eliminado ? "🗑️ Eliminado" : u.activo ? "Activo" : "Inactivo"}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">

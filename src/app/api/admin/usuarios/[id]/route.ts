@@ -19,7 +19,7 @@ export async function GET(
       id: true, nombre: true, apellido: true, documento: true,
       correo: true, celular: true, ciudad: true, departamento: true,
       banco: true, tipoCuenta: true, cuentaBancaria: true,
-      saldoPuntos: true, activo: true, confirmado: true, rol: true,
+      saldoPuntos: true, activo: true, confirmado: true, eliminado: true, eliminadoEn: true, rol: true,
       fechaRegistro: true, codigoRef: true,
       loginIntentos: true, bloqueadoHasta: true,
       _count: { select: { cajas: true, retiros: true, giftCards: true } },
@@ -131,4 +131,55 @@ export async function PATCH(
   });
 
   return NextResponse.json({ mensaje: "Usuario actualizado correctamente." });
+}
+
+// ── DELETE /api/admin/usuarios/[id] ──────────────────────────────────────────
+// "Borrado seguro": no se borra la fila (romperia compras, retiros, gift
+// cards, el arbol de referidos de otros usuarios y la auditoria, que
+// referencian este id sin cascada). En su lugar se bloquea el login
+// (activo=false), se libera el correo/documento anonimizandolos para que la
+// persona pueda registrarse de nuevo si quiere, y se marca eliminado=true
+// para distinguirlo de una simple desactivacion reversible.
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await verificarAdmin();
+  if (!session) return NextResponse.json({ mensaje: "Acceso denegado." }, { status: 403 });
+
+  const ip = obtenerIP(req);
+  const adminId = (session.user as unknown as { id: string }).id;
+  const { id } = await params;
+
+  if (id === adminId) {
+    return NextResponse.json({ mensaje: "No puedes eliminar tu propia cuenta." }, { status: 400 });
+  }
+
+  const { prisma } = await import("@/lib/prisma");
+  const user = await prisma.user.findUnique({ where: { id }, select: { id: true, correo: true, documento: true, eliminado: true } });
+  if (!user) return NextResponse.json({ mensaje: "Usuario no encontrado." }, { status: 404 });
+  if (user.eliminado) return NextResponse.json({ mensaje: "Este usuario ya fue eliminado." }, { status: 400 });
+
+  const correoOriginal = user.correo;
+  const prefijo = `eliminado_${user.id}_`;
+
+  await prisma.user.update({
+    where: { id },
+    data: {
+      activo: false,
+      eliminado: true,
+      eliminadoEn: new Date(),
+      correo: `${prefijo}${user.correo}`,
+      documento: `${prefijo}${user.documento}`,
+    },
+  });
+
+  await registrarAuditoria({
+    userId: adminId,
+    accion: "ADMIN_ELIMINO_USUARIO",
+    detalle: `Usuario ${id} (${correoOriginal}) eliminado — correo/documento liberados para re-registro.`,
+    ip,
+  });
+
+  return NextResponse.json({ mensaje: "Usuario eliminado. Su correo y documento quedaron libres para un nuevo registro." });
 }

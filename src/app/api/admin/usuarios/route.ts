@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true, nombre: true, apellido: true, documento: true,
         correo: true, celular: true, ciudad: true, departamento: true,
-        saldoPuntos: true, activo: true, confirmado: true, rol: true, fechaRegistro: true,
+        saldoPuntos: true, activo: true, confirmado: true, eliminado: true, rol: true, fechaRegistro: true,
         _count: { select: { cajas: true } },
       },
       orderBy: { fechaRegistro: "desc" },

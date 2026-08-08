@@ -93,6 +93,8 @@ model User {
   saldoPuntos     Float         @default(0)
   activo          Boolean       @default(true)
   confirmado      Boolean       @default(false)
+  eliminado       Boolean       @default(false)
+  eliminadoEn     DateTime?
   fechaRegistro   DateTime      @default(now())
   codigoRef          String?       @unique
   resetToken         String?       @unique
