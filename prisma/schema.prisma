@@ -217,10 +217,31 @@ model Sorteo {
   ganancia         Float        @default(0)
   fondoPremios     Float        @default(0)
   configuracion    Json?
+  temporadaId      String?
 
   premios          Premio[]
+  temporada        Temporada?   @relation(fields: [temporadaId], references: [id])
 
   @@map("sorteos")
+}
+
+// Ciclo recurrente de venta de las 10,000 membresías. Se abre una temporada
+// nueva automáticamente cada vez que se ejecuta la selección principal — las
+// membresías vuelven a DISPONIBLE y arranca el conteo desde cero.
+model Temporada {
+  id            String    @id @default(cuid())
+  numero        Int       @unique
+  inicio        DateTime  @default(now())
+  fin           DateTime?
+  totalVendidas Int?
+  totalRecaudo  Float?
+  fondoPremios  Float?
+  ganancia      Float?
+
+  sorteos           Sorteo[]
+  ganadoresPublicos GanadorPublico[]
+
+  @@map("temporadas")
 }
 
 model Premio {
@@ -242,15 +263,17 @@ model Premio {
 // 4 mecanismos de sorteo (Sorteo principal, Gran Sorteo, Sorteo Previo, Selección
 // Anticipada), cada uno con su propio modelo/lógica de premios internos.
 model GanadorPublico {
-  id         String   @id @default(cuid())
-  userId     String
-  numeroCaja String?
-  monto      Float?
-  categoria  String
-  origen     String
-  fecha      DateTime @default(now())
+  id          String     @id @default(cuid())
+  userId      String
+  numeroCaja  String?
+  monto       Float?
+  categoria   String
+  origen      String
+  fecha       DateTime   @default(now())
+  temporadaId String?
 
-  user       User     @relation(fields: [userId], references: [id])
+  user        User       @relation(fields: [userId], references: [id])
+  temporada   Temporada? @relation(fields: [temporadaId], references: [id])
 
   @@map("ganadores_publicos")
 }

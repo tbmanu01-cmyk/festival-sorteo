@@ -42,6 +42,14 @@ interface Resumen {
   monto4: number; monto3: number; monto2: number; monto1: number;
 }
 
+interface TemporadaActual {
+  id: string;
+  numero: number;
+  inicio: string;
+  vendidasActuales: number;
+  reservadasActivas: number;
+}
+
 interface Ganador {
   userId: string;
   nombre: string;
@@ -244,11 +252,13 @@ function ModalConfirmacion({
   onConfirmar,
   onCancelar,
   ejecutando,
+  reservasActivas,
 }: {
   abierto: boolean;
   onConfirmar: () => void;
   onCancelar: () => void;
   ejecutando: boolean;
+  reservasActivas: number;
 }) {
   if (!abierto) return null;
   return (
@@ -266,9 +276,19 @@ function ModalConfirmacion({
         <h2 className="text-xl font-extrabold text-gray-900 text-center mb-2">
           ¿Ejecutar selección principal?
         </h2>
-        <p className="text-gray-500 text-sm text-center mb-6">
-          Esta acción no se puede deshacer. Los premios se acreditarán automáticamente a los ganadores.
+        <p className="text-gray-500 text-sm text-center mb-4">
+          Esta acción no se puede deshacer. Los premios se acreditarán automáticamente a los ganadores y las 10,000 membresías quedarán disponibles de nuevo para arrancar la siguiente temporada.
         </p>
+        {reservasActivas > 0 && (
+          <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 mb-4">
+            <p className="text-orange-700 text-sm font-semibold">
+              ⚠️ Hay {reservasActivas} reserva{reservasActivas !== 1 ? "s" : ""} activa{reservasActivas !== 1 ? "s" : ""} en este momento
+            </p>
+            <p className="text-orange-600 text-xs mt-0.5">
+              Se cancelarán junto con el reset de la temporada — esos usuarios perderán su reserva en curso.
+            </p>
+          </div>
+        )}
         <div className="flex gap-3">
           <button
             onClick={onCancelar}
@@ -364,11 +384,11 @@ function GrupoGanadores({ categoria, premios }: { categoria: Categoria; premios:
 
 function TabPrincipal() {
   const [sorteoExistente, setSorteoExistente] = useState<SorteoData | null>(null);
+  const [temporadaActual, setTemporadaActual] = useState<TemporadaActual | null>(null);
   const [resumen, setResumen] = useState<Resumen | null>(null);
   const [modo, setModo] = useState<"auto" | "manual">("auto");
   const [numeroManual, setNumeroManual] = useState("");
   const [ejecutando, setEjecutando] = useState(false);
-  const [reiniciando, setReiniciando] = useState(false);
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(true);
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -378,11 +398,25 @@ function TabPrincipal() {
   const [modoDemo, setModoDemo] = useState(false);
   const [pendienteJSON, setPendienteJSON] = useState<{ sorteo: SorteoData; resumen: Resumen } | null>(null);
 
-  useEffect(() => {
-    fetch("/api/admin/sorteo")
-      .then((r) => r.json())
-      .then((d) => { setSorteoExistente(d.sorteo); setCargando(false); });
+  const cargarEstado = useCallback(async () => {
+    const d = await fetch("/api/admin/sorteo").then((r) => r.json());
+    setSorteoExistente(d.sorteo);
+    setTemporadaActual(d.temporadaActual);
   }, []);
+
+  useEffect(() => {
+    cargarEstado().finally(() => setCargando(false));
+  }, [cargarEstado]);
+
+  async function abrirModalEjecutar() {
+    if (modo === "manual" && numeroManual.length !== 4) {
+      setError("El número ganador debe ser exactamente 4 dígitos.");
+      return;
+    }
+    setError("");
+    await cargarEstado(); // refresca reservas activas justo antes de confirmar
+    setModalAbierto(true);
+  }
 
   async function ejecutarSorteo() {
     if (modo === "manual" && !/^\d{4}$/.test(numeroManual)) {
@@ -404,7 +438,6 @@ function TabPrincipal() {
       }
       if (!res.ok) {
         setError((json.mensaje as string) ?? "Error desconocido al ejecutar la selección.");
-        if (json.sorteo) setSorteoExistente(json.sorteo as SorteoData);
         setModalAbierto(false);
         return;
       }
@@ -437,18 +470,9 @@ function TabPrincipal() {
       setSorteoExistente(pendienteJSON.sorteo);
       setResumen(pendienteJSON.resumen);
       setPendienteJSON(null);
+      setNumeroManual("");
+      cargarEstado(); // trae la temporada nueva ya abierta por el backend
     }
-  }
-
-  async function reiniciarSorteo() {
-    if (!confirm("¿Seguro que quieres eliminar la selección actual? Esta acción no se puede deshacer.")) return;
-    setReiniciando(true);
-    await fetch("/api/admin/sorteo", { method: "DELETE" });
-    setSorteoExistente(null);
-    setResumen(null);
-    setNumeroManual("");
-    setError("");
-    setReiniciando(false);
   }
 
   if (cargando) return <div className="text-center py-12 text-gray-400">Cargando...</div>;
@@ -462,10 +486,40 @@ function TabPrincipal() {
 
   return (
     <>
-      {!sorteoExistente ? (
+      <div className="space-y-6">
+        {temporadaActual && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-start justify-between flex-wrap gap-2 mb-4">
+              <div>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Temporada actual</p>
+                <h2 className="text-2xl font-extrabold text-[#1B4F8A]">Temporada #{temporadaActual.numero}</h2>
+              </div>
+              <p className="text-gray-400 text-xs">
+                Iniciada el {new Date(temporadaActual.inicio).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="bg-gray-50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-extrabold text-[#1B4F8A]">{temporadaActual.vendidasActuales.toLocaleString("es-CO")}</p>
+                <p className="text-gray-500 text-xs mt-0.5">Membresías vendidas / 10,000</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4 text-center">
+                <p className="text-2xl font-extrabold text-[#1B4F8A]">{(10_000 - temporadaActual.vendidasActuales).toLocaleString("es-CO")}</p>
+                <p className="text-gray-500 text-xs mt-0.5">Disponibles</p>
+              </div>
+              <div className={`rounded-xl p-4 text-center ${temporadaActual.reservadasActivas > 0 ? "bg-orange-50" : "bg-gray-50"}`}>
+                <p className={`text-2xl font-extrabold ${temporadaActual.reservadasActivas > 0 ? "text-orange-600" : "text-[#1B4F8A]"}`}>
+                  {temporadaActual.reservadasActivas.toLocaleString("es-CO")}
+                </p>
+                <p className="text-gray-500 text-xs mt-0.5">Reservas activas</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-5">Configurar selección principal</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-5">Ejecutar selección de esta temporada</h2>
 
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-5">
@@ -512,14 +566,7 @@ function TabPrincipal() {
             )}
 
             <button
-              onClick={() => {
-                if (modo === "manual" && numeroManual.length !== 4) {
-                  setError("El número ganador debe ser exactamente 4 dígitos.");
-                  return;
-                }
-                setError("");
-                setModalAbierto(true);
-              }}
+              onClick={abrirModalEjecutar}
               disabled={ejecutando || (modo === "manual" && numeroManual.length !== 4)}
               className="w-full bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-extrabold py-4 rounded-xl text-lg transition-all shadow-md hover:shadow-lg mb-3"
             >
@@ -535,7 +582,7 @@ function TabPrincipal() {
             </button>
 
             <p className="text-center text-gray-400 text-xs mt-3">
-              Esta acción es irreversible. Los premios se acreditarán automáticamente.
+              Esta acción es irreversible. Se acreditan los premios y las 10,000 membresías vuelven a estar disponibles de inmediato para la siguiente temporada.
             </p>
           </div>
 
@@ -560,96 +607,87 @@ function TabPrincipal() {
             </div>
           </div>
         </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="bg-gradient-to-br from-[#1B4F8A] to-[#0d3b6e] rounded-2xl p-8 text-white text-center">
-            <p className="text-blue-200 text-sm font-medium mb-2 uppercase tracking-widest">Número ganador</p>
-            <div
-              className="text-8xl md:text-9xl font-extrabold tracking-widest text-[#F5A623] my-4"
-              style={{ fontFamily: "'Courier New', monospace" }}
-            >
-              {sorteoExistente.numeroGanador}
-            </div>
-            <p className="text-blue-200 text-sm">
-              Selección ejecutada el{" "}
-              {new Date(sorteoExistente.fecha).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}
-            </p>
-          </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: "Membresías vendidas", valor: sorteoExistente.totalVendidas.toLocaleString("es-CO", { maximumFractionDigits: 0 }), icono: "📦" },
-              { label: "Recaudo total", valor: `$${(sorteoExistente.totalRecaudo / 1_000_000).toFixed(2)}M`, icono: "💰" },
-              { label: "Fondo premios", valor: `$${(sorteoExistente.fondoPremios / 1_000_000).toFixed(2)}M`, icono: "🏆" },
-              { label: "Ganancia operación", valor: `$${(sorteoExistente.ganancia / 1_000_000).toFixed(2)}M`, icono: "🎪" },
-            ].map((item) => (
-              <div key={item.label} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
-                <span className="text-2xl">{item.icono}</span>
-                <p className="text-xl font-extrabold text-[#1B4F8A] mt-1">{item.valor}</p>
-                <p className="text-gray-500 text-xs mt-0.5">{item.label}</p>
+        {sorteoExistente && (
+          <div className="space-y-6">
+            <h2 className="text-lg font-bold text-gray-900">Última selección ejecutada</h2>
+
+            <div className="bg-gradient-to-br from-[#1B4F8A] to-[#0d3b6e] rounded-2xl p-8 text-white text-center">
+              <p className="text-blue-200 text-sm font-medium mb-2 uppercase tracking-widest">Número ganador</p>
+              <div
+                className="text-8xl md:text-9xl font-extrabold tracking-widest text-[#F5A623] my-4"
+                style={{ fontFamily: "'Courier New', monospace" }}
+              >
+                {sorteoExistente.numeroGanador}
               </div>
-            ))}
-          </div>
+              <p className="text-blue-200 text-sm">
+                Selección ejecutada el{" "}
+                {new Date(sorteoExistente.fecha).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}
+              </p>
+            </div>
 
-          {resumen && (
-            <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
-              <h3 className="font-bold text-green-800 mb-3">✅ Selección ejecutada exitosamente</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                {[
-                  { label: "Ganadores 4 cifras", val: resumen.ganadores4, monto: resumen.monto4 },
-                  { label: "Ganadores 3 cifras", val: resumen.ganadores3, monto: resumen.monto3 },
-                  { label: "Ganadores 2 cifras", val: resumen.ganadores2, monto: resumen.monto2 },
-                  { label: "Ganadores 1 cifra",  val: resumen.ganadores1, monto: resumen.monto1 },
-                ].map((item) => (
-                  <div key={item.label} className="bg-white rounded-xl p-3 text-center border border-green-100">
-                    <p className="text-2xl font-extrabold text-[#1B4F8A]">{item.val}</p>
-                    <p className="text-gray-600 text-xs">{item.label}</p>
-                    {item.val > 0 && (
-                      <p className="text-green-600 text-xs font-semibold mt-0.5">
-                        ${item.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })} c/u
-                      </p>
-                    )}
-                  </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: "Membresías vendidas", valor: sorteoExistente.totalVendidas.toLocaleString("es-CO", { maximumFractionDigits: 0 }), icono: "📦" },
+                { label: "Recaudo total", valor: `$${(sorteoExistente.totalRecaudo / 1_000_000).toFixed(2)}M`, icono: "💰" },
+                { label: "Fondo premios", valor: `$${(sorteoExistente.fondoPremios / 1_000_000).toFixed(2)}M`, icono: "🏆" },
+                { label: "Ganancia operación", valor: `$${(sorteoExistente.ganancia / 1_000_000).toFixed(2)}M`, icono: "🎪" },
+              ].map((item) => (
+                <div key={item.label} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 text-center">
+                  <span className="text-2xl">{item.icono}</span>
+                  <p className="text-xl font-extrabold text-[#1B4F8A] mt-1">{item.valor}</p>
+                  <p className="text-gray-500 text-xs mt-0.5">{item.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {resumen && (
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
+                <h3 className="font-bold text-green-800 mb-3">✅ Selección ejecutada exitosamente</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  {[
+                    { label: "Ganadores 4 cifras", val: resumen.ganadores4, monto: resumen.monto4 },
+                    { label: "Ganadores 3 cifras", val: resumen.ganadores3, monto: resumen.monto3 },
+                    { label: "Ganadores 2 cifras", val: resumen.ganadores2, monto: resumen.monto2 },
+                    { label: "Ganadores 1 cifra",  val: resumen.ganadores1, monto: resumen.monto1 },
+                  ].map((item) => (
+                    <div key={item.label} className="bg-white rounded-xl p-3 text-center border border-green-100">
+                      <p className="text-2xl font-extrabold text-[#1B4F8A]">{item.val}</p>
+                      <p className="text-gray-600 text-xs">{item.label}</p>
+                      {item.val > 0 && (
+                        <p className="text-green-600 text-xs font-semibold mt-0.5">
+                          ${item.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })} c/u
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">
+                Ganadores por categoría
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({sorteoExistente.premios.length} total)
+                </span>
+              </h2>
+              <div className="space-y-3">
+                {premiosPorCategoria.map(({ categoria, premios }) => (
+                  <GrupoGanadores key={categoria} categoria={categoria} premios={premios} />
                 ))}
               </div>
             </div>
-          )}
-
-          <div>
-            <h2 className="text-lg font-bold text-gray-900 mb-4">
-              Ganadores por categoría
-              <span className="ml-2 text-sm font-normal text-gray-500">
-                ({sorteoExistente.premios.length} total)
-              </span>
-            </h2>
-            <div className="space-y-3">
-              {premiosPorCategoria.map(({ categoria, premios }) => (
-                <GrupoGanadores key={categoria} categoria={categoria} premios={premios} />
-              ))}
-            </div>
           </div>
-
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
-            <h3 className="font-bold text-red-800 mb-1">Zona de peligro</h3>
-            <p className="text-red-600 text-sm mb-3">
-              Solo para pruebas. Elimina la selección actual y permite ejecutar una nueva.
-            </p>
-            <button
-              onClick={reiniciarSorteo}
-              disabled={reiniciando}
-              className="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold px-5 py-2.5 rounded-xl text-sm transition-colors"
-            >
-              {reiniciando ? "Eliminando..." : "🗑️ Reiniciar selección"}
-            </button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <ModalConfirmacion
         abierto={modalAbierto}
         onConfirmar={ejecutarSorteo}
         onCancelar={() => setModalAbierto(false)}
         ejecutando={ejecutando}
+        reservasActivas={temporadaActual?.reservadasActivas ?? 0}
       />
 
       <OverlayAnimacion

@@ -6,26 +6,35 @@ interface CajaConUser {
   userId: string | null;
 }
 
-// GET: último sorteo finalizado
+// GET: último sorteo finalizado + estado de la temporada actual
 export async function GET() {
   if (!await verificarAdmin()) {
     return NextResponse.json({ mensaje: "Acceso denegado." }, { status: 403 });
   }
 
   const { prisma } = await import("@/lib/prisma");
+  const { obtenerOCrearTemporadaActual } = await import("@/lib/temporada");
 
-  const sorteo = await prisma.sorteo.findFirst({
-    where: { estado: { in: ["FINALIZADO", "EN_CURSO"] } },
-    include: {
-      premios: {
-        include: { user: { select: { nombre: true, apellido: true, correo: true } } },
-        orderBy: { categoria: "asc" },
+  const [sorteo, temporadaActual, vendidasActuales, reservadasActivas] = await Promise.all([
+    prisma.sorteo.findFirst({
+      where: { estado: { in: ["FINALIZADO", "EN_CURSO"] } },
+      include: {
+        premios: {
+          include: { user: { select: { nombre: true, apellido: true, correo: true } } },
+          orderBy: { categoria: "asc" },
+        },
       },
-    },
-    orderBy: { fecha: "desc" },
-  });
+      orderBy: { fecha: "desc" },
+    }),
+    obtenerOCrearTemporadaActual(prisma),
+    prisma.caja.count({ where: { estado: "VENDIDA", tipoSorteo: "PRINCIPAL" } }),
+    prisma.caja.count({ where: { estado: "RESERVADA", tipoSorteo: "PRINCIPAL" } }),
+  ]);
 
-  return NextResponse.json({ sorteo });
+  return NextResponse.json({
+    sorteo,
+    temporadaActual: { ...temporadaActual, vendidasActuales, reservadasActivas },
+  });
 }
 
 // POST: ejecutar sorteo con N ganadores de 4 cifras
@@ -45,14 +54,9 @@ export async function POST(req: NextRequest) {
     }
 
     const { prisma } = await import("@/lib/prisma");
+    const { obtenerOCrearTemporadaActual } = await import("@/lib/temporada");
 
-    const yaEjecutado = await prisma.sorteo.findFirst({ where: { estado: "FINALIZADO" } });
-    if (yaEjecutado) {
-      return NextResponse.json(
-        { mensaje: "Ya existe una selección finalizada. Solo puede haber una.", sorteo: yaEjecutado },
-        { status: 409 }
-      );
-    }
+    const temporadaActual = await obtenerOCrearTemporadaActual(prisma);
 
     // Leer configuración
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -156,6 +160,7 @@ export async function POST(req: NextRequest) {
           ganancia,
           fondoPremios,
           configuracion: { precioCaja: PRECIO_CAJA, modo, ganadores4Cifras: N },
+          temporadaId: temporadaActual.id,
         },
       });
 
@@ -206,6 +211,7 @@ export async function POST(req: NextRequest) {
             monto: p.monto,
             categoria: NOMBRE_CAT[p.categoria],
             origen: "Selección principal",
+            temporadaId: temporadaActual.id,
           })),
         });
       }
@@ -252,6 +258,19 @@ export async function POST(req: NextRequest) {
           });
         }
       }
+
+      // Cierra la temporada actual con el snapshot de sus resultados y abre
+      // la siguiente — el pool de 10,000 membresías principales vuelve a
+      // DISPONIBLE de inmediato para que arranque la nueva temporada.
+      await tx.temporada.update({
+        where: { id: temporadaActual.id },
+        data: { fin: new Date(), totalVendidas, totalRecaudo, fondoPremios, ganancia },
+      });
+      await tx.temporada.create({ data: { numero: temporadaActual.numero + 1 } });
+      await tx.caja.updateMany({
+        where: { tipoSorteo: "PRINCIPAL" },
+        data: { estado: "DISPONIBLE", userId: null, fechaCompra: null, idCompra: null },
+      });
 
       return nuevoSorteo;
     }, { timeout: 30_000 });
@@ -336,17 +355,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// DELETE: reiniciar sorteo (solo para pruebas)
-export async function DELETE() {
-  if (!await verificarAdmin()) {
-    return NextResponse.json({ mensaje: "Acceso denegado." }, { status: 403 });
-  }
-
-  const { prisma } = await import("@/lib/prisma");
-  await prisma.premio.deleteMany();
-  await prisma.sorteo.deleteMany();
-
-  return NextResponse.json({ mensaje: "Selecciones eliminadas. Puedes ejecutar una nueva." });
 }
