@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
 
 const ITEMS = [
   {
@@ -23,17 +22,6 @@ const ITEMS = [
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
         <circle cx="12" cy="8" r="4" />
         <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-      </svg>
-    ),
-  },
-  {
-    href: "/tienda",
-    label: "Tienda",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
-        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-        <line x1="3" y1="6" x2="21" y2="6" />
-        <path d="M16 10a4 4 0 0 1-8 0" />
       </svg>
     ),
   },
@@ -64,20 +52,10 @@ const ITEMS = [
 export default function NavMobile() {
   const { status } = useSession();
   const pathname = usePathname();
-  const [tiendaActiva, setTiendaActiva] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/config")
-      .then((r) => r.json())
-      .then((c: { tiendaActiva?: boolean }) => setTiendaActiva(c.tiendaActiva ?? true))
-      .catch(() => undefined);
-  }, []);
 
   if (status !== "authenticated") return null;
   if (pathname.startsWith("/admin")) return null;
   if (pathname === "/") return null;
-
-  const items = ITEMS.filter((item) => item.href !== "/tienda" || tiendaActiva);
 
   return (
     <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:hidden">
@@ -89,7 +67,7 @@ export default function NavMobile() {
           boxShadow: "0 8px 32px rgba(16,36,99,0.35), 0 2px 8px rgba(0,0,0,0.2)",
         }}
       >
-        {items.map(({ href, label, icon }) => {
+        {ITEMS.map(({ href, label, icon }) => {
           const active = pathname === href || (href !== "/" && pathname.startsWith(href + "/"));
           return (
             <Link

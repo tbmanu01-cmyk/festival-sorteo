@@ -11,7 +11,6 @@ const DEFAULTS = {
   brebKey: "",
   datosBancarios: "",
   linkPagoBoldUrl: "",
-  tiendaActiva: true,
   saldoGiftCardActivo: false,
 };
 

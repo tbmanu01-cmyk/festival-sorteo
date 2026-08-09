@@ -15,7 +15,7 @@ export async function GET() {
   const [
     usuarios, cajas, transacciones, sorteos, premios, retiros, config,
     sorteoAnticipados, referidos, cupones, giftCards, granSorteos,
-    sorteosPreviosGran, notificaciones, conceptosRetencion, bonos, bonoCompras,
+    sorteosPreviosGran, notificaciones, conceptosRetencion,
   ] = await Promise.all([
     prisma.user.findMany(),
     prisma.caja.findMany(),
@@ -32,8 +32,6 @@ export async function GET() {
     prisma.sorteoPrevioGran.findMany(),
     prisma.notificacion.findMany(),
     prisma.conceptoRetencion.findMany(),
-    prisma.bono.findMany(),
-    prisma.bonoCompra.findMany(),
   ]);
 
   const backup = {
@@ -45,8 +43,6 @@ export async function GET() {
       cajas: cajas.length,
       transacciones: transacciones.length,
       retiros: retiros.length,
-      bonos: bonos.length,
-      bonoCompras: bonoCompras.length,
       referidos: referidos.length,
       giftCards: giftCards.length,
     },
@@ -66,8 +62,6 @@ export async function GET() {
       giftCards,
       notificaciones,
       conceptosRetencion,
-      bonos,
-      bonoCompras,
     },
   };
 

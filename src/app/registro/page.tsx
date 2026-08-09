@@ -96,18 +96,17 @@ function CampoSelect({
 function FormularioRegistro() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const refCodeUrl = searchParams.get("ref")  ?? "";
-  const slotToken  = searchParams.get("slot") ?? "";
+  const refCodeUrl = searchParams.get("ref") ?? "";
 
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [ciudades, setCiudades] = useState<string[]>([]);
   const [codigoManual, setCodigoManual] = useState("");
 
-  // Tienda 10K es solo por invitación: sin link/QR (?ref= o ?slot=) ni código
-  // escrito a mano, no se puede crear cuenta.
+  // Tienda 10K es solo por invitación: sin link/QR (?ref=) ni código escrito
+  // a mano, no se puede crear cuenta.
   const refCode = refCodeUrl || codigoManual.trim().toUpperCase();
-  const tieneInvitacion = Boolean(slotToken || refCode);
+  const tieneInvitacion = Boolean(refCode);
 
   const [invitadoPor, setInvitadoPor] = useState<{ nombre: string; apellido: string } | null>(null);
 
@@ -149,8 +148,7 @@ function FormularioRegistro() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          refCode:   refCode   || undefined,
-          slotToken: slotToken || undefined,
+          refCode: refCode || undefined,
         }),
       });
 
@@ -195,15 +193,7 @@ function FormularioRegistro() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="px-8 py-6 space-y-6">
-            {slotToken && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-center gap-2">
-                <span className="text-lg">🔗</span>
-                <p className="text-blue-800 text-sm font-medium">
-                  Tienes un <span className="font-extrabold">slot reservado</span> en la red de alguien — ¡bienvenido!
-                </p>
-              </div>
-            )}
-            {!slotToken && refCodeUrl && (
+            {refCodeUrl && (
               <div className="bg-[#102463]/5 border border-[#1B4F8A]/20 rounded-lg px-4 py-3 flex items-center gap-2">
                 <span className="text-lg">🎁</span>
                 <p className="text-[#102463] text-sm font-medium">
@@ -215,7 +205,7 @@ function FormularioRegistro() {
                 </p>
               </div>
             )}
-            {!slotToken && !refCodeUrl && (
+            {!refCodeUrl && (
               <div className="bg-amber-50 border border-amber-300 rounded-lg px-4 py-3">
                 <p className="text-amber-900 text-sm font-bold mb-2">
                   🔒 Tienda 10K es solo por invitación

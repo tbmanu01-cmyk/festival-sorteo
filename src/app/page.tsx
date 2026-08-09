@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
 
@@ -10,16 +9,7 @@ interface Boton {
   label: string;
   sub: string;
   icono: React.ReactNode;
-  proximamente?: boolean;
 }
-
-const ICONO_TIENDA = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 sm:w-16 sm:h-16">
-    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-    <line x1="3" y1="6" x2="21" y2="6" />
-    <path d="M16 10a4 4 0 0 1-8 0" />
-  </svg>
-);
 
 const ICONO_MEMBRESIAS = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 sm:w-16 sm:h-16">
@@ -77,16 +67,6 @@ const ICONO_REGISTRO = (
 export default function Inicio() {
   const { data: session, status } = useSession();
   const rol = (session?.user as { rol?: string } | undefined)?.rol;
-  const [tiendaActiva, setTiendaActiva] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/config")
-      .then((r) => r.json())
-      .then((d: { tiendaActiva?: boolean }) => setTiendaActiva(d.tiendaActiva ?? true))
-      .catch(() => undefined);
-  }, []);
-
-  const tienda: Boton = { href: "/tienda", label: "Tienda", sub: "Bonos con cashback", icono: ICONO_TIENDA, proximamente: !tiendaActiva };
 
   const botones: Boton[] = [
     { href: "/membresias", label: "Membresías", sub: "Selección aleatoria", icono: ICONO_MEMBRESIAS },
@@ -97,7 +77,6 @@ export default function Inicio() {
       { href: "/dashboard", label: "Mi cuenta", sub: "Billetera y red", icono: ICONO_CUENTA },
       { href: "/dashboard/perfil", label: "Perfil", sub: "Tus datos", icono: ICONO_PERFIL },
       { href: "/notificaciones", label: "Notificaciones", sub: "Avisos y alertas", icono: ICONO_NOTIFICACIONES },
-      tienda,
     );
     if (rol === "ADMIN") {
       botones.push({ href: "/admin", label: "Administrar", sub: "Panel admin", icono: ICONO_ADMIN });
@@ -107,7 +86,6 @@ export default function Inicio() {
   } else {
     botones.push(
       { href: "/notificaciones", label: "Notificaciones", sub: "Avisos y alertas", icono: ICONO_NOTIFICACIONES },
-      tienda,
       { href: "/login", label: "Iniciar sesión", sub: "Ya tengo cuenta", icono: ICONO_LOGIN },
       { href: "/registro", label: "Registrarme", sub: "Crear cuenta gratis", icono: ICONO_REGISTRO },
     );
@@ -130,40 +108,13 @@ export default function Inicio() {
         {botones.map((b) => {
           const contenido = (
             <>
-              <div className="mr-4 mb-0 sm:mr-0 sm:mb-3" style={{ color: b.proximamente ? "rgba(255,255,255,0.45)" : "#ffbd1f", flexShrink: 0 }}>{b.icono}</div>
+              <div className="mr-4 mb-0 sm:mr-0 sm:mb-3" style={{ color: "#ffbd1f", flexShrink: 0 }}>{b.icono}</div>
               <div className="flex flex-col sm:items-center">
                 <span className="text-2xl sm:text-5xl" style={{ color: "white", fontWeight: 800, lineHeight: 1.15 }}>{b.label}</span>
                 <span className="text-base sm:text-xl" style={{ color: "rgba(255,255,255,0.70)", marginTop: 6 }}>{b.sub}</span>
               </div>
             </>
           );
-
-          if (b.proximamente) {
-            return (
-              <div
-                key={b.href}
-                aria-disabled="true"
-                className="relative flex flex-row sm:flex-col items-center justify-start sm:justify-center text-left sm:text-center cursor-not-allowed"
-                style={{
-                  background: "linear-gradient(135deg, #6b7693 0%, #8894ac 100%)",
-                  borderRadius: 24,
-                  boxShadow: "0 8px 20px -6px rgba(16,36,99,0.20)",
-                  padding: "0 22px",
-                  minHeight: 0,
-                  minWidth: 0,
-                  overflow: "hidden",
-                }}
-              >
-                <span
-                  className="absolute top-2 right-2 sm:top-3 sm:right-3 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider"
-                  style={{ background: "#ffbd1f", color: "#102463" }}
-                >
-                  Próximamente
-                </span>
-                {contenido}
-              </div>
-            );
-          }
 
           return (
             <Link

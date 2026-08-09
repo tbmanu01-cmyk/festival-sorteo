@@ -35,7 +35,6 @@ export async function PUT(req: NextRequest) {
     brebKey?: string;
     datosBancarios?: string;
     linkPagoBoldUrl?: string;
-    tiendaActiva?: boolean;
     saldoGiftCardActivo?: boolean;
   };
 

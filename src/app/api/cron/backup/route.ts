@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const [
     usuarios, cajas, transacciones, sorteos, premios, retiros, config,
     sorteoAnticipados, referidos, cupones, giftCards, granSorteos,
-    sorteosPreviosGran, notificaciones, conceptosRetencion, bonos, bonoCompras,
+    sorteosPreviosGran, notificaciones, conceptosRetencion,
   ] = await Promise.all([
     prisma.user.findMany(),
     prisma.caja.findMany(),
@@ -31,8 +31,6 @@ export async function GET(req: Request) {
     prisma.sorteoPrevioGran.findMany(),
     prisma.notificacion.findMany(),
     prisma.conceptoRetencion.findMany(),
-    prisma.bono.findMany(),
-    prisma.bonoCompra.findMany(),
   ]);
 
   const backup = {
@@ -44,8 +42,6 @@ export async function GET(req: Request) {
       cajas: cajas.length,
       transacciones: transacciones.length,
       retiros: retiros.length,
-      bonos: bonos.length,
-      bonoCompras: bonoCompras.length,
       referidos: referidos.length,
       giftCards: giftCards.length,
     },
@@ -65,8 +61,6 @@ export async function GET(req: Request) {
       giftCards,
       notificaciones,
       conceptosRetencion,
-      bonos,
-      bonoCompras,
     },
   };
 
@@ -90,8 +84,6 @@ export async function GET(req: Request) {
         <tr><td style="padding:4px 12px 4px 0;color:#666">Membresías</td><td><strong>${backup.resumen.cajas}</strong></td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666">Transacciones</td><td><strong>${backup.resumen.transacciones}</strong></td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666">Retiros</td><td><strong>${backup.resumen.retiros}</strong></td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Bonos</td><td><strong>${backup.resumen.bonos}</strong></td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Compras bonos</td><td><strong>${backup.resumen.bonoCompras}</strong></td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666">Referidos</td><td><strong>${backup.resumen.referidos}</strong></td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666">Gift cards</td><td><strong>${backup.resumen.giftCards}</strong></td></tr>
       </table>

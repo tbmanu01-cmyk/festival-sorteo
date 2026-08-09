@@ -2,19 +2,9 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
-
 export default function Footer() {
   const { data: session } = useSession();
-  const [tiendaActiva, setTiendaActiva] = useState(true);
   const rol = (session?.user as { rol?: string } | undefined)?.rol;
-
-  useEffect(() => {
-    fetch("/api/config")
-      .then((r) => r.json())
-      .then((c: { tiendaActiva?: boolean }) => setTiendaActiva(c.tiendaActiva ?? true))
-      .catch(() => undefined);
-  }, []);
 
   return (
     <footer style={{ background: "#102463", color: "rgba(255,255,255,0.60)" }} className="mt-auto mb-20 md:mb-0">
@@ -38,9 +28,6 @@ export default function Footer() {
               <li><Link href="/" className="hover:text-white transition-colors">Inicio</Link></li>
               <li><Link href="/membresias" className="hover:text-white transition-colors">Membresías</Link></li>
               <li><Link href="/ranking" className="hover:text-white transition-colors">Ranking</Link></li>
-              {tiendaActiva && (
-                <li><Link href="/tienda" className="hover:text-white transition-colors">Tienda</Link></li>
-              )}
               {session ? (
                 <>
                   <li><Link href="/dashboard" className="hover:text-white transition-colors">Mi cuenta</Link></li>

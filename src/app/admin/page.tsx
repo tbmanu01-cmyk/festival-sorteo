@@ -790,24 +790,6 @@ export default function AdminPanel() {
                   </div>
                   <span className="ml-auto text-[#b87b00] opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
                 </Link>
-                <Link href="/admin/bonos"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-                  <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">🏷️</span>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800 leading-tight">Gestión de Bonos</p>
-                    <p className="text-[10px] text-gray-400">Stock, precios y cashback multinivel</p>
-                  </div>
-                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
-                </Link>
-                <Link href="/admin/red-multinivel"
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
-                  <span className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">🌐</span>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800 leading-tight">Red Multinivel</p>
-                    <p className="text-[10px] text-gray-400">Referidos, niveles y gift cards</p>
-                  </div>
-                  <span className="ml-auto text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity text-xs">→</span>
-                </Link>
               </div>
             </div>
 

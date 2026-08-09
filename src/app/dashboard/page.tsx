@@ -7,7 +7,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { esCustom, esPreset } from "@/lib/avatares";
 import ModalConfirmar from "@/components/ModalConfirmar";
 
 const QRCodeCanvas = dynamic(
@@ -64,20 +63,6 @@ interface MisCajas {
   cuentaBancaria: string | null;
   anticipadasGanadas: AnticipadaGanada[];
   confirmado: boolean;
-}
-
-interface BonoCompraItem {
-  id: string;
-  precio: number;
-  cashbackComprador: number;
-  codigoRedención: string;
-  fecha: string;
-  bono: { nombre: string; cadena: string; valorFace: number };
-}
-
-interface MisBonos {
-  compras: BonoCompraItem[];
-  totalCashback: number;
 }
 
 // ── Hook de cuenta regresiva ──────────────────────────────────────────────
@@ -1015,506 +1000,11 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
 
 // ── Dashboard principal ────────────────────────────────────────────────────
 
-// ── Árbol de familias multinivel ─────────────────────────────────────────────
-
-interface MiembroRed {
-  id: string;
-  nombre: string;
-  apellido: string;
-  fechaRegistro: string;
-  ciudad: string;
-  codigoRef: string | null;
-  avatar?: string | null;
-  refId: string;
-  compro: boolean;
-}
-
-interface FamiliaRed {
-  numero: number;
-  hijos: (MiembroRed | null)[];
-  nietos: (MiembroRed | null)[][];
-  totalMiembros: number;
-  completa: boolean;
-}
-
-interface ResumenAdmin {
-  hijosDirectos: number;
-  totalUsuariosRed: number;
-}
-
-interface DatosRed {
-  yo: MiembroRed;
-  familias: FamiliaRed[];
-  totalFamilias: number;
-  totalMiembros: number;
-  esAdmin?: boolean;
-  resumenAdmin?: ResumenAdmin;
-}
-
-function iniciales(nombre: string, apellido: string) {
-  return `${nombre[0]}${apellido[0]}`.toUpperCase();
-}
-
-function fmtFecha(iso: string) {
-  return new Date(iso).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" });
-}
-
-function AvatarMiembro({ miembro, nivel }: { miembro: MiembroRed; nivel: "hijo" | "nieto" }) {
-  const [mostrando, setMostrando] = useState(false);
-  const [link, setLink]           = useState<string | null>(null);
-  const [copiado, setCopiado]     = useState(false);
-  const [cargando, setCargando]   = useState(false);
-  const [error, setError]         = useState("");
-
-  const tam        = nivel === "hijo" ? "w-12 h-12 text-sm" : "w-10 h-10 text-xs";
-  const defaultBg  = nivel === "hijo" ? "#102463" : "#ffbd1f";
-  const defaultColor = nivel === "hijo" ? "white" : "#102463";
-  const tieneImagen = esPreset(miembro.avatar) || esCustom(miembro.avatar);
-
-  async function solicitarReemplazo() {
-    setCargando(true);
-    setError("");
-    try {
-      const res = await fetch("/api/red/solicitar-reemplazo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ referidoId: miembro.id }),
-      });
-      const json = await res.json();
-      if (!res.ok) { setError(json.mensaje ?? "Error al generar el link."); return; }
-      setLink(json.link);
-    } catch { setError("Error de red."); }
-    finally { setCargando(false); }
-  }
-
-  function copiar() {
-    if (!link) return;
-    navigator.clipboard.writeText(link).then(() => {
-      setCopiado(true);
-      setTimeout(() => { setCopiado(false); setMostrando(false); setLink(null); }, 2000);
-    });
-  }
-
-  return (
-    <div className="flex flex-col items-center gap-1 group relative">
-      <div
-        className={`${tam} rounded-full shadow-sm ring-2 ${miembro.compro ? "ring-white" : "ring-amber-300"} cursor-default overflow-hidden flex items-center justify-center font-extrabold relative`}
-        style={tieneImagen ? {} : { background: miembro.compro ? defaultBg : "#9ca3af", color: "white" }}
-      >
-        {tieneImagen
-          ? <img src={miembro.avatar!} alt="" className="w-full h-full object-cover" />
-          : iniciales(miembro.nombre, miembro.apellido)
-        }
-      </div>
-      <p className={`text-[10px] font-medium text-center leading-tight max-w-[56px] truncate ${miembro.compro ? "text-gray-600" : "text-amber-600"}`}>
-        {miembro.nombre}
-      </p>
-
-      {/* Tooltip con opción de reemplazar para no-compradores */}
-      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[11px] rounded-xl px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl whitespace-nowrap">
-        <p className="font-bold">{miembro.nombre} {miembro.apellido}</p>
-        <p className="text-gray-400 text-[10px] mt-0.5">Desde {fmtFecha(miembro.fechaRegistro)}</p>
-        {!miembro.compro && <p className="text-amber-400 text-[10px] mt-0.5 font-semibold">Sin compra aún</p>}
-      </div>
-
-      {/* Botón reemplazar para slots sin compra */}
-      {!miembro.compro && (
-        <button
-          onClick={() => { setMostrando(true); setLink(null); setError(""); }}
-          className="text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-1.5 py-0.5 hover:bg-amber-100 transition-colors pointer-events-auto -mt-0.5"
-        >
-          reemplazar
-        </button>
-      )}
-
-      {/* Modal de reemplazo */}
-      {mostrando && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-          onClick={() => { setMostrando(false); setLink(null); setError(""); }}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Reemplazar slot</p>
-            <p className="text-sm text-gray-700 font-semibold mb-1">{miembro.nombre} {miembro.apellido}</p>
-            <p className="text-xs text-gray-500 mb-4">
-              Este miembro aún no ha realizado una compra. Puedes generar un link especial para que otra persona ocupe su lugar.
-            </p>
-            {error && <p className="text-xs text-red-500 font-medium mb-3">{error}</p>}
-            {!link ? (
-              <button
-                onClick={solicitarReemplazo}
-                disabled={cargando}
-                className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white font-bold py-2.5 rounded-full text-sm transition-all"
-              >
-                {cargando ? "Generando..." : "Generar link de reemplazo"}
-              </button>
-            ) : (
-              <>
-                <div className="bg-gray-50 rounded-xl px-3 py-2 mb-3 border border-gray-200">
-                  <p className="text-[11px] font-mono text-gray-600 break-all leading-relaxed">{link}</p>
-                </div>
-                <p className="text-[10px] text-gray-400 text-center mb-3">Válido por 72 horas</p>
-                {copiado ? (
-                  <div className="w-full bg-green-100 text-green-700 font-bold py-2.5 rounded-full text-sm text-center">
-                    ✓ ¡Copiado!
-                  </div>
-                ) : (
-                  <button
-                    onClick={copiar}
-                    className="w-full bg-[#102463] hover:bg-[#173592] text-white font-bold py-2.5 rounded-full text-sm transition-all"
-                  >
-                    Copiar link
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface SlotVacioProps {
-  nivel: "hijo" | "nieto";
-  codigoRef: string | null;
-}
-
-function SlotVacio({ nivel, codigoRef }: SlotVacioProps) {
-  const [mostrandoLink, setMostrandoLink] = useState(false);
-  const [copiado, setCopiado] = useState(false);
-  const tam = nivel === "hijo" ? "w-12 h-12 text-base" : "w-10 h-10 text-sm";
-  const colores = nivel === "hijo"
-    ? "bg-[#102463]/10 text-[#102463]/40 hover:bg-[#102463]/20 hover:text-[#102463]/60"
-    : "bg-[#ffbd1f]/15 text-[#102463]/40 hover:bg-[#ffbd1f]/30 hover:text-[#102463]/70";
-
-  const link = codigoRef
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/registro?ref=${codigoRef}`
-    : null;
-
-  function copiar() {
-    if (!link) return;
-    navigator.clipboard.writeText(link).then(() => {
-      setCopiado(true);
-      setTimeout(() => { setCopiado(false); setMostrandoLink(false); }, 2000);
-    });
-  }
-
-  return (
-    <div className="flex flex-col items-center gap-1 relative">
-      <button
-        onClick={() => link && setMostrandoLink(true)}
-        title={link ? "Toca para obtener el link de referido" : "Sin link disponible"}
-        className={`${tam} ${colores} rounded-full flex items-center justify-center font-bold ring-2 ring-white transition-all ${link ? "cursor-pointer" : "cursor-default"}`}
-      >
-        +
-      </button>
-      <p className="text-[10px] text-gray-300 font-medium">libre</p>
-
-      {/* Mini modal al hacer click */}
-      {mostrandoLink && link && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-          onClick={() => setMostrandoLink(false)}
-        >
-          <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-1">Llenar este slot</p>
-            <p className="text-sm text-gray-600 mb-4">
-              Comparte este link para que el nuevo miembro se registre y ocupe este lugar en tu red.
-            </p>
-            <div className="bg-gray-50 rounded-xl px-3 py-2 mb-3 border border-gray-200">
-              <p className="text-[11px] font-mono text-gray-600 break-all leading-relaxed">{link}</p>
-            </div>
-            {copiado ? (
-              <div className="w-full bg-green-100 text-green-700 font-bold py-2.5 rounded-full text-sm text-center">
-                ✓ ¡Copiado!
-              </div>
-            ) : (
-              <button
-                onClick={copiar}
-                className="w-full bg-[#102463] hover:bg-[#173592] text-white font-bold py-2.5 rounded-full text-sm transition-all"
-              >
-                Copiar link
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ArbolFamilia({ familia, yo }: { familia: FamiliaRed; yo: MiembroRed }) {
-  return (
-    <div className="w-full overflow-x-auto pb-2">
-      <div className="min-w-[420px]">
-        {/* Cabeza */}
-        <div className="flex justify-center mb-1">
-          <div className="flex flex-col items-center gap-1">
-            <div
-              className="w-14 h-14 rounded-full shadow-md ring-4 ring-[#ffbd1f]/40 overflow-hidden flex items-center justify-center font-extrabold text-white text-base"
-              style={(esPreset(yo.avatar) || esCustom(yo.avatar)) ? {} : { background: "linear-gradient(135deg, #102463, #173592)" }}
-            >
-              {(esPreset(yo.avatar) || esCustom(yo.avatar))
-                ? <img src={yo.avatar!} alt="" className="w-full h-full object-cover" />
-                : iniciales(yo.nombre, yo.apellido)
-              }
-            </div>
-            <p className="text-xs text-[#102463] font-bold">{yo.nombre}</p>
-            <span className="text-[9px] bg-[#ffbd1f] text-[#102463] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">Tú</span>
-          </div>
-        </div>
-
-        <div className="flex justify-center"><div className="w-px h-5 bg-gray-200" /></div>
-        <div className="flex justify-center">
-          <div className="flex items-center w-full px-8">
-            <div className="flex-1 h-px bg-gray-200" />
-            <div className="flex-1 h-px bg-gray-200" />
-          </div>
-        </div>
-
-        {/* Nivel 1 — Hijos */}
-        <div className="grid grid-cols-3 gap-2 mb-1">
-          {familia.hijos.map((hijo, i) => (
-            <div key={i} className="flex justify-center">
-              {hijo
-                ? <AvatarMiembro miembro={hijo} nivel="hijo" />
-                : <SlotVacio nivel="hijo" codigoRef={yo.codigoRef} />
-              }
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-3 gap-2">
-          {familia.hijos.map((hijo, i) => (
-            <div key={i} className="flex justify-center">
-              {hijo ? <div className="w-px h-4 bg-gray-200" /> : <div className="w-px h-4" />}
-            </div>
-          ))}
-        </div>
-
-        {/* Nivel 2 — Nietos */}
-        <div className="grid grid-cols-3 gap-2">
-          {familia.nietos.map((grupo, i) => (
-            <div key={i} className="flex flex-row justify-center gap-1 flex-wrap">
-              {grupo.map((nieto, j) => (
-                <div key={j}>
-                  {nieto
-                    ? <AvatarMiembro miembro={nieto} nivel="nieto" />
-                    : <SlotVacio nivel="nieto" codigoRef={yo.codigoRef} />
-                  }
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SeccionRed() {
-  const [datos, setDatos] = useState<DatosRed | null>(null);
-  const [cargando, setCargando] = useState(true);
-  const [familiaActiva, setFamiliaActiva] = useState(0);
-
-  useEffect(() => {
-    fetch("/api/mi-red")
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d) setDatos(d); })
-      .catch(() => undefined)
-      .finally(() => setCargando(false));
-  }, []);
-
-  if (cargando) {
-    return (
-      <section>
-        <div className="rounded-2xl p-6 flex justify-center" style={{ background: "linear-gradient(135deg,#102463,#173592)" }}>
-          <div className="w-8 h-8 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-        </div>
-      </section>
-    );
-  }
-
-  if (!datos || datos.totalMiembros === 0) {
-    return (
-      <section>
-        <div className="rounded-2xl p-6 text-center" style={{ background: "linear-gradient(135deg,#102463,#173592)" }}>
-          <p className="text-3xl mb-2">🌱</p>
-          <p className="font-bold text-white mb-1">Tu red está vacía</p>
-          <p className="text-white/60 text-sm">Comparte tu código para empezar a construir tu primera familia.</p>
-        </div>
-      </section>
-    );
-  }
-
-  // ── Vista especial para el admin ──────────────────────────────────────────
-  if (datos.esAdmin && datos.resumenAdmin) {
-    const r = datos.resumenAdmin;
-    return (
-      <section className="space-y-3">
-        <div className="rounded-2xl p-5 text-white" style={{ background: "linear-gradient(135deg,#102463,#1a4a9e)" }}>
-          <p className="text-xs font-bold uppercase tracking-widest text-white/50 mb-4">Red maestra — Administrador</p>
-          <div className="grid grid-cols-2 gap-4 mb-5">
-            <div>
-              <p className="text-4xl font-extrabold leading-none">{r.totalUsuariosRed.toLocaleString("es-CO")}</p>
-              <p className="text-sm text-white/60 mt-1">usuarios en la plataforma</p>
-            </div>
-            <div className="text-right">
-              <p className="text-4xl font-extrabold leading-none text-[#ffbd1f]">{r.hijosDirectos.toLocaleString("es-CO")}</p>
-              <p className="text-sm text-white/60 mt-1">hijos directos</p>
-            </div>
-          </div>
-          <p className="text-xs text-white/40 mb-3">Como administrador eres la raíz de toda la red. Cada usuario independiente queda bajo tu cuenta.</p>
-          <a
-            href="/admin/red-multinivel"
-            className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white font-bold text-sm px-4 py-2.5 rounded-full transition-all"
-          >
-            Ver red completa →
-          </a>
-        </div>
-      </section>
-    );
-  }
-
-  const familia = datos.familias[familiaActiva];
-  const familiasCompletas = datos.familias.filter((f) => f.completa).length;
-  const pctRed = Math.round((datos.totalMiembros / (datos.totalFamilias * 12)) * 100);
-
-  return (
-    <section className="space-y-3">
-
-      {/* ── Banner de estadísticas globales ───────────────────────────────── */}
-      <div className="rounded-2xl p-5 text-white" style={{ background: "linear-gradient(135deg,#102463,#1a4a9e)" }}>
-        <p className="text-xs font-bold uppercase tracking-widest text-white/50 mb-3">Mi red multinivel</p>
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          <div>
-            <p className="text-3xl font-extrabold leading-none">{datos.totalMiembros}</p>
-            <p className="text-[11px] text-white/60 mt-1">miembros</p>
-          </div>
-          <div className="text-center">
-            <p className="text-3xl font-extrabold leading-none">{datos.totalFamilias}</p>
-            <p className="text-[11px] text-white/60 mt-1">familias</p>
-          </div>
-          <div className="text-right">
-            <p className="text-3xl font-extrabold leading-none text-[#ffbd1f]">{familiasCompletas}</p>
-            <p className="text-[11px] text-white/60 mt-1">completas</p>
-          </div>
-        </div>
-        {/* Barra de progreso global */}
-        <div>
-          <div className="flex justify-between text-[10px] text-white/50 mb-1.5">
-            <span>Progreso total de la red</span>
-            <span>{pctRed}%</span>
-          </div>
-          <div className="w-full bg-white/10 rounded-full h-2">
-            <div
-              className="h-2 rounded-full transition-all"
-              style={{ width: `${pctRed}%`, background: "linear-gradient(90deg,#ffbd1f,#f59e0b)" }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ── Tarjeta de familia con navegador ──────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-
-        {/* Cabecera del navegador */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-gray-50/60">
-          <button
-            onClick={() => setFamiliaActiva((i) => Math.max(0, i - 1))}
-            disabled={familiaActiva === 0}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-30 transition-all font-bold text-lg leading-none shadow-sm"
-          >
-            ‹
-          </button>
-
-          <div className="flex-1 min-w-0">
-            <select
-              value={familiaActiva}
-              onChange={(e) => setFamiliaActiva(Number(e.target.value))}
-              className="w-full text-sm font-extrabold text-[#102463] bg-transparent border-none focus:outline-none cursor-pointer appearance-none"
-            >
-              {datos.familias.map((f, i) => (
-                <option key={i} value={i}>
-                  Familia {i + 1} de {datos.totalFamilias}{f.completa ? " ✓" : ` · ${f.totalMiembros}/12 slots`}
-                </option>
-              ))}
-            </select>
-            {/* Barra de progreso de esta familia */}
-            <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1.5">
-              <div
-                className={`h-1.5 rounded-full transition-all ${familia.completa ? "bg-green-500" : "bg-[#102463]"}`}
-                style={{ width: `${(familia.totalMiembros / 12) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${familia.completa ? "bg-green-100 text-green-700" : "bg-[#102463]/10 text-[#102463]"}`}>
-            {familia.completa ? "✓ Completa" : `${familia.totalMiembros}/12`}
-          </span>
-
-          <button
-            onClick={() => setFamiliaActiva((i) => Math.min(datos.totalFamilias - 1, i + 1))}
-            disabled={familiaActiva === datos.totalFamilias - 1}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 disabled:opacity-30 transition-all font-bold text-lg leading-none shadow-sm"
-          >
-            ›
-          </button>
-        </div>
-
-        {/* Mini stats de la familia */}
-        <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100">
-          <div className="py-3 text-center">
-            <p className="text-lg font-extrabold text-[#102463]">{familia.hijos.filter(Boolean).length}<span className="text-xs text-gray-300 font-normal">/3</span></p>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider">nivel 1</p>
-          </div>
-          <div className="py-3 text-center">
-            <p className="text-lg font-extrabold text-[#102463]">{familia.nietos.flat().filter(Boolean).length}<span className="text-xs text-gray-300 font-normal">/9</span></p>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider">nivel 2</p>
-          </div>
-          <div className="py-3 text-center">
-            <p className="text-lg font-extrabold text-[#102463]">{familia.totalMiembros}<span className="text-xs text-gray-300 font-normal">/12</span></p>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider">total</p>
-          </div>
-        </div>
-
-        {/* Leyenda */}
-        <div className="flex gap-4 justify-center pt-4 px-4 text-[10px] text-gray-400">
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#102463] inline-block" />Nivel 1</span>
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#ffbd1f] inline-block" />Nivel 2</span>
-          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-gray-200 inline-block" />Libre</span>
-        </div>
-
-        {/* Árbol */}
-        <div className="p-5 pt-3">
-          <ArbolFamilia familia={familia} yo={datos.yo} />
-        </div>
-
-        {familia.completa && datos.totalFamilias > familiaActiva + 1 && (
-          <div className="mx-4 mb-4 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 text-center">
-            <p className="text-xs text-green-700 font-bold">
-              ✓ Familia {familiaActiva + 1} completa — Familia {familiaActiva + 2} abierta
-            </p>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   const [datos, setDatos] = useState<MisCajas | null>(null);
-  const [misBonos, setMisBonos] = useState<MisBonos | null>(null);
   const [cargando, setCargando] = useState(true);
   const [precioCaja, setPrecioCaja] = useState(10_000);
   const [giftCardsDisponibles, setGiftCardsDisponibles] = useState<GiftCardDisp[]>([]);
@@ -1528,33 +1018,29 @@ export default function Dashboard() {
   const [mensajeVerify, setMensajeVerify] = useState<{ texto: string; ok: boolean } | null>(null);
   const [codigoVerif, setCodigoVerif] = useState("");
   const [verificando, setVerificando] = useState(false);
-  const [tiendaActiva, setTiendaActiva] = useState(true);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
   const cargarDatos = useCallback(async () => {
-    const [resCajas, resGcs, resBonos] = await Promise.all([
+    const [resCajas, resGcs] = await Promise.all([
       fetch("/api/mis-cajas"),
       fetch("/api/gift-cards"),
-      fetch("/api/mis-bonos"),
     ]);
     if (resCajas.ok) setDatos(await resCajas.json());
     if (resGcs.ok) {
       const gcsData = await resGcs.json() as { giftCards: (GiftCardDisp & { estado: string })[] };
       setGiftCardsDisponibles(gcsData.giftCards.filter((g) => g.estado === "DISPONIBLE"));
     }
-    if (resBonos.ok) setMisBonos(await resBonos.json());
     setCargando(false);
   }, []);
 
   useEffect(() => {
     fetch("/api/config")
       .then((r) => r.json())
-      .then((c: { precioCaja?: number; tiendaActiva?: boolean }) => {
+      .then((c: { precioCaja?: number }) => {
         if (c.precioCaja) setPrecioCaja(c.precioCaja);
-        setTiendaActiva(c.tiendaActiva ?? true);
       })
       .catch(() => undefined);
   }, []);
@@ -1630,7 +1116,7 @@ export default function Dashboard() {
               <div className="flex-1">
                 <p className="font-extrabold text-amber-900 text-base">Verifica tu correo electrónico</p>
                 <p className="text-amber-800 text-sm mt-0.5">
-                  Todavía no puedes comprar membresías, bonos ni solicitar retiros.
+                  Todavía no puedes comprar membresías ni solicitar retiros.
                   Revisa tu bandeja de entrada (y la carpeta de spam).
                 </p>
                 {mensajeVerify && (
@@ -1851,9 +1337,6 @@ export default function Dashboard() {
           {/* Sección de referidos */}
           <SeccionReferidos cuentaConfirmada={confirmado} />
 
-          {/* Árbol de familias multinivel — depende de la tienda de bonos */}
-          {tiendaActiva && <SeccionRed />}
-
           {/* Cajas compradas */}
           {cajas.length > 0 && (
             <section>
@@ -1879,46 +1362,6 @@ export default function Dashboard() {
             </section>
           )}
 
-          {/* Mis Bonos — depende de la tienda de bonos */}
-          {tiendaActiva && misBonos && misBonos.compras.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-bold text-gray-900">
-                  Mis bonos
-                  <span className="ml-2 text-sm font-normal text-gray-500">({misBonos.compras.length})</span>
-                </h2>
-                <Link href="/tienda" className="text-[#1B4F8A] text-sm font-semibold hover:underline">
-                  + Comprar bonos
-                </Link>
-              </div>
-              {/* Resumen cashback */}
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4 mb-3 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-green-700 font-semibold uppercase tracking-wider">Cashback total recibido</p>
-                  <p className="text-2xl font-extrabold text-green-700">${misBonos.totalCashback.toLocaleString("es-CO")} COP</p>
-                </div>
-                <span className="text-4xl">💰</span>
-              </div>
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
-                {misBonos.compras.slice(0, 5).map((compra) => (
-                  <div key={compra.id} className="flex items-center gap-4 px-4 py-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#102463]/5 flex items-center justify-center text-xl shrink-0">
-                      🏷️
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm truncate">{compra.bono.nombre}</p>
-                      <p className="text-gray-400 text-xs font-mono">{compra.codigoRedención}</p>
-                      <p className="text-gray-400 text-xs">{new Date(compra.fecha).toLocaleDateString("es-CO", { dateStyle: "medium" })}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-gray-900">${compra.bono.valorFace.toLocaleString("es-CO")}</p>
-                      <p className="text-xs font-semibold text-green-600">+${compra.cashbackComprador.toLocaleString("es-CO")} COP</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
 
           {/* Selecciones anticipadas ganadas */}
           {anticipadasGanadas.length > 0 && (

@@ -18,7 +18,6 @@ interface Config {
   ganadores4Cifras:      number;
   membresiasPorGiftCard: number;
   giftCardActivo:        boolean;
-  tiendaActiva:          boolean;
   fechaSorteo:           string | null;
   retirosDisponiblesDesde: string | null;
   qrPagoUrl:             string | null;
@@ -56,10 +55,9 @@ export default function PaginaConfiguracion() {
   const [n4,          setN4]          = useState(4);
   const [mpgc,          setMpgc]          = useState(5);
   const [gcActivo,      setGcActivo]      = useState(true);
-  const [tiendaActiva,  setTiendaActiva]  = useState(true);
   const [saldoGcActivo, setSaldoGcActivo] = useState(false);
   const [confirmarToggle, setConfirmarToggle] = useState<{
-    campo: "gc" | "tienda" | "saldoGc";
+    campo: "gc" | "saldoGc";
     activar: boolean;
     titulo: string;
     mensaje: string;
@@ -100,7 +98,6 @@ export default function PaginaConfiguracion() {
         setN4(c.ganadores4Cifras ?? 4);
         setMpgc(c.membresiasPorGiftCard ?? 5);
         setGcActivo(c.giftCardActivo ?? true);
-        setTiendaActiva(c.tiendaActiva ?? true);
         setSaldoGcActivo(c.saldoGiftCardActivo ?? false);
         setFechaSorteo(
           c.fechaSorteo ? new Date(c.fechaSorteo).toISOString().slice(0, 16) : ""
@@ -140,7 +137,6 @@ export default function PaginaConfiguracion() {
           ganadores4Cifras:      n4,
           membresiasPorGiftCard: mpgc,
           giftCardActivo:        gcActivo,
-          tiendaActiva:          tiendaActiva,
           saldoGiftCardActivo:   saldoGcActivo,
           fechaSorteo:           fechaSorteo || null,
           retirosDisponiblesDesde: retirosDisponiblesDesde || null,
@@ -161,7 +157,7 @@ export default function PaginaConfiguracion() {
   }
 
   function pedirConfirmacionToggle(
-    campo: "gc" | "tienda" | "saldoGc",
+    campo: "gc" | "saldoGc",
     estadoActual: boolean,
     nombreOpcion: string
   ) {
@@ -178,7 +174,6 @@ export default function PaginaConfiguracion() {
     if (!confirmarToggle) return;
     const { campo, activar } = confirmarToggle;
     if (campo === "gc") setGcActivo(activar);
-    if (campo === "tienda") setTiendaActiva(activar);
     if (campo === "saldoGc") setSaldoGcActivo(activar);
     setConfirmarToggle(null);
   }
@@ -415,38 +410,6 @@ export default function PaginaConfiguracion() {
               {!saldoGcActivo && (
                 <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs text-amber-700 font-medium">
                   ⚠️ Deshabilitada por defecto. Solo usuarios con correo verificado podrán usarla al activarla.
-                </div>
-              )}
-            </div>
-
-            {/* ── Activar / desactivar tienda de bonos ─────────────────── */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h2 className="font-bold text-gray-800">Tienda de bonos</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {tiendaActiva
-                      ? "Activa — visible y accesible para todos los usuarios."
-                      : "Inactiva — el botón queda visible con etiqueta \"Próximamente\" y la página /tienda no se puede usar."}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => pedirConfirmacionToggle("tienda", tiendaActiva, "la tienda de bonos")}
-                  className={`relative flex-shrink-0 w-14 h-7 rounded-full transition-colors duration-200 focus:outline-none ${
-                    tiendaActiva ? "bg-green-500" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform duration-200 ${
-                      tiendaActiva ? "translate-x-7" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
-              {!tiendaActiva && (
-                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs text-amber-700 font-medium">
-                  ⚠️ Ideal para pre-lanzamiento: el catálogo y las compras quedan bloqueados hasta que la actives.
                 </div>
               )}
             </div>

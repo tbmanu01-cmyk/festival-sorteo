@@ -21,8 +21,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const refCode   = typeof body.refCode   === "string" ? body.refCode.trim().toUpperCase()   : null;
-    const slotToken = typeof body.slotToken === "string" ? body.slotToken.trim()               : null;
+    const refCode = typeof body.refCode === "string" ? body.refCode.trim().toUpperCase() : null;
 
     const resultado = registroSchema.safeParse(body);
 
@@ -53,32 +52,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Registro cerrado: solo se puede entrar con invitación real (link/QR
-    // con slotToken, o un código de referido de un usuario existente). Se
-    // valida ANTES de crear el usuario para no dejar cuentas huérfanas.
-    if (slotToken) {
-      const slotValido = await prisma.referido.findFirst({
-        where: { slotToken, slotExpiry: { gt: new Date() } },
-      });
-      if (!slotValido) {
-        return NextResponse.json(
-          { mensaje: "Ese link de invitación ya expiró o no es válido. Pide uno nuevo a quien te invitó." },
-          { status: 400 }
-        );
-      }
-    } else if (refCode) {
-      const [referidorValido] = await prisma.$queryRaw<{ id: string }[]>`
-        SELECT id FROM users WHERE "codigoRef" = ${refCode} LIMIT 1
-      `;
-      if (!referidorValido) {
-        return NextResponse.json(
-          { mensaje: "Ese código de referido no existe. Verifica que esté bien escrito." },
-          { status: 400 }
-        );
-      }
-    } else {
+    // Registro cerrado: solo se puede entrar con un código de referido de un
+    // usuario existente. Se valida ANTES de crear el usuario para no dejar
+    // cuentas huérfanas.
+    if (!refCode) {
       return NextResponse.json(
-        { mensaje: "Necesitas un link de invitación o un código de referido para crear una cuenta en Tienda 10K." },
+        { mensaje: "Necesitas un código de invitación válido para registrarte." },
+        { status: 400 }
+      );
+    }
+    const [referidorValido] = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM users WHERE "codigoRef" = ${refCode} LIMIT 1
+    `;
+    if (!referidorValido) {
+      return NextResponse.json(
+        { mensaje: "Ese código de referido no existe. Verifica que esté bien escrito." },
         { status: 400 }
       );
     }
@@ -110,70 +98,14 @@ export async function POST(req: NextRequest) {
       )
     `;
 
-    // Obtener admin para auto-asignación de usuarios sin código
-    const adminUser = await prisma.user.findFirst({ where: { rol: "ADMIN" }, select: { id: true } });
-
-    // Slot replacement: link new user into an existing reserved slot
-    if (slotToken) {
-      const ahora = new Date();
-      const slot = await prisma.referido.findFirst({
-        where: { slotToken, slotExpiry: { gt: ahora } },
-      });
-      if (slot) {
-        await prisma.referido.update({
-          where: { id: slot.id },
-          data: { referidoId: nuevoId, slotToken: null, slotExpiry: null, compro: false, fecha: new Date() },
-        });
-      }
-    } else if (refCode) {
-      // Normal referral: check capacity before linking
-      const MAX_HIJOS_L1 = 300; // 100 familias × 3 hijos
-      const [referidor] = await prisma.$queryRaw<{ id: string }[]>`
-        SELECT id FROM users WHERE "codigoRef" = ${refCode} AND id != ${nuevoId} LIMIT 1
-      `;
-      if (referidor) {
-        const hijosCount = await prisma.referido.count({ where: { referidorId: referidor.id } });
-
-        if (hijosCount >= MAX_HIJOS_L1) {
-          // Árbol lleno — registrar usuario igualmente pero sin vincular a esta red
-        } else {
-          // Verificar progresión de familia: nueva familia solo abre cuando la anterior está completa
-          let puedeVincular = true;
-          if (hijosCount > 0 && hijosCount % 3 === 0) {
-            const ultimosTres = await prisma.referido.findMany({
-              where: { referidorId: referidor.id },
-              orderBy: { fecha: "asc" },
-              skip: hijosCount - 3,
-              take: 3,
-              select: { referidoId: true },
-            });
-            for (const hijo of ultimosTres) {
-              const nietos = await prisma.referido.count({ where: { referidorId: hijo.referidoId } });
-              if (nietos < 3) { puedeVincular = false; break; }
-            }
-          }
-
-          if (puedeVincular) {
-            const refId = crypto.randomUUID();
-            await prisma.$executeRaw`
-              INSERT INTO referidos (id, "referidorId", "referidoId", fecha, compro)
-              VALUES (${refId}, ${referidor.id}, ${nuevoId}, NOW(), false)
-              ON CONFLICT ("referidoId") DO NOTHING
-            `;
-          } else if (adminUser) {
-            // Árbol del referidor lleno o familia incompleta → cae bajo el admin
-            const refId = crypto.randomUUID();
-            await prisma.$executeRaw`
-              INSERT INTO referidos (id, "referidorId", "referidoId", fecha, compro)
-              VALUES (${refId}, ${adminUser.id}, ${nuevoId}, NOW(), false)
-              ON CONFLICT ("referidoId") DO NOTHING
-            `;
-          }
-        }
-      }
-    }
-    // No hay rama "sin código" — ya se validó arriba que slotToken o refCode
-    // vienen presentes y son válidos antes de llegar hasta acá.
+    // Vincula al nuevo usuario bajo su referidor — ya se validó arriba que
+    // el código de referido es válido antes de llegar hasta acá.
+    const refId = crypto.randomUUID();
+    await prisma.$executeRaw`
+      INSERT INTO referidos (id, "referidorId", "referidoId", fecha, compro)
+      VALUES (${refId}, ${referidorValido.id}, ${nuevoId}, NOW(), false)
+      ON CONFLICT ("referidoId") DO NOTHING
+    `;
 
     // Enviar código de verificación (6 dígitos, 10 min) — más robusto que un
     // link: no depende de que sobreviva un clic real ni el escaneo previo
