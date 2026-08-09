@@ -56,6 +56,10 @@ export async function GET() {
   const progreso = totalMembresias % mpgc;
   const gcGanadas = Math.floor(totalMembresias / mpgc);
 
+  // Progreso por compras propias — sistema independiente del de referidos,
+  // ambos alimentan gift cards vía emitirGiftCardsPorMembresias()
+  const comprasPropias = await prisma.caja.count({ where: { userId, estado: "VENDIDA" } });
+
   type CuponRow = { id: string; codigo: string; usado: boolean; fechaCreacion: Date; fechaUso: Date | null };
   const cupones = await prisma.$queryRaw<CuponRow[]>`
     SELECT id, codigo, usado, "fechaCreacion", "fechaUso"
@@ -78,6 +82,8 @@ export async function GET() {
     totalMembresias,
     progreso,
     cuponesGanados: gcGanadas,
+    comprasPropias,
+    mpgc,
     cupones: cupones.map((c) => ({
       ...c,
       fechaCreacion: c.fechaCreacion instanceof Date ? c.fechaCreacion.toISOString() : c.fechaCreacion,

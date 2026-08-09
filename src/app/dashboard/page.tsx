@@ -713,6 +713,8 @@ interface DatosReferidosAPI {
   codigoRef: string | null;
   comprados: number;
   progreso: number;
+  comprasPropias: number;
+  mpgc: number;
 }
 
 function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
@@ -735,7 +737,13 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
       fetch("/api/gift-cards").then((r) => r.ok ? r.json() : null),
       fetch("/api/config").then((r) => r.ok ? r.json() : null),
     ]).then(([ref, gcs, cfg]) => {
-      if (ref) setDatos({ codigoRef: ref.codigoRef ?? null, comprados: ref.comprados ?? 0, progreso: ref.progreso ?? 0 });
+      if (ref) setDatos({
+        codigoRef: ref.codigoRef ?? null,
+        comprados: ref.comprados ?? 0,
+        progreso: ref.progreso ?? 0,
+        comprasPropias: ref.comprasPropias ?? 0,
+        mpgc: ref.mpgc ?? 5,
+      });
       if (gcs?.giftCards) setGiftCards(gcs.giftCards);
       if (cfg) setSaldoGiftCardActivo(cfg.saldoGiftCardActivo ?? false);
       setCargando(false);
@@ -794,6 +802,13 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
   const enCiclo = comprados % 5;
   const barPct = (enCiclo / 5) * 100;
   const faltan = enCiclo === 0 ? 5 : 5 - enCiclo;
+
+  const mpgc = datos?.mpgc ?? 5;
+  const comprasPropias = datos?.comprasPropias ?? 0;
+  const enCicloPropio = comprasPropias % mpgc;
+  const barPctPropio = (enCicloPropio / mpgc) * 100;
+  const faltanPropias = enCicloPropio === 0 ? mpgc : mpgc - enCicloPropio;
+
   const gcDisponibles = giftCards.filter((g) => g.estado === "DISPONIBLE");
 
   return (
@@ -927,6 +942,29 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
                   : enCiclo === 0
                   ? "¡Completaste 5 referidos! Sigue invitando para ganar otra gift card."
                   : `Te ${faltan === 1 ? "falta 1 amigo" : `faltan ${faltan} amigos`} para ganar tu ${Math.floor(comprados / 5) + 1 === 1 ? "primera" : "próxima"} gift card`}
+              </p>
+            </div>
+          )}
+
+          {/* Progreso por compras propias — independiente del de amigos */}
+          {!cargando && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-bold text-gray-700">{enCicloPropio} de {mpgc} membresías propias</span>
+                {comprasPropias > 0 && <span className="text-xs text-gray-400">{comprasPropias} en total</span>}
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                <div
+                  className="h-3 rounded-full bg-gradient-to-r from-[#1B4F8A] to-[#F5A623] transition-all duration-700"
+                  style={{ width: enCicloPropio === 0 && comprasPropias > 0 ? "100%" : `${barPctPropio}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                {comprasPropias === 0
+                  ? `Por cada ${mpgc} membresías que compres tú mismo, recibes una gift card`
+                  : enCicloPropio === 0
+                  ? `¡Completaste ${mpgc} membresías propias! Sigue comprando para ganar otra gift card.`
+                  : `Te ${faltanPropias === 1 ? "falta 1 membresía" : `faltan ${faltanPropias} membresías`} propias para ganar tu ${Math.floor(comprasPropias / mpgc) + 1 === 1 ? "primera" : "próxima"} gift card`}
               </p>
             </div>
           )}
