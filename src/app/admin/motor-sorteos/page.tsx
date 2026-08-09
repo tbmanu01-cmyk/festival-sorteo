@@ -396,6 +396,7 @@ function TabPrincipal() {
   const [numAnimacion, setNumAnimacion] = useState("0000");
   const [animTerminada, setAnimTerminada] = useState(false);
   const [modoDemo, setModoDemo] = useState(false);
+  const [modoReplay, setModoReplay] = useState(false);
   const [pendienteJSON, setPendienteJSON] = useState<{ sorteo: SorteoData; resumen: Resumen } | null>(null);
 
   const cargarEstado = useCallback(async () => {
@@ -459,6 +460,16 @@ function TabPrincipal() {
     const num = String(Math.floor(Math.random() * 10000)).padStart(4, "0");
     setNumAnimacion(num);
     setModoDemo(true);
+    setModoReplay(false);
+    setAnimTerminada(false);
+    setOverlayActivo(true);
+  }
+
+  function reproducirAnimacion() {
+    if (!sorteoExistente) return;
+    setNumAnimacion(sorteoExistente.numeroGanador);
+    setModoDemo(false);
+    setModoReplay(true);
     setAnimTerminada(false);
     setOverlayActivo(true);
   }
@@ -466,7 +477,8 @@ function TabPrincipal() {
   function cerrarOverlay() {
     setOverlayActivo(false);
     setAnimTerminada(false);
-    if (!modoDemo && pendienteJSON) {
+    setModoReplay(false);
+    if (!modoDemo && !modoReplay && pendienteJSON) {
       setSorteoExistente(pendienteJSON.sorteo);
       setResumen(pendienteJSON.resumen);
       setPendienteJSON(null);
@@ -610,7 +622,15 @@ function TabPrincipal() {
 
         {sorteoExistente && (
           <div className="space-y-6">
-            <h2 className="text-lg font-bold text-gray-900">Última selección ejecutada</h2>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h2 className="text-lg font-bold text-gray-900">Última selección ejecutada</h2>
+              <button
+                onClick={reproducirAnimacion}
+                className="border-2 border-[#1B4F8A] text-[#1B4F8A] hover:bg-[#1B4F8A]/5 font-semibold px-4 py-2 rounded-xl text-sm transition-all"
+              >
+                ▶ Reproducir animación
+              </button>
+            </div>
 
             <div className="bg-gradient-to-br from-[#1B4F8A] to-[#0d3b6e] rounded-2xl p-8 text-white text-center">
               <p className="text-blue-200 text-sm font-medium mb-2 uppercase tracking-widest">Número ganador</p>
@@ -696,9 +716,9 @@ function TabPrincipal() {
         animTerminada={animTerminada}
         onTerminado={() => setAnimTerminada(true)}
         onCerrar={cerrarOverlay}
-        badge={modoDemo ? "Modo demo — sin selección real" : "🎲 Selección Principal"}
+        badge={modoDemo ? "Modo demo — sin selección real" : modoReplay ? "🎬 Repetición — resultado real" : "🎲 Selección Principal"}
         modoDemo={modoDemo}
-        textoBoton={modoDemo ? "✕  Cerrar demo" : "Ver resultados →"}
+        textoBoton={modoDemo ? "✕  Cerrar demo" : modoReplay ? "✕  Cerrar repetición" : "Ver resultados →"}
       />
     </>
   );
