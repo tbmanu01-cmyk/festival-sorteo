@@ -9,7 +9,6 @@ import SubirImagen from "@/components/SubirImagen";
 import ModalConfirmar from "@/components/ModalConfirmar";
 
 interface Config {
-  precioCaja:            number;
   margenGanancia:        number;
   pct4Cifras:            number;
   pct3Cifras:            number;
@@ -18,12 +17,10 @@ interface Config {
   ganadores4Cifras:      number;
   membresiasPorGiftCard: number;
   giftCardActivo:        boolean;
-  fechaSorteo:           string | null;
   retirosDisponiblesDesde: string | null;
   qrPagoUrl:             string | null;
   brebKey:               string | null;
   datosBancarios:        string | null;
-  linkPagoBoldUrl:       string | null;
   saldoGiftCardActivo:   boolean;
 }
 
@@ -62,12 +59,10 @@ export default function PaginaConfiguracion() {
     titulo: string;
     mensaje: string;
   } | null>(null);
-  const [fechaSorteo,   setFechaSorteo]   = useState("");
   const [retirosDisponiblesDesde, setRetirosDisponiblesDesde] = useState("");
   const [qrPagoUrl,     setQrPagoUrl]     = useState("");
   const [brebKey,       setBrebKey]       = useState("");
   const [datosBancarios, setDatosBancarios] = useState("");
-  const [linkPagoBoldUrl, setLinkPagoBoldUrl] = useState("");
 
   // Validaciones en tiempo real
   const sumaPremios = pct4 + pct3 + pct2 + pct1;
@@ -89,7 +84,6 @@ export default function PaginaConfiguracion() {
     fetch("/api/admin/config")
       .then((r) => r.json())
       .then((c: Config) => {
-        setPrecioCaja(c.precioCaja);
         setMargen(pct(c.margenGanancia));
         setPct4(pct(c.pct4Cifras));
         setPct3(pct(c.pct3Cifras));
@@ -99,22 +93,21 @@ export default function PaginaConfiguracion() {
         setMpgc(c.membresiasPorGiftCard ?? 5);
         setGcActivo(c.giftCardActivo ?? true);
         setSaldoGcActivo(c.saldoGiftCardActivo ?? false);
-        setFechaSorteo(
-          c.fechaSorteo ? new Date(c.fechaSorteo).toISOString().slice(0, 16) : ""
-        );
         setRetirosDisponiblesDesde(
           c.retirosDisponiblesDesde ? new Date(c.retirosDisponiblesDesde).toISOString().slice(0, 16) : ""
         );
         setQrPagoUrl(c.qrPagoUrl ?? "");
         setBrebKey(c.brebKey ?? "");
         setDatosBancarios(c.datosBancarios ?? "");
-        setLinkPagoBoldUrl(c.linkPagoBoldUrl ?? "");
       })
       .finally(() => setCargando(false));
 
     fetch("/api/config")
       .then((r) => r.json())
-      .then((c: { vendidasTotal?: number }) => setVendidasTotal(c.vendidasTotal ?? 0))
+      .then((c: { precioCaja?: number; vendidasTotal?: number }) => {
+        if (c.precioCaja) setPrecioCaja(c.precioCaja);
+        setVendidasTotal(c.vendidasTotal ?? 0);
+      })
       .catch(() => undefined);
   }, []);
 
@@ -128,7 +121,6 @@ export default function PaginaConfiguracion() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          precioCaja,
           margenGanancia:        dec(margen),
           pct4Cifras:            dec(pct4),
           pct3Cifras:            dec(pct3),
@@ -138,12 +130,10 @@ export default function PaginaConfiguracion() {
           membresiasPorGiftCard: mpgc,
           giftCardActivo:        gcActivo,
           saldoGiftCardActivo:   saldoGcActivo,
-          fechaSorteo:           fechaSorteo || null,
           retirosDisponiblesDesde: retirosDisponiblesDesde || null,
           qrPagoUrl:             qrPagoUrl || "",
           brebKey:               brebKey || "",
           datosBancarios:        datosBancarios || "",
-          linkPagoBoldUrl:       linkPagoBoldUrl || "",
         }),
       });
       const json = await res.json() as { mensaje: string };
@@ -212,27 +202,9 @@ export default function PaginaConfiguracion() {
             <p className="text-blue-200 text-sm">Ajusta los parámetros de la selección aleatoria</p>
           </div>
 
-          <form onSubmit={guardar} className="space-y-5">
+          <SeccionTiposMembresia />
 
-            {/* ── Precio por caja ──────────────────────────────────────── */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="font-bold text-gray-800 mb-4">Precio por membresía</h2>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none">$</span>
-                <input
-                  type="number"
-                  min={1000}
-                  step={500}
-                  value={precioCaja}
-                  onChange={(e) => setPrecioCaja(Number(e.target.value))}
-                  className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
-                />
-              </div>
-              <p className="text-xs text-gray-400 mt-1">
-                Recaudo estimado (10.000 membresías):{" "}
-                <strong>${(precioCaja * 10000).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</strong>
-              </p>
-            </div>
+          <form onSubmit={guardar} className="space-y-5">
 
             {/* ── Ganadores de 4 cifras ─────────────────────────────────── */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -536,20 +508,6 @@ export default function PaginaConfiguracion() {
               })()}
             </div>
 
-            {/* ── Fecha de la selección aleatoria ──────────────────────── */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="font-bold text-gray-800 mb-4">Fecha y hora de la selección aleatoria</h2>
-              <input
-                type="datetime-local"
-                value={fechaSorteo}
-                onChange={(e) => setFechaSorteo(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
-              />
-              <p className="text-xs text-gray-400 mt-1.5">
-                Se muestra en la página de inicio y en la tienda. En la hora previa a esta fecha se pausan las compras/reservas automáticamente. Si tienes un cron externo configurado, la selección se ejecuta sola al llegar esta hora. Deja vacío para no programar nada.
-              </p>
-            </div>
-
             {/* ── Freeze de retiros post-selección ────────────────────── */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <h2 className="font-bold text-gray-800 mb-4">Retiros disponibles desde</h2>
@@ -562,26 +520,6 @@ export default function PaginaConfiguracion() {
               <p className="text-xs text-gray-400 mt-1.5">
                 Se calcula solo (próximo día hábil) cada vez que se ejecuta una selección — nadie puede solicitar retiros antes de esta fecha. Si esa semana cae festivo, corre la fecha un día más aquí a mano. Deja vacío para no pausar retiros.
               </p>
-            </div>
-
-            {/* ── Link de pago con tarjeta (Bold) ─────────────────────── */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="font-bold text-gray-800 mb-1">Pago con tarjeta (link de Bold)</h2>
-              <p className="text-xs text-gray-400 mb-5">
-                Link de pago creado manualmente desde tu panel de Bold (panel.bold.co). Monto fijo — si cambias el
-                precio de la membresía, crea un nuevo link en Bold por ese valor y actualízalo aquí.
-              </p>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">URL del link de pago Bold</label>
-                <input
-                  type="text"
-                  value={linkPagoBoldUrl}
-                  onChange={(e) => setLinkPagoBoldUrl(e.target.value)}
-                  placeholder="https://checkout.bold.co/payment/LNK_XXXXXXXX"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
-                />
-                <p className="text-xs text-gray-400 mt-1">Déjalo vacío para ocultar la opción de pago con tarjeta.</p>
-              </div>
             </div>
 
             {/* ── Datos de pago por transferencia ──────────────────────── */}
@@ -654,3 +592,150 @@ export default function PaginaConfiguracion() {
 }
 
 function n4ok(n: number) { return Number.isInteger(n) && n >= 1 && n <= 10 ? n : 1; }
+
+// ── Gestión de membresías (tiers) ───────────────────────────────────────────
+
+interface TipoMembresiaAdmin {
+  id: string;
+  slug: string;
+  nombre: string;
+  precio: number;
+  activo: boolean;
+  fechaSorteo: string | null;
+  linkPagoBoldUrl: string | null;
+}
+
+function TarjetaTipoMembresia({ tipo, onGuardado }: { tipo: TipoMembresiaAdmin; onGuardado: () => void }) {
+  const [precio, setPrecio] = useState(tipo.precio);
+  const [activo, setActivo] = useState(tipo.activo);
+  const [fechaSorteo, setFechaSorteo] = useState(
+    tipo.fechaSorteo ? new Date(tipo.fechaSorteo).toISOString().slice(0, 16) : ""
+  );
+  const [linkPagoBoldUrl, setLinkPagoBoldUrl] = useState(tipo.linkPagoBoldUrl ?? "");
+  const [guardando, setGuardando] = useState(false);
+  const [mensaje, setMensaje] = useState<string | null>(null);
+
+  async function guardar() {
+    setGuardando(true);
+    setMensaje(null);
+    try {
+      const res = await fetch(`/api/admin/tipos-membresia/${tipo.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          precio,
+          activo,
+          fechaSorteo: fechaSorteo || null,
+          linkPagoBoldUrl: linkPagoBoldUrl || null,
+        }),
+      });
+      const json = await res.json() as { mensaje: string };
+      setMensaje(json.mensaje);
+      if (res.ok) { onGuardado(); setTimeout(() => setMensaje(null), 3000); }
+    } catch {
+      setMensaje("Error de conexión.");
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <h3 className="font-bold text-gray-800">{tipo.nombre}</h3>
+        <button
+          type="button"
+          onClick={() => setActivo(!activo)}
+          className={`relative flex-shrink-0 w-14 h-7 rounded-full transition-colors duration-200 focus:outline-none ${
+            activo ? "bg-green-500" : "bg-gray-300"
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform duration-200 ${
+              activo ? "translate-x-7" : "translate-x-0"
+            }`}
+          />
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">Precio por membresía</label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium select-none">$</span>
+            <input
+              type="number"
+              min={1000}
+              step={500}
+              value={precio}
+              onChange={(e) => setPrecio(Number(e.target.value))}
+              className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">Fecha y hora de la próxima selección</label>
+          <input
+            type="datetime-local"
+            value={fechaSorteo}
+            onChange={(e) => setFechaSorteo(e.target.value)}
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">Link de pago Bold (monto fijo)</label>
+          <input
+            type="text"
+            value={linkPagoBoldUrl}
+            onChange={(e) => setLinkPagoBoldUrl(e.target.value)}
+            placeholder="https://checkout.bold.co/payment/LNK_XXXXXXXX"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
+          />
+        </div>
+
+        {mensaje && <p className="text-xs text-gray-500">{mensaje}</p>}
+
+        <button
+          type="button"
+          onClick={guardar}
+          disabled={guardando}
+          className="w-full bg-[#1B4F8A] hover:bg-[#1a5fa8] disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
+        >
+          {guardando ? "Guardando..." : "Guardar"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SeccionTiposMembresia() {
+  const [tipos, setTipos] = useState<TipoMembresiaAdmin[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  const cargar = () => {
+    fetch("/api/admin/tipos-membresia")
+      .then((r) => r.json())
+      .then((d: { tipos: TipoMembresiaAdmin[] }) => setTipos(d.tipos ?? []))
+      .finally(() => setCargando(false));
+  };
+
+  useEffect(() => { cargar(); }, []);
+
+  if (cargando) return null;
+
+  return (
+    <div className="mb-5">
+      <h2 className="font-bold text-gray-800 mb-1">Membresías</h2>
+      <p className="text-xs text-gray-400 mb-4">
+        Las 3 membresías corren de forma 100% independiente — su propio pool de 10,000 números, su propia selección y su propio calendario. Las inactivas quedan ocultas en /membresias.
+      </p>
+      <div className="grid md:grid-cols-3 gap-4">
+        {tipos.map((t) => (
+          <TarjetaTipoMembresia key={t.id} tipo={t} onGuardado={cargar} />
+        ))}
+      </div>
+    </div>
+  );
+}

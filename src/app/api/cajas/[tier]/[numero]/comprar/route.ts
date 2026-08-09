@@ -5,7 +5,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ numero: string }> }
+  { params }: { params: Promise<{ tier: string; numero: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -13,7 +13,7 @@ export async function POST(
       return NextResponse.json({ mensaje: "Debes iniciar sesión." }, { status: 401 });
     }
 
-    const { numero } = await params;
+    const { tier, numero } = await params;
     if (!/^\d{4}$/.test(numero)) {
       return NextResponse.json({ mensaje: "Número inválido." }, { status: 400 });
     }
@@ -34,11 +34,13 @@ export async function POST(
     const { prisma } = await import("@/lib/prisma");
     const { calcularFreezeSeleccion } = await import("@/lib/freezeSeleccion");
 
-    // Precio dinámico desde Config
-    const config = await prisma.config.findUnique({ where: { id: "singleton" } });
-    const precioCaja = config?.precioCaja ?? 10_000;
+    const tipoMembresia = await prisma.tipoMembresia.findUnique({ where: { slug: tier } });
+    if (!tipoMembresia) {
+      return NextResponse.json({ mensaje: "Tipo de membresía no encontrado." }, { status: 404 });
+    }
+    const precioCaja = tipoMembresia.precio;
 
-    const freeze = calcularFreezeSeleccion(config?.fechaSorteo ?? null);
+    const freeze = calcularFreezeSeleccion(tipoMembresia.fechaSorteo);
     if (freeze.activo) {
       return NextResponse.json(
         {
@@ -58,7 +60,9 @@ export async function POST(
       );
     }
 
-    const caja = await prisma.caja.findUnique({ where: { numero } });
+    const caja = await prisma.caja.findUnique({
+      where: { cajaTierNumero: { tipoMembresiaId: tipoMembresia.id, numero } },
+    });
     if (!caja) return NextResponse.json({ mensaje: "Membresía no encontrada." }, { status: 404 });
 
     const esReservadaMia = caja.estado === "RESERVADA" && caja.userId === userId;
@@ -110,7 +114,7 @@ export async function POST(
       }
 
       const actualizada = await tx.caja.update({
-        where: { numero },
+        where: { cajaTierNumero: { tipoMembresiaId: tipoMembresia.id, numero } },
         data: { estado: "VENDIDA", userId, fechaCompra: new Date(), idCompra },
       });
 
@@ -120,8 +124,8 @@ export async function POST(
           tipo: "COMPRA",
           monto: -montoCobrado,
           descripcion: giftCard
-            ? `Compra de membresía #${numero} (gift card ${giftCard.codigo})`
-            : `Compra de membresía #${numero}`,
+            ? `Compra de membresía ${tipoMembresia.nombre} #${numero} (gift card ${giftCard.codigo})`
+            : `Compra de membresía ${tipoMembresia.nombre} #${numero}`,
           referencia: idCompra,
         },
       });
@@ -170,7 +174,7 @@ export async function POST(
 
     // Gift cards automáticas por umbral de membresías (propias o de la red de referidos) + notificación
     import("@/lib/giftCardsPorMembresias").then(({ emitirGiftCardsPorMembresias }) =>
-      emitirGiftCardsPorMembresias({ usuarioCompradorId: userId, precioCaja })
+      emitirGiftCardsPorMembresias({ usuarioCompradorId: userId, precioCaja, tipoMembresiaId: tipoMembresia.id })
     ).catch((err) => console.error("Gift cards por membresías error:", err));
 
     return NextResponse.json({

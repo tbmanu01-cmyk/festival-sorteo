@@ -50,6 +50,14 @@ interface TemporadaActual {
   reservadasActivas: number;
 }
 
+interface TipoMembresiaAdmin {
+  id: string;
+  slug: string;
+  nombre: string;
+  precio: number;
+  activo: boolean;
+}
+
 interface Ganador {
   userId: string;
   nombre: string;
@@ -383,6 +391,8 @@ function GrupoGanadores({ categoria, premios }: { categoria: Categoria; premios:
 }
 
 function TabPrincipal() {
+  const [tipos, setTipos] = useState<TipoMembresiaAdmin[]>([]);
+  const [tier, setTier] = useState<string>("");
   const [sorteoExistente, setSorteoExistente] = useState<SorteoData | null>(null);
   const [temporadaActual, setTemporadaActual] = useState<TemporadaActual | null>(null);
   const [resumen, setResumen] = useState<Resumen | null>(null);
@@ -399,15 +409,29 @@ function TabPrincipal() {
   const [modoReplay, setModoReplay] = useState(false);
   const [pendienteJSON, setPendienteJSON] = useState<{ sorteo: SorteoData; resumen: Resumen } | null>(null);
 
-  const cargarEstado = useCallback(async () => {
-    const d = await fetch("/api/admin/sorteo").then((r) => r.json());
-    setSorteoExistente(d.sorteo);
-    setTemporadaActual(d.temporadaActual);
+  useEffect(() => {
+    fetch("/api/admin/tipos-membresia")
+      .then((r) => r.json())
+      .then((d: { tipos: TipoMembresiaAdmin[] }) => {
+        setTipos(d.tipos ?? []);
+        setTier((actual) => actual || d.tipos?.[0]?.slug || "");
+      });
   }, []);
 
+  const cargarEstado = useCallback(async () => {
+    if (!tier) return;
+    const d = await fetch(`/api/admin/sorteo?tier=${tier}`).then((r) => r.json());
+    setSorteoExistente(d.sorteo);
+    setTemporadaActual(d.temporadaActual);
+  }, [tier]);
+
   useEffect(() => {
+    if (!tier) return;
+    setCargando(true);
+    setSorteoExistente(null);
+    setResumen(null);
     cargarEstado().finally(() => setCargando(false));
-  }, [cargarEstado]);
+  }, [tier, cargarEstado]);
 
   async function abrirModalEjecutar() {
     if (modo === "manual" && numeroManual.length !== 4) {
@@ -431,7 +455,7 @@ function TabPrincipal() {
       const res = await fetch("/api/admin/sorteo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ modo, numeroGanador: modo === "manual" ? numeroManual : undefined }),
+        body: JSON.stringify({ tier, modo, numeroGanador: modo === "manual" ? numeroManual : undefined }),
       });
       let json: Record<string, unknown>;
       try { json = await res.json(); } catch {
@@ -487,8 +511,6 @@ function TabPrincipal() {
     }
   }
 
-  if (cargando) return <div className="text-center py-12 text-gray-400">Cargando...</div>;
-
   const premiosPorCategoria = sorteoExistente
     ? (["CUATRO_CIFRAS", "TRES_CIFRAS", "DOS_CIFRAS", "UNA_CIFRA"] as Categoria[]).map((cat) => ({
         categoria: cat,
@@ -499,6 +521,27 @@ function TabPrincipal() {
   return (
     <>
       <div className="space-y-6">
+        {tipos.length > 1 && (
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-semibold text-gray-600">Membresía:</label>
+            <select
+              value={tier}
+              onChange={(e) => setTier(e.target.value)}
+              className="border-2 border-gray-200 rounded-xl px-4 py-2 text-sm font-bold text-[#1B4F8A] focus:outline-none focus:border-[#1B4F8A]"
+            >
+              {tipos.map((t) => (
+                <option key={t.slug} value={t.slug}>
+                  {t.nombre}{!t.activo ? " (inactiva)" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {cargando ? (
+          <div className="text-center py-12 text-gray-400">Cargando...</div>
+        ) : (
+        <>
         {temporadaActual && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-start justify-between flex-wrap gap-2 mb-4">
@@ -699,6 +742,8 @@ function TabPrincipal() {
               </div>
             </div>
           </div>
+        )}
+        </>
         )}
       </div>
 

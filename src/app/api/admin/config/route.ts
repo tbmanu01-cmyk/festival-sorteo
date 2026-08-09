@@ -20,7 +20,6 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = await req.json() as {
-    precioCaja?: number;
     margenGanancia?: number;
     pct4Cifras?: number;
     pct3Cifras?: number;
@@ -29,12 +28,10 @@ export async function PUT(req: NextRequest) {
     ganadores4Cifras?: number;
     membresiasPorGiftCard?: number;
     giftCardActivo?: boolean;
-    fechaSorteo?: string | null;
     retirosDisponiblesDesde?: string | null;
     qrPagoUrl?: string;
     brebKey?: string;
     datosBancarios?: string;
-    linkPagoBoldUrl?: string;
     saldoGiftCardActivo?: boolean;
   };
 
@@ -81,16 +78,10 @@ export async function PUT(req: NextRequest) {
     create: {
       id: "singleton",
       ...body,
-      fechaSorteo: body.fechaSorteo ? new Date(body.fechaSorteo) : null,
       retirosDisponiblesDesde: body.retirosDisponiblesDesde ? new Date(body.retirosDisponiblesDesde) : null,
     },
     update: {
       ...body,
-      fechaSorteo: body.fechaSorteo
-        ? new Date(body.fechaSorteo)
-        : body.fechaSorteo === null
-        ? null
-        : undefined,
       retirosDisponiblesDesde: body.retirosDisponiblesDesde
         ? new Date(body.retirosDisponiblesDesde)
         : body.retirosDisponiblesDesde === null

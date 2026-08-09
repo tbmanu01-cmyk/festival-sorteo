@@ -10,10 +10,13 @@ export async function POST(req: NextRequest) {
     }
     const userId = (session.user as unknown as { id: string }).id;
 
-    const body = await req.json() as { numeroCaja: string };
+    const body = await req.json() as { numeroCaja: string; tier: string };
     const numeroCaja = body.numeroCaja;
     if (!numeroCaja || !/^\d{4}$/.test(numeroCaja)) {
       return NextResponse.json({ mensaje: "Número de membresía inválido." }, { status: 400 });
+    }
+    if (!body.tier) {
+      return NextResponse.json({ mensaje: "Falta el parámetro tier." }, { status: 400 });
     }
 
     if (!process.env.BOLD_API_KEY || !process.env.BOLD_SECRET_KEY) {
@@ -36,16 +39,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const caja = await prisma.caja.findUnique({ where: { numero: numeroCaja } });
+    const tipoMembresia = await prisma.tipoMembresia.findUnique({ where: { slug: body.tier } });
+    if (!tipoMembresia) {
+      return NextResponse.json({ mensaje: "Tipo de membresía no encontrado." }, { status: 404 });
+    }
+
+    const caja = await prisma.caja.findUnique({
+      where: { cajaTierNumero: { tipoMembresiaId: tipoMembresia.id, numero: numeroCaja } },
+    });
     if (!caja) return NextResponse.json({ mensaje: "Membresía no encontrada." }, { status: 404 });
     if (caja.estado === "VENDIDA") {
       return NextResponse.json({ mensaje: "Esta membresía ya fue vendida." }, { status: 409 });
     }
 
-    const config = await prisma.config.findUnique({ where: { id: "singleton" } });
-
     const { calcularFreezeSeleccion } = await import("@/lib/freezeSeleccion");
-    const freeze = calcularFreezeSeleccion(config?.fechaSorteo ?? null);
+    const freeze = calcularFreezeSeleccion(tipoMembresia.fechaSorteo);
     if (freeze.activo) {
       return NextResponse.json(
         {
@@ -56,12 +64,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const monto = config?.precioCaja ?? 10_000;
+    const monto = tipoMembresia.precio;
     const moneda = "COP";
     const orderId = `MEM${numeroCaja}-${Date.now().toString(36).toUpperCase()}`;
 
     await prisma.pagoBold.create({
-      data: { orderId, usuarioId: userId, numeroCaja, monto, moneda },
+      data: { orderId, usuarioId: userId, numeroCaja, tipoMembresiaId: tipoMembresia.id, monto, moneda },
     });
 
     const { generarFirmaBold } = await import("@/lib/bold");

@@ -8,8 +8,10 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import BotonPagoBold from "@/components/BotonPagoBold";
 
-interface DatosPago {
-  precioCaja: number;
+interface TipoMembresiaAPI {
+  slug: string;
+  nombre: string;
+  precio: number;
 }
 
 export default function PaginaPagar() {
@@ -25,30 +27,34 @@ function PaginaPagarInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const numero = searchParams.get("numero") ?? "";
+  const tier = searchParams.get("tier") ?? "";
 
-  const [datos, setDatos] = useState<DatosPago | null>(null);
+  const [tipoMembresia, setTipoMembresia] = useState<TipoMembresiaAPI | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push(`/login?redirect=/membresias/pagar?numero=${numero}`);
+      router.push(`/login?redirect=/membresias/pagar?tier=${tier}&numero=${numero}`);
       return;
     }
-    if (!numero || !/^\d{4}$/.test(numero)) {
+    if (!numero || !/^\d{4}$/.test(numero) || !tier) {
       router.push("/membresias");
     }
-  }, [status, numero, router]);
+  }, [status, numero, tier, router]);
 
   useEffect(() => {
     fetch("/api/config")
       .then((r) => r.json())
-      .then((c: DatosPago) => setDatos(c))
+      .then((c: { tiposMembresia?: TipoMembresiaAPI[] }) => {
+        const tipo = c.tiposMembresia?.find((t) => t.slug === tier) ?? null;
+        setTipoMembresia(tipo);
+      })
       .catch(() => undefined);
-  }, []);
+  }, [tier]);
 
-  if (status === "loading" || !datos) return null;
-  if (!numero || !/^\d{4}$/.test(numero)) return null;
+  if (status === "loading" || !tipoMembresia) return null;
+  if (!numero || !/^\d{4}$/.test(numero) || !tier) return null;
 
-  const monto = datos.precioCaja;
+  const monto = tipoMembresia.precio;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -61,7 +67,7 @@ function PaginaPagarInner() {
             <Link href="/membresias" className="text-blue-300 text-sm font-medium flex items-center gap-1 mb-3 hover:text-white transition-colors">
               ← Volver a membresías
             </Link>
-            <p className="text-blue-200 text-sm mb-1">Membresía seleccionada</p>
+            <p className="text-blue-200 text-sm mb-1">{tipoMembresia.nombre} seleccionada</p>
             <div className="text-6xl font-extrabold tracking-widest text-[#ffbd1f]">#{numero}</div>
             <p className="text-2xl font-extrabold mt-2">
               ${monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP
@@ -74,7 +80,7 @@ function PaginaPagarInner() {
             <p className="text-gray-500 text-sm mb-5">
               Pago procesado por Bold. Tu membresía se activa automáticamente al confirmarse.
             </p>
-            <BotonPagoBold numeroCaja={numero} />
+            <BotonPagoBold numeroCaja={numero} tier={tier} />
           </div>
 
           <p className="text-center text-gray-400 text-xs pb-4">

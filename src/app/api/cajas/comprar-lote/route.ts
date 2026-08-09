@@ -24,9 +24,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json().catch(() => ({})) as { numeros?: string[] };
+    const body = await req.json().catch(() => ({})) as { tier?: string; numeros?: string[] };
     const numeros = Array.isArray(body.numeros) ? Array.from(new Set(body.numeros)) : [];
 
+    if (!body.tier) {
+      return NextResponse.json({ mensaje: "Falta el parámetro tier." }, { status: 400 });
+    }
     if (numeros.length === 0) {
       return NextResponse.json({ mensaje: "No seleccionaste ninguna membresía." }, { status: 400 });
     }
@@ -39,6 +42,11 @@ export async function POST(req: NextRequest) {
 
     const { prisma } = await import("@/lib/prisma");
 
+    const tipoMembresia = await prisma.tipoMembresia.findUnique({ where: { slug: body.tier } });
+    if (!tipoMembresia) {
+      return NextResponse.json({ mensaje: "Tipo de membresía no encontrado." }, { status: 404 });
+    }
+
     const usuarioCheck = await prisma.user.findUnique({
       where: { id: userId },
       select: { confirmado: true, saldoPuntos: true },
@@ -50,11 +58,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const config = await prisma.config.findUnique({ where: { id: "singleton" } });
-    const precioCaja = config?.precioCaja ?? 10_000;
+    const precioCaja = tipoMembresia.precio;
 
     const { calcularFreezeSeleccion } = await import("@/lib/freezeSeleccion");
-    const freeze = calcularFreezeSeleccion(config?.fechaSorteo ?? null);
+    const freeze = calcularFreezeSeleccion(tipoMembresia.fechaSorteo);
     if (freeze.activo) {
       return NextResponse.json(
         {
@@ -65,7 +72,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const cajas = await prisma.caja.findMany({ where: { numero: { in: numeros } } });
+    const cajas = await prisma.caja.findMany({ where: { numero: { in: numeros }, tipoMembresiaId: tipoMembresia.id } });
     if (cajas.length !== numeros.length) {
       return NextResponse.json({ mensaje: "Alguna de las membresías seleccionadas no existe." }, { status: 404 });
     }
@@ -106,7 +113,7 @@ export async function POST(req: NextRequest) {
       for (const numero of numeros) {
         const idCompra = `${idLote}-${numero}`;
         await tx.caja.update({
-          where: { numero },
+          where: { cajaTierNumero: { tipoMembresiaId: tipoMembresia.id, numero } },
           data: { estado: "VENDIDA", userId, fechaCompra: new Date(), idCompra },
         });
         await tx.transaccion.create({
@@ -114,7 +121,7 @@ export async function POST(req: NextRequest) {
             userId,
             tipo: "COMPRA",
             monto: -precioCaja,
-            descripcion: `Compra de membresía #${numero} (pago múltiple)`,
+            descripcion: `Compra de membresía ${tipoMembresia.nombre} #${numero} (pago múltiple)`,
             referencia: idCompra,
           },
         });
@@ -152,7 +159,7 @@ export async function POST(req: NextRequest) {
 
     // Gift cards automáticas por umbral de membresías (propias o de la red de referidos) + notificación
     import("@/lib/giftCardsPorMembresias").then(({ emitirGiftCardsPorMembresias }) =>
-      emitirGiftCardsPorMembresias({ usuarioCompradorId: userId, precioCaja })
+      emitirGiftCardsPorMembresias({ usuarioCompradorId: userId, precioCaja, tipoMembresiaId: tipoMembresia.id })
     ).catch((err) => console.error("Gift cards por membresías error:", err));
 
     return NextResponse.json({

@@ -26,10 +26,21 @@ interface RespuestaCajas {
   limite: number;
 }
 
+interface TipoMembresiaAPI {
+  slug: string;
+  nombre: string;
+  precio: number;
+  fechaSorteo: string | null;
+  vendidasTotal: number;
+  freezeActivo: boolean;
+  freezeMinutos: number | null;
+}
+
 // ── Modal de confirmación ──────────────────────────────────────────────────
 
 interface ModalProps {
   caja: Caja | null;
+  tier: string | null;
   precio: number;
   giftCardId: string | null;
   giftCardValor: number;
@@ -44,7 +55,7 @@ interface ModalProps {
   freezeMinutos: number | null;
 }
 
-function ModalReserva({ caja, precio, giftCardId, giftCardValor, giftCardCodigo, esSorpresa, onCerrar, onConfirmar, onComprarConGiftCard, cargando, resultado, freezeActivo, freezeMinutos }: ModalProps) {
+function ModalReserva({ caja, tier, precio, giftCardId, giftCardValor, giftCardCodigo, esSorpresa, onCerrar, onConfirmar, onComprarConGiftCard, cargando, resultado, freezeActivo, freezeMinutos }: ModalProps) {
   const [confirmandoPago, setConfirmandoPago] = useState(false);
   if (!caja) return null;
   const descuento = giftCardId ? Math.min(giftCardValor, precio) : 0;
@@ -201,7 +212,7 @@ function ModalReserva({ caja, precio, giftCardId, giftCardValor, giftCardCodigo,
                 </button>
               ) : (
                 <a
-                  href={`/membresias/pagar?numero=${caja.numero}`}
+                  href={`/membresias/pagar?tier=${tier}&numero=${caja.numero}`}
                   className="flex-1 bg-[#ffbd1f] hover:bg-yellow-300 text-[#102463] font-bold py-3 rounded-full transition-all shadow-md text-center text-sm"
                 >
                   Pagar
@@ -371,12 +382,8 @@ function MembresiasInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [fechaSorteo, setFechaSorteo] = useState<string | null>(null);
-  const [fechaSorteoISO, setFechaSorteoISO] = useState<string | null>(null);
-  const [freezeActivo, setFreezeActivo] = useState(false);
-  const [freezeMinutos, setFreezeMinutos] = useState<number | null>(null);
-  const [precioCaja, setPrecioCaja] = useState(10_000);
-  const [vendidasTotal, setVendidasTotal] = useState(0);
+  const [tiposMembresia, setTiposMembresia] = useState<TipoMembresiaAPI[]>([]);
+  const [tier, setTier] = useState<string | null>(searchParams.get("tier"));
   const [giftCardId, setGiftCardId] = useState<string | null>(null);
   const [giftCardValor, setGiftCardValor] = useState(0);
   const [giftCardCodigo, setGiftCardCodigo] = useState<string | null>(null);
@@ -403,18 +410,28 @@ function MembresiasInner() {
   useEffect(() => {
     fetch("/api/config")
       .then((r) => r.json())
-      .then((c: { fechaSorteo?: string | null; precioCaja?: number; vendidasTotal?: number; freezeActivo?: boolean; freezeMinutos?: number | null }) => {
-        if (c.fechaSorteo) {
-          setFechaSorteoISO(c.fechaSorteo);
-          setFechaSorteo(new Date(c.fechaSorteo).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }));
-        }
-        setFreezeActivo(c.freezeActivo ?? false);
-        setFreezeMinutos(c.freezeMinutos ?? null);
-        if (c.precioCaja) setPrecioCaja(c.precioCaja);
-        if (c.vendidasTotal !== undefined) setVendidasTotal(c.vendidasTotal);
+      .then((c: { tiposMembresia?: TipoMembresiaAPI[] }) => {
+        const tipos = c.tiposMembresia ?? [];
+        setTiposMembresia(tipos);
+        setTier((actual) => (actual && tipos.some((t) => t.slug === actual)) ? actual : (tipos[0]?.slug ?? null));
       })
       .catch(() => undefined);
   }, []);
+
+  const tierActual = tiposMembresia.find((t) => t.slug === tier) ?? tiposMembresia[0] ?? null;
+  const precioCaja = tierActual?.precio ?? 0;
+  const vendidasTotal = tierActual?.vendidasTotal ?? 0;
+  const fechaSorteoISO = tierActual?.fechaSorteo ?? null;
+  const freezeActivo = tierActual?.freezeActivo ?? false;
+  const freezeMinutos = tierActual?.freezeMinutos ?? null;
+
+  function cambiarTier(nuevoSlug: string) {
+    setTier(nuevoSlug);
+    setPagina(1);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tier", nuevoSlug);
+    router.replace(`/membresias?${params.toString()}`, { scroll: false });
+  }
 
   useEffect(() => {
     const gcId = searchParams.get("giftCard");
@@ -430,9 +447,11 @@ function MembresiasInner() {
 
   const fetchCajas = useCallback(
     async (silencioso = false) => {
+      if (!tier) return;
       if (!silencioso) setCargando(true);
       try {
         const params = new URLSearchParams({
+          tier,
           pagina: String(pagina),
           limite: "100",
           filtro,
@@ -444,7 +463,7 @@ function MembresiasInner() {
         if (!silencioso) setCargando(false);
       }
     },
-    [pagina, filtro, buscar]
+    [tier, pagina, filtro, buscar]
   );
 
   useEffect(() => {
@@ -479,9 +498,10 @@ function MembresiasInner() {
 
   const elegirAleatoria = async () => {
     if (!session) { router.push("/login?redirect=/membresias"); return; }
+    if (!tier) return;
     setBuscandoAleatoria(true);
     try {
-      const res = await fetch("/api/cajas/aleatoria");
+      const res = await fetch(`/api/cajas/aleatoria?tier=${tier}`);
       const json = await res.json();
       if (!res.ok || !json.caja) return;
       setEsSorpresa(true);
@@ -510,9 +530,10 @@ function MembresiasInner() {
   };
 
   const confirmarReserva = async (numero: string) => {
+    if (!tier) return;
     setReservandoCaja(true);
     try {
-      const res = await fetch(`/api/cajas/${numero}/reservar`, { method: "POST" });
+      const res = await fetch(`/api/cajas/${tier}/${numero}/reservar`, { method: "POST" });
       const json = await res.json();
       setResultadoReserva({
         ok: res.ok,
@@ -527,10 +548,10 @@ function MembresiasInner() {
   };
 
   const comprarConGiftCard = async (numero: string) => {
-    if (!giftCardId) return;
+    if (!giftCardId || !tier) return;
     setReservandoCaja(true);
     try {
-      const res = await fetch(`/api/cajas/${numero}/comprar`, {
+      const res = await fetch(`/api/cajas/${tier}/${numero}/comprar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ giftCardId }),
@@ -568,6 +589,29 @@ function MembresiasInner() {
             <p style={{ fontSize: 17, color: "rgba(255,255,255,0.85)", margin: "0 0 24px", maxWidth: 480, lineHeight: 1.65 }}>
               10,000 membresías numeradas. Coincide con el número de la selección aleatoria en 4, 3, 2 o 1 cifra y gana parte del recaudo.
             </p>
+
+            {tiposMembresia.length > 1 && (
+              <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+                {tiposMembresia.map((t) => (
+                  <button
+                    key={t.slug}
+                    onClick={() => cambiarTier(t.slug)}
+                    style={{
+                      padding: "8px 20px",
+                      borderRadius: 999,
+                      fontSize: 14,
+                      fontWeight: 700,
+                      transition: "all 0.15s",
+                      background: tier === t.slug ? "#ffbd1f" : "rgba(255,255,255,0.10)",
+                      color: tier === t.slug ? "#102463" : "white",
+                      border: tier === t.slug ? "1px solid #ffbd1f" : "1px solid rgba(255,255,255,0.18)",
+                    }}
+                  >
+                    {t.nombre}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Pills de stats */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: fechaSorteoISO ? 24 : 0 }}>
@@ -751,6 +795,7 @@ function MembresiasInner() {
 
       <ModalReserva
         caja={cajaSeleccionada}
+        tier={tier}
         precio={precioCaja}
         giftCardId={giftCardId}
         giftCardValor={giftCardValor}

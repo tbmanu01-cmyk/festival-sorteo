@@ -5,23 +5,25 @@
 export async function confirmarCompraMembresia(opts: {
   usuarioId: string;
   numeroCaja: string;
+  tipoMembresiaId: string;
   monto: number;
   descripcionTransaccion: string;
   referenciaTransaccion: string;
 }) {
-  const { usuarioId, numeroCaja, monto, descripcionTransaccion, referenciaTransaccion } = opts;
+  const { usuarioId, numeroCaja, tipoMembresiaId, monto, descripcionTransaccion, referenciaTransaccion } = opts;
   const { prisma } = await import("@/lib/prisma");
 
-  const caja = await prisma.caja.findUnique({ where: { numero: numeroCaja } });
+  const caja = await prisma.caja.findUnique({
+    where: { cajaTierNumero: { tipoMembresiaId, numero: numeroCaja } },
+  });
   if (!caja) throw new Error(`Membresía #${numeroCaja} no encontrada en el sistema.`);
   if (caja.estado === "VENDIDA") throw new Error(`La membresía #${numeroCaja} ya fue vendida.`);
 
-  const config = await prisma.config.findUnique({ where: { id: "singleton" } });
   const idCompra = `COMPRA-${usuarioId}-${Date.now()}`;
 
   await prisma.$transaction([
     prisma.caja.update({
-      where: { numero: numeroCaja },
+      where: { cajaTierNumero: { tipoMembresiaId, numero: numeroCaja } },
       data: { estado: "VENDIDA", userId: usuarioId, fechaCompra: new Date(), idCompra },
     }),
     prisma.transaccion.create({
@@ -37,7 +39,7 @@ export async function confirmarCompraMembresia(opts: {
 
   // Gift cards automáticas por umbral de membresías (propias o de la red de referidos) + notificación
   import("@/lib/giftCardsPorMembresias").then(({ emitirGiftCardsPorMembresias }) =>
-    emitirGiftCardsPorMembresias({ usuarioCompradorId: usuarioId, precioCaja: config?.precioCaja ?? 10_000 })
+    emitirGiftCardsPorMembresias({ usuarioCompradorId: usuarioId, precioCaja: monto, tipoMembresiaId })
   ).catch((e) => console.error("Gift cards por membresías (aprobación) error:", e));
 
   // Email al usuario — fire and forget

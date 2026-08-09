@@ -12,6 +12,15 @@ export async function GET(req: NextRequest) {
     const limite = Math.min(200, Math.max(1, Number(searchParams.get("limite") ?? LIMITE_DEFAULT)));
     const filtro = searchParams.get("filtro") ?? "todos";
     const buscar = searchParams.get("buscar")?.trim() ?? "";
+    const tier = searchParams.get("tier");
+
+    if (!tier) {
+      return NextResponse.json({ mensaje: "Falta el parámetro tier." }, { status: 400 });
+    }
+    const tipoMembresia = await prisma.tipoMembresia.findUnique({ where: { slug: tier } });
+    if (!tipoMembresia) {
+      return NextResponse.json({ mensaje: "Tipo de membresía no encontrado." }, { status: 404 });
+    }
 
     // Liberar reservas expiradas antes de consultar
     const expiradas = new Date(Date.now() - MINUTOS_RESERVA * 60 * 1000);
@@ -29,7 +38,7 @@ export async function GET(req: NextRequest) {
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: Record<string, any> = {};
+    const where: Record<string, any> = { tipoMembresiaId: tipoMembresia.id };
 
     if (buscar) {
       where.numero = { contains: buscar };

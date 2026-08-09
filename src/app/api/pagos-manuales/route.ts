@@ -12,16 +12,20 @@ export async function POST(req: NextRequest) {
     const userId = (session.user as unknown as { id: string }).id;
     const body = await req.json() as {
       numeroCaja: string;
+      tier: string;
       nombrePagador: string;
       refBancaria: string;
       comprobanteUrl?: string;
       notas?: string;
     };
 
-    const { numeroCaja, nombrePagador, refBancaria, comprobanteUrl, notas } = body;
+    const { numeroCaja, tier, nombrePagador, refBancaria, comprobanteUrl, notas } = body;
 
     if (!numeroCaja || !/^\d{4}$/.test(numeroCaja)) {
       return NextResponse.json({ mensaje: "Número de membresía inválido." }, { status: 400 });
+    }
+    if (!tier) {
+      return NextResponse.json({ mensaje: "Falta el parámetro tier." }, { status: 400 });
     }
     if (!nombrePagador?.trim()) {
       return NextResponse.json({ mensaje: "El nombre del titular es obligatorio." }, { status: 400 });
@@ -54,8 +58,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const config = await prisma.config.findUnique({ where: { id: "singleton" } });
-    const monto = config?.precioCaja ?? 10_000;
+    const tipoMembresia = await prisma.tipoMembresia.findUnique({ where: { slug: tier } });
+    if (!tipoMembresia) {
+      return NextResponse.json({ mensaje: "Tipo de membresía no encontrado." }, { status: 404 });
+    }
+    const monto = tipoMembresia.precio;
 
     const referencia = `PM-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
@@ -64,6 +71,7 @@ export async function POST(req: NextRequest) {
         referencia,
         usuarioId: userId,
         numeroCaja,
+        tipoMembresiaId: tipoMembresia.id,
         monto,
         nombrePagador: nombrePagador.trim(),
         refBancaria: refBancaria.trim(),

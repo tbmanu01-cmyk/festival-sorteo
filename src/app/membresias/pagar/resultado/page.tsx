@@ -21,6 +21,7 @@ function ResultadoInner() {
   const orderId = searchParams.get("bold-order-id") ?? "";
 
   const [numero, setNumero] = useState("");
+  const [tier, setTier] = useState("");
   const [estado, setEstado] = useState<"PENDIENTE" | "APROBADO" | "RECHAZADO" | "ERROR">(
     orderId ? "PENDIENTE" : "ERROR"
   );
@@ -32,8 +33,9 @@ function ResultadoInner() {
     const t = setTimeout(async () => {
       try {
         const res = await fetch(`/api/pagos/bold/estado?orderId=${encodeURIComponent(orderId)}`);
-        const json = await res.json() as { estado?: "PENDIENTE" | "APROBADO" | "RECHAZADO"; numeroCaja?: string };
+        const json = await res.json() as { estado?: "PENDIENTE" | "APROBADO" | "RECHAZADO"; numeroCaja?: string; tier?: string };
         if (json.numeroCaja) setNumero(json.numeroCaja);
+        if (json.tier) setTier(json.tier);
         if (res.ok && json.estado && json.estado !== "PENDIENTE") {
           setEstado(json.estado);
         } else {
@@ -90,7 +92,7 @@ function ResultadoInner() {
               <p className="text-gray-500 mb-6 text-sm">
                 No pudimos confirmar tu pago para la membresía <strong>#{numero}</strong>. Puedes intentar de nuevo o pagar por transferencia.
               </p>
-              <Link href={`/membresias/pagar?numero=${numero}`} className="block bg-[#102463] hover:bg-[#173592] text-white font-bold py-3.5 rounded-full text-center transition-all">
+              <Link href={`/membresias/pagar?tier=${tier}&numero=${numero}`} className="block bg-[#102463] hover:bg-[#173592] text-white font-bold py-3.5 rounded-full text-center transition-all">
                 Intentar de nuevo
               </Link>
             </>

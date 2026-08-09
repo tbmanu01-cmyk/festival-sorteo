@@ -7,6 +7,7 @@ export async function GET() {
   const sorteos = await prisma.sorteo.findMany({
     where: { estado: "FINALIZADO" },
     include: {
+      tipoMembresia: { select: { slug: true, nombre: true } },
       premios: {
         include: { user: { select: { nombre: true, apellido: true, correo: true, celular: true } } },
         orderBy: { categoria: "asc" },

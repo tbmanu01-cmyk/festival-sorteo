@@ -51,11 +51,17 @@ export async function manejarWebhookBold(req: NextRequest) {
       return NextResponse.json({ mensaje: "Monto no coincide." }, { status: 200 });
     }
 
+    if (!pago.tipoMembresiaId) {
+      console.error("Webhook Bold: orden sin tipoMembresiaId", orderId);
+      return NextResponse.json({ mensaje: "Orden sin tipo de membresía." }, { status: 200 });
+    }
+
     const { confirmarCompraMembresia } = await import("@/lib/confirmarCompra");
     try {
       await confirmarCompraMembresia({
         usuarioId: pago.usuarioId,
         numeroCaja: pago.numeroCaja,
+        tipoMembresiaId: pago.tipoMembresiaId,
         monto: pago.monto,
         descripcionTransaccion: `Membresía #${pago.numeroCaja} — pago con Bold (${evento.data.payment_id})`,
         referenciaTransaccion: orderId,

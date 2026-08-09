@@ -13,10 +13,11 @@ type Resultado =
   | { ok: false; status: number; mensaje: string };
 
 export async function ejecutarSeleccionPrincipal(opts: {
+  tipoMembresiaId: string;
   modo: "auto" | "manual";
   numeroGanador?: string;
 }): Promise<Resultado> {
-  const { modo, numeroGanador: numManual } = opts;
+  const { tipoMembresiaId, modo, numeroGanador: numManual } = opts;
 
   if (modo === "manual" && (!numManual || !/^\d{4}$/.test(numManual))) {
     return { ok: false, status: 400, mensaje: "El número ganador debe ser de 4 dígitos." };
@@ -26,11 +27,16 @@ export async function ejecutarSeleccionPrincipal(opts: {
   const { obtenerOCrearTemporadaActual } = await import("@/lib/temporada");
   const { crearNotificacion } = await import("@/lib/notificaciones");
 
-  const temporadaActual = await obtenerOCrearTemporadaActual(prisma);
+  const tipoMembresia = await prisma.tipoMembresia.findUnique({ where: { id: tipoMembresiaId } });
+  if (!tipoMembresia) {
+    return { ok: false, status: 404, mensaje: "Tipo de membresía no encontrado." };
+  }
+
+  const temporadaActual = await obtenerOCrearTemporadaActual(prisma, tipoMembresiaId);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cfg = await prisma.config.upsert({ where: { id: "singleton" }, create: { id: "singleton" }, update: {} }) as any;
-  const PRECIO_CAJA: number = cfg.precioCaja;
+  const PRECIO_CAJA: number = tipoMembresia.precio;
   const PCT_4: number      = cfg.pct4Cifras;
   const PCT_3: number      = cfg.pct3Cifras;
   const PCT_2: number      = cfg.pct2Cifras;
@@ -38,12 +44,12 @@ export async function ejecutarSeleccionPrincipal(opts: {
   const N: number          = cfg.ganadores4Cifras ?? 4;
 
   const cajasVendidas: CajaConUser[] = await prisma.caja.findMany({
-    where: { estado: "VENDIDA", userId: { not: null } },
+    where: { estado: "VENDIDA", userId: { not: null }, tipoSorteo: "PRINCIPAL", tipoMembresiaId },
     select: { numero: true, userId: true },
   });
 
   if (cajasVendidas.length === 0) {
-    return { ok: false, status: 400, mensaje: "No hay membresías vendidas para realizar la selección." };
+    return { ok: false, status: 400, mensaje: `No hay membresías ${tipoMembresia.nombre} vendidas para realizar la selección.` };
   }
 
   const totalVendidas = cajasVendidas.length;
@@ -121,6 +127,7 @@ export async function ejecutarSeleccionPrincipal(opts: {
         fondoPremios,
         configuracion: { precioCaja: PRECIO_CAJA, modo, ganadores4Cifras: N },
         temporadaId: temporadaActual.id,
+        tipoMembresiaId,
       },
     });
 
@@ -166,6 +173,7 @@ export async function ejecutarSeleccionPrincipal(opts: {
           categoria: NOMBRE_CAT[p.categoria],
           origen: "Selección principal",
           temporadaId: temporadaActual.id,
+          tipoMembresiaId,
         })),
       });
     }
@@ -222,15 +230,16 @@ export async function ejecutarSeleccionPrincipal(opts: {
     }
 
     // Cierra la temporada actual con el snapshot de sus resultados y abre
-    // la siguiente — el pool de 10,000 membresías principales vuelve a
-    // DISPONIBLE de inmediato para que arranque la nueva temporada.
+    // la siguiente — el pool de 10,000 membresías de ESTE tier vuelve a
+    // DISPONIBLE de inmediato para que arranque la nueva temporada. Los
+    // otros tiers no se tocan.
     await tx.temporada.update({
       where: { id: temporadaActual.id },
       data: { fin: new Date(), totalVendidas, totalRecaudo, fondoPremios, ganancia },
     });
-    await tx.temporada.create({ data: { numero: temporadaActual.numero + 1 } });
+    await tx.temporada.create({ data: { tipoMembresiaId, numero: temporadaActual.numero + 1 } });
     await tx.caja.updateMany({
-      where: { tipoSorteo: "PRINCIPAL" },
+      where: { tipoSorteo: "PRINCIPAL", tipoMembresiaId },
       data: { estado: "DISPONIBLE", userId: null, fechaCompra: null, idCompra: null },
     });
 
@@ -299,6 +308,8 @@ export async function ejecutarSeleccionPrincipal(opts: {
     ok: true,
     sorteo: sorteoCompleto,
     resumen: {
+      tipoMembresiaId,
+      tipoMembresiaSlug: tipoMembresia.slug,
       numerosGanadores,
       numeroGanador: ultimoNumero,
       totalVendidas,

@@ -51,8 +51,14 @@ export async function PATCH(
     return NextResponse.json({ mensaje: "Pago rechazado y usuario notificado." });
   }
 
+  if (!pago.tipoMembresiaId) {
+    return NextResponse.json({ mensaje: "Este pago no tiene tipo de membresía asociado." }, { status: 409 });
+  }
+
   // APROBAR — verificar que la caja siga disponible o reservada por este usuario
-  const caja = await prisma.caja.findUnique({ where: { numero: pago.numeroCaja } });
+  const caja = await prisma.caja.findUnique({
+    where: { cajaTierNumero: { tipoMembresiaId: pago.tipoMembresiaId, numero: pago.numeroCaja } },
+  });
   if (!caja) {
     return NextResponse.json({ mensaje: "Membresía no encontrada en el sistema." }, { status: 404 });
   }
@@ -68,6 +74,7 @@ export async function PATCH(
     await confirmarCompraMembresia({
       usuarioId: pago.usuarioId,
       numeroCaja: pago.numeroCaja,
+      tipoMembresiaId: pago.tipoMembresiaId,
       monto: pago.monto,
       descripcionTransaccion: `Membresía #${pago.numeroCaja} — pago por transferencia (${pago.referencia})`,
       referenciaTransaccion: pago.referencia,

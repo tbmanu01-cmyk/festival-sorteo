@@ -23,12 +23,12 @@ export async function GET() {
   const [reservadas, vendidas, premios, retiros, usuario, todasAnticipadas] = await Promise.all([
     prisma.caja.findMany({
       where: { userId, estado: "RESERVADA" },
-      select: { numero: true, fechaCompra: true },
+      select: { numero: true, fechaCompra: true, tipoMembresia: { select: { slug: true, nombre: true } } },
       orderBy: { fechaCompra: "asc" },
     }),
     prisma.caja.findMany({
       where: { userId, estado: "VENDIDA" },
-      select: { numero: true, fechaCompra: true, idCompra: true },
+      select: { numero: true, fechaCompra: true, idCompra: true, tipoMembresia: { select: { slug: true, nombre: true } } },
       orderBy: { fechaCompra: "desc" },
     }),
     prisma.premio.findMany({

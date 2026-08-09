@@ -13,10 +13,10 @@ export async function GET(req: NextRequest) {
   if (!orderId) return NextResponse.json({ mensaje: "Falta orderId." }, { status: 400 });
 
   const { prisma } = await import("@/lib/prisma");
-  const pago = await prisma.pagoBold.findUnique({ where: { orderId } });
+  const pago = await prisma.pagoBold.findUnique({ where: { orderId }, include: { tipoMembresia: { select: { slug: true } } } });
   if (!pago || pago.usuarioId !== userId) {
     return NextResponse.json({ mensaje: "No encontrado." }, { status: 404 });
   }
 
-  return NextResponse.json({ estado: pago.estado, numeroCaja: pago.numeroCaja });
+  return NextResponse.json({ estado: pago.estado, numeroCaja: pago.numeroCaja, tier: pago.tipoMembresia?.slug ?? null });
 }

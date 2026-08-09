@@ -20,12 +20,14 @@ interface CajaReservada {
   numero: string;
   fechaCompra: string;
   expira: string;
+  tipoMembresia: { slug: string; nombre: string } | null;
 }
 
 interface CajaVendida {
   numero: string;
   fechaCompra: string;
   idCompra: string | null;
+  tipoMembresia: { slug: string; nombre: string } | null;
 }
 
 interface Premio {
@@ -110,10 +112,11 @@ function TarjetaReserva({
   precio: number;
   saldo: number;
   giftCardsDisponibles: GiftCardDisp[];
-  onComprar: (numero: string, giftCardId?: string) => Promise<void>;
-  onLiberar: (numero: string) => Promise<void>;
+  onComprar: (numero: string, tier: string, giftCardId?: string) => Promise<void>;
+  onLiberar: (numero: string, tier: string) => Promise<void>;
   comprando: boolean;
 }) {
+  const tier = caja.tipoMembresia?.slug ?? "";
   const { min, seg, expirada, pct } = useCountdown(caja.expira);
   const [gcSeleccionada, setGcSeleccionada] = useState<string>("");
   const [confirmando, setConfirmando] = useState(false);
@@ -146,7 +149,7 @@ function TarjetaReserva({
           }
           textoConfirmar="Sí, pagar"
           cargando={comprando}
-          onConfirmar={async () => { await onComprar(caja.numero, gcSeleccionada || undefined); setConfirmando(false); }}
+          onConfirmar={async () => { await onComprar(caja.numero, tier, gcSeleccionada || undefined); setConfirmando(false); }}
           onCancelar={() => setConfirmando(false)}
         />
       )}
@@ -158,7 +161,7 @@ function TarjetaReserva({
           textoConfirmar="Sí, liberar"
           peligroso
           cargando={comprando}
-          onConfirmar={async () => { await onLiberar(caja.numero); setConfirmandoLiberar(false); }}
+          onConfirmar={async () => { await onLiberar(caja.numero, tier); setConfirmandoLiberar(false); }}
           onCancelar={() => setConfirmandoLiberar(false)}
         />
       )}
@@ -280,7 +283,7 @@ function TarjetaReserva({
               </p>
               <div className="flex gap-2">
                 <a
-                  href={`/membresias/pagar?numero=${caja.numero}`}
+                  href={`/membresias/pagar?tier=${tier}&numero=${caja.numero}`}
                   className="flex-1 text-center bg-[#102463] hover:bg-[#173592] text-white font-bold py-3 rounded-xl transition-colors shadow-md text-sm"
                 >
                   💳 Pagar con tarjeta, PSE o Nequi
@@ -1055,10 +1058,10 @@ export default function Dashboard() {
     return () => clearInterval(t);
   }, [status, cargarDatos]);
 
-  async function completarCompra(numero: string, giftCardId?: string) {
+  async function completarCompra(numero: string, tier: string, giftCardId?: string) {
     setComprando(numero);
     setMensajeCompra(null);
-    const res = await fetch(`/api/cajas/${numero}/comprar`, {
+    const res = await fetch(`/api/cajas/${tier}/${numero}/comprar`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(giftCardId ? { giftCardId } : {}),
@@ -1069,9 +1072,9 @@ export default function Dashboard() {
     if (res.ok) cargarDatos();
   }
 
-  async function liberarReserva(numero: string) {
+  async function liberarReserva(numero: string, tier: string) {
     setComprando(numero);
-    const res = await fetch(`/api/cajas/${numero}/reservar`, { method: "DELETE" });
+    const res = await fetch(`/api/cajas/${tier}/${numero}/reservar`, { method: "DELETE" });
     const json = await res.json() as { mensaje: string };
     setComprando(null);
     setMensajeCompra({ ok: res.ok, texto: json.mensaje });

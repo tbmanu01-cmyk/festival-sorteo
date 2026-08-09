@@ -6,7 +6,7 @@ const MINUTOS_RESERVA = 15;
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ numero: string }> }
+  { params }: { params: Promise<{ tier: string; numero: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,7 +17,7 @@ export async function POST(
       );
     }
 
-    const { numero } = await params;
+    const { tier, numero } = await params;
 
     if (!/^\d{4}$/.test(numero)) {
       return NextResponse.json({ mensaje: "Número de membresía inválido." }, { status: 400 });
@@ -27,8 +27,12 @@ export async function POST(
     const { calcularFreezeSeleccion } = await import("@/lib/freezeSeleccion");
     const userId = (session.user as unknown as { id: string }).id;
 
-    const config = await prisma.config.findUnique({ where: { id: "singleton" }, select: { fechaSorteo: true } });
-    const freeze = calcularFreezeSeleccion(config?.fechaSorteo ?? null);
+    const tipoMembresia = await prisma.tipoMembresia.findUnique({ where: { slug: tier } });
+    if (!tipoMembresia) {
+      return NextResponse.json({ mensaje: "Tipo de membresía no encontrado." }, { status: 404 });
+    }
+
+    const freeze = calcularFreezeSeleccion(tipoMembresia.fechaSorteo);
     if (freeze.activo) {
       return NextResponse.json(
         {
@@ -39,7 +43,7 @@ export async function POST(
       );
     }
 
-    // Liberar reservas propias expiradas
+    // Liberar reservas expiradas (barrido global, no depende del tier de esta operación)
     const expiradas = new Date(Date.now() - MINUTOS_RESERVA * 60 * 1000);
     await prisma.caja.updateMany({
       where: {
@@ -54,7 +58,9 @@ export async function POST(
       },
     });
 
-    const caja = await prisma.caja.findUnique({ where: { numero } });
+    const caja = await prisma.caja.findUnique({
+      where: { cajaTierNumero: { tipoMembresiaId: tipoMembresia.id, numero } },
+    });
 
     if (!caja) {
       return NextResponse.json({ mensaje: "Membresía no encontrada." }, { status: 404 });
@@ -70,7 +76,7 @@ export async function POST(
     const expira = new Date(Date.now() + MINUTOS_RESERVA * 60 * 1000);
 
     const cajaReservada = await prisma.caja.update({
-      where: { numero },
+      where: { cajaTierNumero: { tipoMembresiaId: tipoMembresia.id, numero } },
       data: {
         estado: "RESERVADA",
         userId,
@@ -85,7 +91,7 @@ export async function POST(
       expira: expira.toISOString(),
     });
   } catch (error) {
-    console.error("POST /api/cajas/[numero]/reservar error:", error);
+    console.error("POST /api/cajas/[tier]/[numero]/reservar error:", error);
     return NextResponse.json({ mensaje: "Error interno del servidor." }, { status: 500 });
   }
 }
@@ -93,7 +99,7 @@ export async function POST(
 // DELETE: liberar una reserva propia antes de que expire (el usuario ya no quiere pagarla)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ numero: string }> }
+  { params }: { params: Promise<{ tier: string; numero: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -101,7 +107,7 @@ export async function DELETE(
       return NextResponse.json({ mensaje: "Debes iniciar sesión." }, { status: 401 });
     }
 
-    const { numero } = await params;
+    const { tier, numero } = await params;
     if (!/^\d{4}$/.test(numero)) {
       return NextResponse.json({ mensaje: "Número de membresía inválido." }, { status: 400 });
     }
@@ -109,7 +115,14 @@ export async function DELETE(
     const { prisma } = await import("@/lib/prisma");
     const userId = (session.user as unknown as { id: string }).id;
 
-    const caja = await prisma.caja.findUnique({ where: { numero } });
+    const tipoMembresia = await prisma.tipoMembresia.findUnique({ where: { slug: tier } });
+    if (!tipoMembresia) {
+      return NextResponse.json({ mensaje: "Tipo de membresía no encontrado." }, { status: 404 });
+    }
+
+    const caja = await prisma.caja.findUnique({
+      where: { cajaTierNumero: { tipoMembresiaId: tipoMembresia.id, numero } },
+    });
     if (!caja) {
       return NextResponse.json({ mensaje: "Membresía no encontrada." }, { status: 404 });
     }
@@ -118,13 +131,13 @@ export async function DELETE(
     }
 
     await prisma.caja.update({
-      where: { numero },
+      where: { cajaTierNumero: { tipoMembresiaId: tipoMembresia.id, numero } },
       data: { estado: "DISPONIBLE", userId: null, fechaCompra: null, idCompra: null },
     });
 
     return NextResponse.json({ mensaje: `Reserva de la membresía #${numero} cancelada. Queda disponible de nuevo.` });
   } catch (error) {
-    console.error("DELETE /api/cajas/[numero]/reservar error:", error);
+    console.error("DELETE /api/cajas/[tier]/[numero]/reservar error:", error);
     return NextResponse.json({ mensaje: "Error interno del servidor." }, { status: 500 });
   }
 }

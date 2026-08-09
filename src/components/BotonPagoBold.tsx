@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 
 interface Props {
   numeroCaja: string;
+  tier: string;
 }
 
-export default function BotonPagoBold({ numeroCaja }: Props) {
+export default function BotonPagoBold({ numeroCaja, tier }: Props) {
   const contenedorRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -21,7 +22,7 @@ export default function BotonPagoBold({ numeroCaja }: Props) {
         const res = await fetch("/api/pagos/bold/firma", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ numeroCaja }),
+          body: JSON.stringify({ numeroCaja, tier }),
         });
         const json = await res.json() as {
           mensaje?: string;
@@ -69,7 +70,7 @@ export default function BotonPagoBold({ numeroCaja }: Props) {
     return () => {
       cancelado = true;
     };
-  }, [numeroCaja]);
+  }, [numeroCaja, tier]);
 
   return (
     <div className="flex flex-col items-center gap-3 py-2">

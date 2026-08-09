@@ -1,9 +1,10 @@
 // Emite gift cards automáticas cuando un usuario alcanza el umbral de
 // membresías configurado (Config.membresiasPorGiftCard) — ya sea por sus
 // propias compras o porque la suma de compras de su red de referidos llega
-// al umbral — y notifica al beneficiario. Compartido entre los 3 caminos de
-// compra: /api/cajas/[numero]/comprar, /api/cajas/comprar-lote y la
-// confirmación de pagos por Bold/transferencia manual.
+// al umbral — y notifica al beneficiario. El umbral se cuenta POR SEPARADO
+// en cada tier (5 compras del tier 10k no se mezclan con 5 del tier 50k).
+// Compartido entre los 3 caminos de compra: /api/cajas/[tier]/[numero]/comprar,
+// /api/cajas/comprar-lote y la confirmación de pagos por Bold/transferencia manual.
 
 async function crearGiftCardYNotificar(opts: {
   propietarioId: string;
@@ -32,13 +33,18 @@ async function crearGiftCardYNotificar(opts: {
 export async function emitirGiftCardsPorMembresias(opts: {
   usuarioCompradorId: string;
   precioCaja: number;
+  tipoMembresiaId: string;
 }) {
-  const { usuarioCompradorId, precioCaja } = opts;
+  const { usuarioCompradorId, precioCaja, tipoMembresiaId } = opts;
   const { prisma } = await import("@/lib/prisma");
 
-  const config = await prisma.config.findUnique({ where: { id: "singleton" } });
-  if (!(config?.giftCardActivo ?? true)) return;
+  const [config, tipoMembresia] = await Promise.all([
+    prisma.config.findUnique({ where: { id: "singleton" } }),
+    prisma.tipoMembresia.findUnique({ where: { id: tipoMembresiaId }, select: { slug: true } }),
+  ]);
+  if (!(config?.giftCardActivo ?? true) || !tipoMembresia) return;
   const mpgc = config?.membresiasPorGiftCard ?? 5;
+  const sufijoTier = ` — ${tipoMembresia.slug}`;
 
   // Por red de referidos: el referidor de este comprador
   type RefRow = { id: string; referidorId: string };
@@ -52,19 +58,19 @@ export async function emitirGiftCardsPorMembresias(opts: {
     const [{ totalMembresias }] = await prisma.$queryRaw<{ totalMembresias: bigint }[]>`
       SELECT COUNT(c.id) AS "totalMembresias"
       FROM referidos r
-      INNER JOIN cajas c ON c."userId" = r."referidoId" AND c.estado = 'VENDIDA'
+      INNER JOIN cajas c ON c."userId" = r."referidoId" AND c.estado = 'VENDIDA' AND c."tipoMembresiaId" = ${tipoMembresiaId}
       WHERE r."referidorId" = ${ref.referidorId}
     `;
     const debeHaber = Math.floor(Number(totalMembresias) / mpgc);
     if (debeHaber > 0) {
       const yaEmitidas = await prisma.giftCard.count({
-        where: { propietarioId: ref.referidorId, nota: { contains: "referidos" } },
+        where: { propietarioId: ref.referidorId, nota: { contains: `referidos${sufijoTier}` } },
       });
       for (let i = 0; i < debeHaber - yaEmitidas; i++) {
         await crearGiftCardYNotificar({
           propietarioId: ref.referidorId,
           valor: precioCaja,
-          nota: "Premio por referidos",
+          nota: `Premio por referidos${sufijoTier}`,
           mensajeExtra: `¡Felicitaciones! Tus referidos ya suman ${mpgc} membresías compradas.`,
         });
       }
@@ -72,17 +78,17 @@ export async function emitirGiftCardsPorMembresias(opts: {
   }
 
   // Por compras propias
-  const totalPropias = await prisma.caja.count({ where: { userId: usuarioCompradorId, estado: "VENDIDA" } });
+  const totalPropias = await prisma.caja.count({ where: { userId: usuarioCompradorId, estado: "VENDIDA", tipoMembresiaId } });
   const debeHaberPropias = Math.floor(totalPropias / mpgc);
   if (debeHaberPropias > 0) {
     const yaEmitidas = await prisma.giftCard.count({
-      where: { propietarioId: usuarioCompradorId, nota: { contains: "compras propias" } },
+      where: { propietarioId: usuarioCompradorId, nota: { contains: `compras propias${sufijoTier}` } },
     });
     for (let i = 0; i < debeHaberPropias - yaEmitidas; i++) {
       await crearGiftCardYNotificar({
         propietarioId: usuarioCompradorId,
         valor: precioCaja,
-        nota: "Premio por compras propias",
+        nota: `Premio por compras propias${sufijoTier}`,
         mensajeExtra: `¡Felicitaciones! Ya acumulaste ${mpgc} membresías compradas.`,
       });
     }
