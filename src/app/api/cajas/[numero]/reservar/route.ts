@@ -24,7 +24,20 @@ export async function POST(
     }
 
     const { prisma } = await import("@/lib/prisma");
+    const { calcularFreezeSeleccion } = await import("@/lib/freezeSeleccion");
     const userId = (session.user as unknown as { id: string }).id;
+
+    const config = await prisma.config.findUnique({ where: { id: "singleton" }, select: { fechaSorteo: true } });
+    const freeze = calcularFreezeSeleccion(config?.fechaSorteo ?? null);
+    if (freeze.activo) {
+      return NextResponse.json(
+        {
+          mensaje: `La selección de esta temporada está por comenzar (en ${freeze.minutosParaInicio} min). Las reservas se reabren apenas termine.`,
+          codigo: "SELECCION_POR_COMENZAR",
+        },
+        { status: 423 }
+      );
+    }
 
     // Liberar reservas propias expiradas
     const expiradas = new Date(Date.now() - MINUTOS_RESERVA * 60 * 1000);

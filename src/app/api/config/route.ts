@@ -18,12 +18,19 @@ const DEFAULTS = {
 export async function GET() {
   try {
     const { prisma } = await import("@/lib/prisma");
+    const { calcularFreezeSeleccion } = await import("@/lib/freezeSeleccion");
     const [config, vendidasTotal] = await Promise.all([
       prisma.config.findUnique({ where: { id: "singleton" } }),
       prisma.caja.count({ where: { estado: "VENDIDA" } }),
     ]);
-    return NextResponse.json({ ...(config ?? DEFAULTS), vendidasTotal });
+    const freeze = calcularFreezeSeleccion(config?.fechaSorteo ?? null);
+    return NextResponse.json({
+      ...(config ?? DEFAULTS),
+      vendidasTotal,
+      freezeActivo: freeze.activo,
+      freezeMinutos: freeze.minutosParaInicio,
+    });
   } catch {
-    return NextResponse.json({ ...DEFAULTS, vendidasTotal: 0 });
+    return NextResponse.json({ ...DEFAULTS, vendidasTotal: 0, freezeActivo: false, freezeMinutos: null });
   }
 }

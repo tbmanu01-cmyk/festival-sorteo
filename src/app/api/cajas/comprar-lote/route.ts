@@ -53,6 +53,18 @@ export async function POST(req: NextRequest) {
     const config = await prisma.config.findUnique({ where: { id: "singleton" } });
     const precioCaja = config?.precioCaja ?? 10_000;
 
+    const { calcularFreezeSeleccion } = await import("@/lib/freezeSeleccion");
+    const freeze = calcularFreezeSeleccion(config?.fechaSorteo ?? null);
+    if (freeze.activo) {
+      return NextResponse.json(
+        {
+          mensaje: `La selección de esta temporada está por comenzar (en ${freeze.minutosParaInicio} min). Las compras se reabren apenas termine.`,
+          codigo: "SELECCION_POR_COMENZAR",
+        },
+        { status: 423 }
+      );
+    }
+
     const cajas = await prisma.caja.findMany({ where: { numero: { in: numeros } } });
     if (cajas.length !== numeros.length) {
       return NextResponse.json({ mensaje: "Alguna de las membresías seleccionadas no existe." }, { status: 404 });

@@ -32,6 +32,22 @@ export async function POST(
     const body = await req.json().catch(() => ({})) as { giftCardId?: string };
 
     const { prisma } = await import("@/lib/prisma");
+    const { calcularFreezeSeleccion } = await import("@/lib/freezeSeleccion");
+
+    // Precio dinámico desde Config
+    const config = await prisma.config.findUnique({ where: { id: "singleton" } });
+    const precioCaja = config?.precioCaja ?? 10_000;
+
+    const freeze = calcularFreezeSeleccion(config?.fechaSorteo ?? null);
+    if (freeze.activo) {
+      return NextResponse.json(
+        {
+          mensaje: `La selección de esta temporada está por comenzar (en ${freeze.minutosParaInicio} min). Las compras se reabren apenas termine.`,
+          codigo: "SELECCION_POR_COMENZAR",
+        },
+        { status: 423 }
+      );
+    }
 
     // Verificar correo confirmado
     const usuarioCheck = await prisma.user.findUnique({ where: { id: userId }, select: { confirmado: true } });
@@ -41,10 +57,6 @@ export async function POST(
         { status: 403 }
       );
     }
-
-    // Precio dinámico desde Config
-    const config = await prisma.config.findUnique({ where: { id: "singleton" } });
-    const precioCaja = config?.precioCaja ?? 10_000;
 
     const caja = await prisma.caja.findUnique({ where: { numero } });
     if (!caja) return NextResponse.json({ mensaje: "Membresía no encontrada." }, { status: 404 });

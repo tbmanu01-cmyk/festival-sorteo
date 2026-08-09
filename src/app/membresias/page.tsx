@@ -40,9 +40,11 @@ interface ModalProps {
   onComprarConGiftCard: (numero: string) => Promise<void>;
   cargando: boolean;
   resultado: { ok: boolean; mensaje: string; expira?: string; compra?: boolean } | null;
+  freezeActivo: boolean;
+  freezeMinutos: number | null;
 }
 
-function ModalReserva({ caja, precio, giftCardId, giftCardValor, giftCardCodigo, esSorpresa, onCerrar, onConfirmar, onComprarConGiftCard, cargando, resultado }: ModalProps) {
+function ModalReserva({ caja, precio, giftCardId, giftCardValor, giftCardCodigo, esSorpresa, onCerrar, onConfirmar, onComprarConGiftCard, cargando, resultado, freezeActivo, freezeMinutos }: ModalProps) {
   const [confirmandoPago, setConfirmandoPago] = useState(false);
   if (!caja) return null;
   const descuento = giftCardId ? Math.min(giftCardValor, precio) : 0;
@@ -129,6 +131,17 @@ function ModalReserva({ caja, precio, giftCardId, giftCardValor, giftCardCodigo,
               </span>
             </div>
 
+            {freezeActivo && (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 mb-4 text-center">
+                <p className="text-orange-700 text-sm font-semibold">
+                  ⏳ La selección de esta temporada está por comenzar
+                </p>
+                <p className="text-orange-600 text-xs mt-0.5">
+                  Faltan {freezeMinutos} min — las reservas y compras se reabren apenas termine.
+                </p>
+              </div>
+            )}
+
             <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Precio por membresía</span>
@@ -166,7 +179,7 @@ function ModalReserva({ caja, precio, giftCardId, giftCardValor, giftCardCodigo,
               </button>
               <button
                 onClick={() => onConfirmar(caja.numero)}
-                disabled={cargando}
+                disabled={cargando || freezeActivo}
                 className="flex-1 border-2 border-[#102463] text-[#102463] hover:bg-[#102463]/5 font-bold py-3 rounded-xl transition-all disabled:opacity-50 text-sm"
               >
                 {cargando ? "..." : "Reservar"}
@@ -174,10 +187,17 @@ function ModalReserva({ caja, precio, giftCardId, giftCardValor, giftCardCodigo,
               {giftCardId ? (
                 <button
                   onClick={() => setConfirmandoPago(true)}
-                  disabled={cargando}
+                  disabled={cargando || freezeActivo}
                   className="flex-1 bg-[#ffbd1f] hover:bg-yellow-300 disabled:opacity-50 text-[#102463] font-bold py-3 rounded-full transition-all shadow-md text-center text-sm"
                 >
                   {cargando ? "..." : "Pagar"}
+                </button>
+              ) : freezeActivo ? (
+                <button
+                  disabled
+                  className="flex-1 bg-gray-200 text-gray-400 font-bold py-3 rounded-full text-center text-sm cursor-not-allowed"
+                >
+                  Pagar
                 </button>
               ) : (
                 <a
@@ -353,6 +373,8 @@ function MembresiasInner() {
 
   const [fechaSorteo, setFechaSorteo] = useState<string | null>(null);
   const [fechaSorteoISO, setFechaSorteoISO] = useState<string | null>(null);
+  const [freezeActivo, setFreezeActivo] = useState(false);
+  const [freezeMinutos, setFreezeMinutos] = useState<number | null>(null);
   const [precioCaja, setPrecioCaja] = useState(10_000);
   const [vendidasTotal, setVendidasTotal] = useState(0);
   const [giftCardId, setGiftCardId] = useState<string | null>(null);
@@ -381,11 +403,13 @@ function MembresiasInner() {
   useEffect(() => {
     fetch("/api/config")
       .then((r) => r.json())
-      .then((c: { fechaSorteo?: string | null; precioCaja?: number; vendidasTotal?: number }) => {
+      .then((c: { fechaSorteo?: string | null; precioCaja?: number; vendidasTotal?: number; freezeActivo?: boolean; freezeMinutos?: number | null }) => {
         if (c.fechaSorteo) {
           setFechaSorteoISO(c.fechaSorteo);
           setFechaSorteo(new Date(c.fechaSorteo).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }));
         }
+        setFreezeActivo(c.freezeActivo ?? false);
+        setFreezeMinutos(c.freezeMinutos ?? null);
         if (c.precioCaja) setPrecioCaja(c.precioCaja);
         if (c.vendidasTotal !== undefined) setVendidasTotal(c.vendidasTotal);
       })
@@ -573,6 +597,12 @@ function MembresiasInner() {
           </div>
         </section>
 
+        {freezeActivo && (
+          <div className="bg-orange-500 text-white px-4 py-3 text-sm font-semibold text-center">
+            ⏳ La selección de esta temporada está por comenzar (en {freezeMinutos} min) — reservas y compras pausadas hasta que termine.
+          </div>
+        )}
+
         {giftCardId && (
           <div className="bg-green-600 text-white px-4 py-3 text-sm font-semibold text-center flex items-center justify-center gap-2">
             🎁 Gift card activa — ${giftCardValor.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP de descuento en tu próxima membresía
@@ -731,6 +761,8 @@ function MembresiasInner() {
         onComprarConGiftCard={comprarConGiftCard}
         cargando={reservandoCaja}
         resultado={resultadoReserva}
+        freezeActivo={freezeActivo}
+        freezeMinutos={freezeMinutos}
       />
     </div>
   );

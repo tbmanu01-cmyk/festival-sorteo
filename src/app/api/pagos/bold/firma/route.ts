@@ -43,6 +43,19 @@ export async function POST(req: NextRequest) {
     }
 
     const config = await prisma.config.findUnique({ where: { id: "singleton" } });
+
+    const { calcularFreezeSeleccion } = await import("@/lib/freezeSeleccion");
+    const freeze = calcularFreezeSeleccion(config?.fechaSorteo ?? null);
+    if (freeze.activo) {
+      return NextResponse.json(
+        {
+          mensaje: `La selección de esta temporada está por comenzar (en ${freeze.minutosParaInicio} min). Las compras se reabren apenas termine.`,
+          codigo: "SELECCION_POR_COMENZAR",
+        },
+        { status: 423 }
+      );
+    }
+
     const monto = config?.precioCaja ?? 10_000;
     const moneda = "COP";
     const orderId = `MEM${numeroCaja}-${Date.now().toString(36).toUpperCase()}`;
