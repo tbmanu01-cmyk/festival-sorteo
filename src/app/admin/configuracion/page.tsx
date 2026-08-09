@@ -20,6 +20,7 @@ interface Config {
   giftCardActivo:        boolean;
   tiendaActiva:          boolean;
   fechaSorteo:           string | null;
+  retirosDisponiblesDesde: string | null;
   qrPagoUrl:             string | null;
   brebKey:               string | null;
   datosBancarios:        string | null;
@@ -64,6 +65,7 @@ export default function PaginaConfiguracion() {
     mensaje: string;
   } | null>(null);
   const [fechaSorteo,   setFechaSorteo]   = useState("");
+  const [retirosDisponiblesDesde, setRetirosDisponiblesDesde] = useState("");
   const [qrPagoUrl,     setQrPagoUrl]     = useState("");
   const [brebKey,       setBrebKey]       = useState("");
   const [datosBancarios, setDatosBancarios] = useState("");
@@ -103,6 +105,9 @@ export default function PaginaConfiguracion() {
         setFechaSorteo(
           c.fechaSorteo ? new Date(c.fechaSorteo).toISOString().slice(0, 16) : ""
         );
+        setRetirosDisponiblesDesde(
+          c.retirosDisponiblesDesde ? new Date(c.retirosDisponiblesDesde).toISOString().slice(0, 16) : ""
+        );
         setQrPagoUrl(c.qrPagoUrl ?? "");
         setBrebKey(c.brebKey ?? "");
         setDatosBancarios(c.datosBancarios ?? "");
@@ -138,6 +143,7 @@ export default function PaginaConfiguracion() {
           tiendaActiva:          tiendaActiva,
           saldoGiftCardActivo:   saldoGcActivo,
           fechaSorteo:           fechaSorteo || null,
+          retirosDisponiblesDesde: retirosDisponiblesDesde || null,
           qrPagoUrl:             qrPagoUrl || "",
           brebKey:               brebKey || "",
           datosBancarios:        datosBancarios || "",
@@ -577,7 +583,21 @@ export default function PaginaConfiguracion() {
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
               />
               <p className="text-xs text-gray-400 mt-1.5">
-                Se mostrará en la página de inicio y en la tienda. Deja vacío para no mostrar fecha.
+                Se muestra en la página de inicio y en la tienda. En la hora previa a esta fecha se pausan las compras/reservas automáticamente. Si tienes un cron externo configurado, la selección se ejecuta sola al llegar esta hora. Deja vacío para no programar nada.
+              </p>
+            </div>
+
+            {/* ── Freeze de retiros post-selección ────────────────────── */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h2 className="font-bold text-gray-800 mb-4">Retiros disponibles desde</h2>
+              <input
+                type="datetime-local"
+                value={retirosDisponiblesDesde}
+                onChange={(e) => setRetirosDisponiblesDesde(e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
+              />
+              <p className="text-xs text-gray-400 mt-1.5">
+                Se calcula solo (próximo día hábil) cada vez que se ejecuta una selección — nadie puede solicitar retiros antes de esta fecha. Si esa semana cae festivo, corre la fecha un día más aquí a mano. Deja vacío para no pausar retiros.
               </p>
             </div>
 

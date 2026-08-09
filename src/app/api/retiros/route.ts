@@ -59,6 +59,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const config = await prisma.config.findUnique({ where: { id: "singleton" }, select: { retirosDisponiblesDesde: true } });
+  const { estaEnFreezeRetiros } = await import("@/lib/retirosFreeze");
+  if (estaEnFreezeRetiros(config?.retirosDisponiblesDesde ?? null)) {
+    return NextResponse.json(
+      {
+        mensaje: `Los retiros están pausados tras la última selección. Se reabren el ${config!.retirosDisponiblesDesde!.toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}.`,
+        codigo: "RETIROS_PAUSADOS",
+        disponibleDesde: config!.retirosDisponiblesDesde!.toISOString(),
+      },
+      { status: 423 }
+    );
+  }
+
   const usuario = await prisma.user.findUnique({
     where: { id: userId },
     select: { saldoPuntos: true, cuentaBancaria: true, banco: true, tipoCuenta: true, nombre: true, correo: true, confirmado: true },

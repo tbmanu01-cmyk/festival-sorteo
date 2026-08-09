@@ -324,6 +324,7 @@ model Config {
   linkPagoBoldUrl  String?   @default("")
   tiendaActiva     Boolean   @default(true)
   saldoGiftCardActivo Boolean @default(false)
+  retirosDisponiblesDesde DateTime?
 
   @@map("config")
 }

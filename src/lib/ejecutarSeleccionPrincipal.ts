@@ -234,6 +234,15 @@ export async function ejecutarSeleccionPrincipal(opts: {
       data: { estado: "DISPONIBLE", userId: null, fechaCompra: null, idCompra: null },
     });
 
+    // Freeze total de retiros hasta el siguiente día hábil — le da al admin
+    // el fin de semana para conciliar antes de que se muevan los primeros
+    // retiros de la temporada nueva.
+    const { calcularProximoDiaHabil } = await import("@/lib/retirosFreeze");
+    await tx.config.update({
+      where: { id: "singleton" },
+      data: { retirosDisponiblesDesde: calcularProximoDiaHabil(new Date()) },
+    });
+
     return nuevoSorteo;
   }, { timeout: 30_000 });
 

@@ -30,6 +30,7 @@ export async function PUT(req: NextRequest) {
     membresiasPorGiftCard?: number;
     giftCardActivo?: boolean;
     fechaSorteo?: string | null;
+    retirosDisponiblesDesde?: string | null;
     qrPagoUrl?: string;
     brebKey?: string;
     datosBancarios?: string;
@@ -82,12 +83,18 @@ export async function PUT(req: NextRequest) {
       id: "singleton",
       ...body,
       fechaSorteo: body.fechaSorteo ? new Date(body.fechaSorteo) : null,
+      retirosDisponiblesDesde: body.retirosDisponiblesDesde ? new Date(body.retirosDisponiblesDesde) : null,
     },
     update: {
       ...body,
       fechaSorteo: body.fechaSorteo
         ? new Date(body.fechaSorteo)
         : body.fechaSorteo === null
+        ? null
+        : undefined,
+      retirosDisponiblesDesde: body.retirosDisponiblesDesde
+        ? new Date(body.retirosDisponiblesDesde)
+        : body.retirosDisponiblesDesde === null
         ? null
         : undefined,
     },
