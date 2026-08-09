@@ -232,12 +232,14 @@ function FormularioRegistro() {
                 <CampoTexto
                   label="Nombre *"
                   placeholder="Tu nombre"
+                  maxLength={20}
                   error={errors.nombre?.message}
                   {...register("nombre")}
                 />
                 <CampoTexto
                   label="Apellido *"
                   placeholder="Tu apellido"
+                  maxLength={20}
                   error={errors.apellido?.message}
                   {...register("apellido")}
                 />

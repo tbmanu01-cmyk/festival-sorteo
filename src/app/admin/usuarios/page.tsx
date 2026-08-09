@@ -316,8 +316,8 @@ function ModalEdicion({
               {tab === "perfil" && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
-                    <Campo label="Nombre" value={nombre} onChange={setNombre} />
-                    <Campo label="Apellido" value={apellido} onChange={setApellido} />
+                    <Campo label="Nombre" value={nombre} onChange={setNombre} maxLength={20} />
+                    <Campo label="Apellido" value={apellido} onChange={setApellido} maxLength={20} />
                   </div>
                   <Campo label="Correo electrónico" value={correo} onChange={setCorreo} type="email" />
                   <div className="grid grid-cols-2 gap-3">
@@ -600,9 +600,9 @@ function ModalEdicion({
 // ── Componente auxiliar de campo ─────────────────────────────────────────────
 
 function Campo({
-  label, value, onChange, type = "text",
+  label, value, onChange, type = "text", maxLength,
 }: {
-  label: string; value: string; onChange: (v: string) => void; type?: string;
+  label: string; value: string; onChange: (v: string) => void; type?: string; maxLength?: number;
 }) {
   return (
     <div>
@@ -611,6 +611,7 @@ function Campo({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        maxLength={maxLength}
         className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30"
       />
     </div>

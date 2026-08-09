@@ -6,10 +6,26 @@ const textoSeguro = (min: number, msg: string) =>
     .transform((v) => v.replace(/<[^>]*>/g, "").replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim())
     .pipe(z.string().min(min, msg));
 
+// Un solo nombre/apellido: solo letras (con tildes y ñ), sin espacios, sin
+// números ni símbolos, máximo 20 caracteres. Evita que alguien meta varios
+// nombres seguidos o texto basura en un campo pensado para una sola palabra.
+const nombrePropio = (msg: string) =>
+  z.string()
+    .transform((v) => v.trim())
+    .pipe(
+      z.string()
+        .min(2, msg)
+        .max(20, "Máximo 20 caracteres")
+        .regex(/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+$/, "Solo letras, sin espacios ni caracteres especiales")
+    );
+
+export const nombreSchema = nombrePropio("El nombre debe tener al menos 2 caracteres");
+export const apellidoSchema = nombrePropio("El apellido debe tener al menos 2 caracteres");
+
 export const registroSchema = z
   .object({
-    nombre:   textoSeguro(2, "El nombre debe tener al menos 2 caracteres"),
-    apellido: textoSeguro(2, "El apellido debe tener al menos 2 caracteres"),
+    nombre:   nombreSchema,
+    apellido: apellidoSchema,
     documento: z.string().min(6, "El documento debe tener al menos 6 caracteres"),
     correo: z.string().email("Correo electrónico inválido"),
     celular: z

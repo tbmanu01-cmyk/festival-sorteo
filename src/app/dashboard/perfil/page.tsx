@@ -48,10 +48,10 @@ const IcoOjo = ({ abierto }: { abierto: boolean }) =>
 
 // ── Campo de texto ─────────────────────────────────────────────────────────────
 function Campo({
-  label, value, onChange, type = "text", placeholder = "", mono = false,
+  label, value, onChange, type = "text", placeholder = "", mono = false, maxLength,
 }: {
   label: string; value: string; onChange: (v: string) => void;
-  type?: string; placeholder?: string; mono?: boolean;
+  type?: string; placeholder?: string; mono?: boolean; maxLength?: number;
 }) {
   return (
     <div>
@@ -61,6 +61,7 @@ function Campo({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        maxLength={maxLength}
         className={`w-full px-4 py-3 bg-[#f7f8fc] border border-[#e3e7f2] rounded-2xl text-sm text-[#0e1424] focus:outline-none focus:ring-2 focus:ring-[#102463]/20 focus:border-[#102463] transition-all ${mono ? "font-mono" : "font-medium"}`}
       />
     </div>
@@ -356,8 +357,8 @@ export default function PaginaPerfil() {
             onToggle={() => toggleSeccion("personal")}
           >
             <div className="grid grid-cols-2 gap-3">
-              <Campo label="Nombre" value={nombre} onChange={setNombre} />
-              <Campo label="Apellido" value={apellido} onChange={setApellido} />
+              <Campo label="Nombre" value={nombre} onChange={setNombre} maxLength={20} />
+              <Campo label="Apellido" value={apellido} onChange={setApellido} maxLength={20} />
             </div>
             <Campo label="Correo electrónico" value={correo} onChange={setCorreo} type="email" />
             <Campo label="Celular" value={celular} onChange={setCelular} type="tel" placeholder="300 000 0000" />

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { nombreSchema, apellidoSchema } from "@/lib/validaciones";
 
 async function obtenerSesion() {
   return getServerSession(authOptions);
@@ -44,6 +45,18 @@ export async function PATCH(req: NextRequest) {
       const dup = await prisma.user.findFirst({ where: { correo: body.correo, id: { not: userId } } });
       if (dup) return NextResponse.json({ mensaje: "Ese correo ya está registrado." }, { status: 409 });
     }
+  }
+
+  // Validar nombre/apellido si vienen en la petición
+  if (body.nombre !== undefined) {
+    const r = nombreSchema.safeParse(body.nombre);
+    if (!r.success) return NextResponse.json({ mensaje: r.error.issues[0].message }, { status: 400 });
+    body.nombre = r.data;
+  }
+  if (body.apellido !== undefined) {
+    const r = apellidoSchema.safeParse(body.apellido);
+    if (!r.success) return NextResponse.json({ mensaje: r.error.issues[0].message }, { status: 400 });
+    body.apellido = r.data;
   }
 
   // Campos que el usuario puede editar por sí mismo
