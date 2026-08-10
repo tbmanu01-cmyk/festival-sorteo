@@ -30,6 +30,10 @@ function PaginaPagarInner() {
   const tier = searchParams.get("tier") ?? "";
 
   const [tipoMembresia, setTipoMembresia] = useState<TipoMembresiaAPI | null>(null);
+  const [saldo, setSaldo] = useState<number | null>(null);
+  const [confirmandoSaldo, setConfirmandoSaldo] = useState(false);
+  const [pagandoSaldo, setPagandoSaldo] = useState(false);
+  const [resultadoSaldo, setResultadoSaldo] = useState<{ ok: boolean; mensaje: string } | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -51,10 +55,40 @@ function PaginaPagarInner() {
       .catch(() => undefined);
   }, [tier]);
 
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/mis-cajas")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { saldoPuntos?: number } | null) => {
+        if (d && typeof d.saldoPuntos === "number") setSaldo(d.saldoPuntos);
+      })
+      .catch(() => undefined);
+  }, [status]);
+
   if (status === "loading" || !tipoMembresia) return null;
   if (!numero || !/^\d{4}$/.test(numero) || !tier) return null;
 
   const monto = tipoMembresia.precio;
+  const alcanzaConSaldo = saldo !== null && saldo >= monto;
+
+  async function pagarConSaldo() {
+    setPagandoSaldo(true);
+    setResultadoSaldo(null);
+    try {
+      const res = await fetch(`/api/cajas/${tier}/${numero}/comprar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const json = await res.json() as { mensaje: string };
+      setResultadoSaldo({ ok: res.ok, mensaje: json.mensaje });
+    } catch {
+      setResultadoSaldo({ ok: false, mensaje: "Error de conexión. Intenta nuevamente." });
+    } finally {
+      setPagandoSaldo(false);
+      setConfirmandoSaldo(false);
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -74,14 +108,75 @@ function PaginaPagarInner() {
             </p>
           </div>
 
-          {/* Pago con Bold — única acción */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-            <h2 className="font-extrabold text-gray-900 text-lg mb-1">Pago con tarjeta, PSE o Nequi</h2>
-            <p className="text-gray-500 text-sm mb-5">
-              Pago procesado por Bold. Tu membresía se activa automáticamente al confirmarse.
-            </p>
-            <BotonPagoBold numeroCaja={numero} tier={tier} />
-          </div>
+          {resultadoSaldo?.ok ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">¡Membresía comprada!</h3>
+              <p className="text-gray-600 text-sm mb-5">{resultadoSaldo.mensaje}</p>
+              <Link
+                href="/dashboard"
+                className="inline-block bg-[#102463] hover:bg-[#173592] text-white font-bold py-3 px-6 rounded-full transition-all"
+              >
+                Ir a mi cuenta
+              </Link>
+            </div>
+          ) : (
+            <>
+              {/* Pagar con saldo disponible — solo si alcanza */}
+              {alcanzaConSaldo && (
+                <div className="bg-white rounded-2xl shadow-sm border border-green-200 p-6 mb-4">
+                  <h2 className="font-extrabold text-gray-900 text-lg mb-1">Pagar con tu saldo</h2>
+                  <p className="text-gray-500 text-sm mb-1">
+                    Saldo disponible: <span className="font-bold text-green-600">${saldo!.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</span>
+                  </p>
+                  <p className="text-gray-500 text-sm mb-5">Se descuenta al instante, sin pasarela externa.</p>
+                  {resultadoSaldo && !resultadoSaldo.ok && (
+                    <p className="text-red-600 text-xs font-semibold mb-3">⚠ {resultadoSaldo.mensaje}</p>
+                  )}
+                  {confirmandoSaldo ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setConfirmandoSaldo(false)}
+                        disabled={pagandoSaldo}
+                        className="flex-1 border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={pagarConSaldo}
+                        disabled={pagandoSaldo}
+                        className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all text-sm"
+                      >
+                        {pagandoSaldo ? "Procesando..." : "Sí, pagar con saldo"}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmandoSaldo(true)}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-full transition-all shadow-md text-sm"
+                    >
+                      Pagar ${monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP con saldo
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Pago con Bold */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                <h2 className="font-extrabold text-gray-900 text-lg mb-1">
+                  {alcanzaConSaldo ? "O paga con tarjeta, PSE o Nequi" : "Pago con tarjeta, PSE o Nequi"}
+                </h2>
+                <p className="text-gray-500 text-sm mb-5">
+                  Pago procesado por Bold. Tu membresía se activa automáticamente al confirmarse.
+                </p>
+                <BotonPagoBold numeroCaja={numero} tier={tier} />
+              </div>
+            </>
+          )}
 
           <p className="text-center text-gray-400 text-xs pb-4">
             ¿Tienes algún problema? Escríbenos directamente.

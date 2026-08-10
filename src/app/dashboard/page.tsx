@@ -254,12 +254,18 @@ function TarjetaReserva({
             </div>
           )}
 
-          {alcanzaSaldo ? (
-            <div className="flex gap-2">
+          <div className="space-y-2">
+            {!alcanzaSaldo && (
+              <p className="text-xs text-red-600 font-medium text-center">
+                Tu saldo no alcanza (te faltan ${(total - saldo).toLocaleString("es-CO", { maximumFractionDigits: 0 })}).
+              </p>
+            )}
+
+            {alcanzaSaldo && (
               <button
                 onClick={() => setConfirmando(true)}
                 disabled={comprando}
-                className="flex-1 bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-bold py-3 rounded-xl transition-colors shadow-md text-sm"
+                className="w-full bg-[#F5A623] hover:bg-yellow-400 disabled:bg-gray-200 disabled:text-gray-400 text-[#1B4F8A] font-bold py-3 rounded-xl transition-colors shadow-md text-sm"
               >
                 {comprando
                   ? "Procesando..."
@@ -267,6 +273,19 @@ function TarjetaReserva({
                   ? "✅ Completar compra — ¡Gratis!"
                   : `✅ Pagar con saldo — $${total.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
               </button>
+            )}
+
+            <div className="flex gap-2">
+              <a
+                href={`/membresias/pagar?tier=${tier}&numero=${caja.numero}`}
+                className={`flex-1 text-center font-bold py-3 rounded-xl transition-colors text-sm ${
+                  alcanzaSaldo
+                    ? "border-2 border-[#102463] text-[#102463] hover:bg-[#102463]/5"
+                    : "bg-[#102463] hover:bg-[#173592] text-white shadow-md"
+                }`}
+              >
+                💳 Pagar con tarjeta, PSE o Nequi
+              </a>
               <button
                 onClick={() => setConfirmandoLiberar(true)}
                 disabled={comprando}
@@ -276,29 +295,7 @@ function TarjetaReserva({
                 ✕ Liberar
               </button>
             </div>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-xs text-red-600 font-medium text-center">
-                Tu saldo no alcanza (te faltan ${(total - saldo).toLocaleString("es-CO", { maximumFractionDigits: 0 })}).
-              </p>
-              <div className="flex gap-2">
-                <a
-                  href={`/membresias/pagar?tier=${tier}&numero=${caja.numero}`}
-                  className="flex-1 text-center bg-[#102463] hover:bg-[#173592] text-white font-bold py-3 rounded-xl transition-colors shadow-md text-sm"
-                >
-                  💳 Pagar con tarjeta, PSE o Nequi
-                </a>
-                <button
-                  onClick={() => setConfirmandoLiberar(true)}
-                  disabled={comprando}
-                  title="Dejar de reservar esta membresía"
-                  className="flex-shrink-0 border-2 border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 font-bold py-3 px-3 rounded-xl transition-colors text-sm"
-                >
-                  ✕ Liberar
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
         </>
       )}
 
