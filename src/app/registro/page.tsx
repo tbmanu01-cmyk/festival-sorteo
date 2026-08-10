@@ -129,6 +129,14 @@ function FormularioRegistro() {
 
   const departamentoSeleccionado = watch("departamento");
 
+  // Máximo seleccionable en el date picker: hoy - 18 años (evita que el
+  // usuario intente elegir una fecha que ya sabemos que va a rechazar)
+  const fechaMaximaNacimiento = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 18);
+    return d.toISOString().split("T")[0];
+  })();
+
   useEffect(() => {
     if (departamentoSeleccionado) {
       setCiudades(ciudadesPorDepartamento[departamentoSeleccionado] ?? []);
@@ -264,6 +272,13 @@ function FormularioRegistro() {
                   error={errors.correo?.message}
                   {...register("correo")}
                 />
+                <CampoTexto
+                  label="Fecha de nacimiento *"
+                  type="date"
+                  max={fechaMaximaNacimiento}
+                  error={errors.fechaNacimiento?.message}
+                  {...register("fechaNacimiento")}
+                />
               </div>
             </section>
 
@@ -385,6 +400,23 @@ function FormularioRegistro() {
               </label>
               {errors.terminos && (
                 <p className="text-red-500 text-xs mt-1">{errors.terminos.message}</p>
+              )}
+            </div>
+
+            {/* Mayoría de edad */}
+            <div>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#102463] focus:ring-[#102463]"
+                  {...register("mayorEdad")}
+                />
+                <span className="text-sm text-gray-600">
+                  Confirmo que soy mayor de 18 años.
+                </span>
+              </label>
+              {errors.mayorEdad && (
+                <p className="text-red-500 text-xs mt-1">{errors.mayorEdad.message}</p>
               )}
             </div>
 

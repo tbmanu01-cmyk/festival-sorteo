@@ -404,8 +404,19 @@ function MembresiasInner() {
   } | null>(null);
   const [buscandoAleatoria, setBuscandoAleatoria] = useState(false);
   const [esSorpresa, setEsSorpresa] = useState(false);
+  const [confirmado, setConfirmado] = useState<boolean | null>(null);
 
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!session) return;
+    fetch("/api/mis-cajas")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { confirmado?: boolean } | null) => {
+        if (d && typeof d.confirmado === "boolean") setConfirmado(d.confirmado);
+      })
+      .catch(() => undefined);
+  }, [session]);
 
   useEffect(() => {
     fetch("/api/config")
@@ -572,6 +583,15 @@ function MembresiasInner() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
+
+      {session && confirmado === false && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 text-center">
+          <p className="text-amber-800 text-sm font-semibold">
+            ⚠ Debes verificar tu correo electrónico antes de reservar o comprar una membresía.{" "}
+            <Link href="/dashboard" className="underline hover:text-amber-900">Verificar ahora</Link>
+          </p>
+        </div>
+      )}
 
       <main className="flex-1 bg-gray-50">
         <section

@@ -27,6 +27,14 @@ export async function POST(
     const { calcularFreezeSeleccion } = await import("@/lib/freezeSeleccion");
     const userId = (session.user as unknown as { id: string }).id;
 
+    const usuarioCheck = await prisma.user.findUnique({ where: { id: userId }, select: { confirmado: true, rol: true } });
+    if (!usuarioCheck?.confirmado && usuarioCheck?.rol !== "ADMIN") {
+      return NextResponse.json(
+        { mensaje: "Debes verificar tu correo electrónico antes de reservar una membresía.", codigo: "EMAIL_NO_VERIFICADO" },
+        { status: 403 }
+      );
+    }
+
     const tipoMembresia = await prisma.tipoMembresia.findUnique({ where: { slug: tier } });
     if (!tipoMembresia) {
       return NextResponse.json({ mensaje: "Tipo de membresía no encontrado." }, { status: 404 });

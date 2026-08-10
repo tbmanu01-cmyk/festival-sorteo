@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
+import { useChatWidget } from "@/lib/chatContext";
 
 interface Msg {
   id: string;
@@ -37,14 +38,13 @@ const ESTADO_LABEL: Record<ConversacionInfo["estado"], string> = {
 export default function ChatWidget() {
   const { status } = useSession();
   const pathname = usePathname();
+  const { abierto, setAbierto, noLeidos, setNoLeidos } = useChatWidget();
 
-  const [abierto, setAbierto] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [conversacion, setConversacion] = useState<ConversacionInfo | null>(null);
   const [mensajes, setMensajes] = useState<Msg[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [sugerencias, setSugerencias] = useState<FaqOpt[]>([]);
-  const [noLeidos, setNoLeidos] = useState(0);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const listaRef = useRef<HTMLDivElement>(null);
@@ -91,6 +91,13 @@ export default function ChatWidget() {
     };
   }, [status, abierto, oculto]);
 
+  // Cargar la conversación al abrir el panel, sin importar qué botón lo disparó
+  // (burbuja de escritorio o el ícono dentro de la barra flotante en mobile)
+  useEffect(() => {
+    if (abierto) cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abierto]);
+
   // Mientras el panel está abierto y hay un asesor de por medio, refresca cada 5s
   useEffect(() => {
     if (!abierto || !conversacion) return;
@@ -101,7 +108,6 @@ export default function ChatWidget() {
 
   function abrir() {
     setAbierto(true);
-    cargar();
   }
 
   async function enviar(textoMsg: string, faqItemId?: string) {
@@ -154,10 +160,10 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Burbuja flotante */}
+      {/* Burbuja flotante — solo desktop; en mobile el trigger vive en NavMobile */}
       <button
         onClick={() => (abierto ? setAbierto(false) : abrir())}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform hover:scale-105"
+        className="hidden md:flex fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-2xl items-center justify-center transition-transform hover:scale-105"
         style={{ background: "linear-gradient(135deg, #102463, #173592)" }}
         aria-label="Chat de soporte"
       >

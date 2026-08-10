@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -10,6 +11,7 @@ interface BeforeInstallPromptEvent extends Event {
 type Nav = Navigator & { standalone?: boolean };
 
 export default function PwaInstallBanner() {
+  const pathname = usePathname();
   const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIos, setIsIos] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -60,22 +62,23 @@ export default function PwaInstallBanner() {
     localStorage.setItem("pwa-dismissed", "1");
   };
 
-  if (!visible) return null;
+  if (!visible || pathname?.startsWith("/admin")) return null;
 
   return (
     <>
-      {/* ── Sección inline en home (mobile) ─────────────── */}
-      <section className="md:hidden" style={{ background: "var(--c10-ink-50)", padding: "0 16px 24px" }}>
+      {/* ── Banner flotante (mobile), arriba de la barra de accesos directos ─── */}
+      <div className="md:hidden fixed left-4 right-4 z-40" style={{ bottom: 92 }}>
         <div
           style={{
             background: "linear-gradient(135deg, #102463 0%, #173592 100%)",
             borderRadius: 20,
-            padding: "20px 20px",
+            padding: "16px 18px",
             display: "flex",
             alignItems: "center",
             gap: 14,
             position: "relative",
             overflow: "hidden",
+            boxShadow: "0 12px 32px rgba(16,36,99,0.35), 0 4px 12px rgba(0,0,0,0.15)",
           }}
         >
           {/* Glow */}
@@ -162,7 +165,7 @@ export default function PwaInstallBanner() {
             </button>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* ── Banner sticky (desktop + tablet) ────────────── */}
       <div

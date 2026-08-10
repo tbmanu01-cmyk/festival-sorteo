@@ -31,6 +31,7 @@ function PaginaPagarInner() {
 
   const [tipoMembresia, setTipoMembresia] = useState<TipoMembresiaAPI | null>(null);
   const [saldo, setSaldo] = useState<number | null>(null);
+  const [confirmado, setConfirmado] = useState<boolean | null>(null);
   const [confirmandoSaldo, setConfirmandoSaldo] = useState(false);
   const [pagandoSaldo, setPagandoSaldo] = useState(false);
   const [resultadoSaldo, setResultadoSaldo] = useState<{ ok: boolean; mensaje: string } | null>(null);
@@ -59,8 +60,9 @@ function PaginaPagarInner() {
     if (status !== "authenticated") return;
     fetch("/api/mis-cajas")
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { saldoPuntos?: number } | null) => {
+      .then((d: { saldoPuntos?: number; confirmado?: boolean } | null) => {
         if (d && typeof d.saldoPuntos === "number") setSaldo(d.saldoPuntos);
+        if (d && typeof d.confirmado === "boolean") setConfirmado(d.confirmado);
       })
       .catch(() => undefined);
   }, [status]);
@@ -98,8 +100,15 @@ function PaginaPagarInner() {
 
           {/* Encabezado */}
           <div className="bg-gradient-to-r from-[#102463] to-[#173592] rounded-2xl p-6 text-white mb-6">
-            <Link href="/membresias" className="text-blue-300 text-sm font-medium flex items-center gap-1 mb-3 hover:text-white transition-colors">
-              ← Volver a membresías
+            <Link
+              href="/membresias"
+              className="inline-flex items-center gap-1.5 bg-[#ffbd1f] hover:bg-yellow-300 text-[#102463] text-xs font-bold px-3 py-1.5 rounded-full mb-3 transition-colors shadow-sm"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m12 19-7-7 7-7" />
+                <path d="M19 12H5" />
+              </svg>
+              Volver a membresías
             </Link>
             <p className="text-blue-200 text-sm mb-1">{tipoMembresia.nombre} seleccionada</p>
             <div className="text-6xl font-extrabold tracking-widest text-[#ffbd1f]">#{numero}</div>
@@ -108,7 +117,19 @@ function PaginaPagarInner() {
             </p>
           </div>
 
-          {resultadoSaldo?.ok ? (
+          {confirmado === false ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 mb-6 text-center">
+              <p className="text-amber-800 font-semibold text-sm mb-3">
+                ⚠ Debes verificar tu correo electrónico antes de pagar una membresía.
+              </p>
+              <Link
+                href="/dashboard"
+                className="inline-block bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-5 rounded-full transition-colors text-sm"
+              >
+                Verificar mi correo
+              </Link>
+            </div>
+          ) : resultadoSaldo?.ok ? (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

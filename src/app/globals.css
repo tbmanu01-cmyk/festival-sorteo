@@ -24,6 +24,17 @@
   scroll-behavior: smooth;
 }
 
+/*
+ * Textos grises más oscuros/legibles en toda la app (pedido del cliente).
+ * Solo afecta el color de TEXTO (no fondos ni bordes gray-*), y no toca los
+ * textos que ya usan otras paletas sobre fondos oscuros (ej. text-blue-200,
+ * text-white), así que el contraste sobre el azul de marca no se ve afectado.
+ * Al estar fuera de cualquier @layer, esta regla gana por cascada sobre las
+ * utilidades de Tailwind (que sí van dentro de @layer) sin necesitar !important.
+ */
+.text-gray-400 { color: #4b5563; }
+.text-gray-500 { color: #374151; }
+
 body {
   font-family: var(--font-nunito), "Nunito", Arial, sans-serif;
 }

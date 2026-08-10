@@ -1,10 +1,11 @@
 export const departamentos = [
+  "Bogotá D.C.",
   "Amazonas", "Antioquia", "Arauca", "Atlántico", "Bolívar", "Boyacá",
   "Caldas", "Caquetá", "Casanare", "Cauca", "Cesar", "Chocó", "Córdoba",
   "Cundinamarca", "Guainía", "Guaviare", "Huila", "La Guajira", "Magdalena",
   "Meta", "Nariño", "Norte de Santander", "Putumayo", "Quindío", "Risaralda",
   "San Andrés y Providencia", "Santander", "Sucre", "Tolima",
-  "Valle del Cauca", "Vaupés", "Vichada", "Bogotá D.C.",
+  "Valle del Cauca", "Vaupés", "Vichada",
 ];
 
 export const ciudadesPorDepartamento: Record<string, string[]> = {
@@ -63,4 +64,18 @@ export const bancos = [
   "Banco Pichincha",
   "Itaú Colombia",
   "Scotiabank Colpatria",
+  "Banco Santander Colombia",
+  "Banco Union",
+  "Bancoomeva",
+  "Confiar Cooperativa Financiera",
+  "Cotrafa",
+  "Coink",
+  "Movii",
+  "Lulo Bank",
+  "RappiPay",
+  "Powwi",
+  "Ualá",
+  "Coltefinanciera",
+  "Iris",
+  "Cooperativa Financiera de Antioquia (CFA)",
 ];

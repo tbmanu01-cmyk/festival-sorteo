@@ -81,6 +81,7 @@ model User {
   celular         String
   ciudad          String
   departamento    String
+  fechaNacimiento DateTime?
   cuentaBancaria  String?
   banco           String?
   tipoCuenta      String?

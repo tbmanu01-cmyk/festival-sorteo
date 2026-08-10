@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useChatWidget } from "@/lib/chatContext";
 
 const ITEMS = [
   {
@@ -49,9 +50,16 @@ const ITEMS = [
   },
 ];
 
+const CHAT_ICON = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+  </svg>
+);
+
 export default function NavMobile() {
   const { status } = useSession();
   const pathname = usePathname();
+  const { abierto, setAbierto, noLeidos } = useChatWidget();
 
   if (status !== "authenticated") return null;
   if (pathname.startsWith("/admin")) return null;
@@ -85,6 +93,23 @@ export default function NavMobile() {
             </Link>
           );
         })}
+        <button
+          onClick={() => setAbierto(!abierto)}
+          aria-label="Soporte"
+          className={`relative flex items-center justify-center w-16 h-16 rounded-full transition-all duration-200 ${
+            abierto
+              ? "text-[#102463] scale-105"
+              : "text-white/70 hover:text-white hover:bg-white/10"
+          }`}
+          style={abierto ? { background: "#ffbd1f", boxShadow: "0 4px 12px rgba(255,189,31,0.45)" } : {}}
+        >
+          {CHAT_ICON}
+          {!abierto && noLeidos > 0 && (
+            <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+              {noLeidos > 9 ? "9+" : noLeidos}
+            </span>
+          )}
+        </button>
       </div>
     </nav>
   );

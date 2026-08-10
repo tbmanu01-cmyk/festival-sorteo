@@ -6,6 +6,7 @@ import SwRegister from "@/components/SwRegister";
 import NavMobile from "@/components/NavMobile";
 import AdminNavMobile from "@/components/AdminNavMobile";
 import ChatWidget from "@/components/ChatWidget";
+import PwaInstallBanner from "@/components/PwaInstallBanner";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -65,6 +66,7 @@ export default function RootLayout({
           <NavMobile />
           <AdminNavMobile />
           <ChatWidget />
+          <PwaInstallBanner />
         </Providers>
         <SwRegister />
       </body>

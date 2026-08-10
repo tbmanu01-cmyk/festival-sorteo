@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     const {
-      nombre, apellido, documento, correo, celular,
+      nombre, apellido, documento, correo, celular, fechaNacimiento,
       ciudad, departamento, banco, tipoCuenta, cuentaBancaria, password,
     } = resultado.data;
 
@@ -88,11 +88,11 @@ export async function POST(req: NextRequest) {
     const nuevoId = crypto.randomUUID();
     await prisma.$executeRaw`
       INSERT INTO users (
-        id, nombre, apellido, documento, correo, celular,
+        id, nombre, apellido, documento, correo, celular, "fechaNacimiento",
         ciudad, departamento, banco, "tipoCuenta", "cuentaBancaria",
         password, rol, "saldoPuntos", activo, confirmado, "fechaRegistro", "codigoRef", avatar
       ) VALUES (
-        ${nuevoId}, ${nombre}, ${apellido}, ${documento}, ${correo}, ${celular},
+        ${nuevoId}, ${nombre}, ${apellido}, ${documento}, ${correo}, ${celular}, ${new Date(fechaNacimiento)},
         ${ciudad}, ${departamento}, ${banco}, ${tipoCuenta}, ${cuentaBancaria},
         ${passwordHash}, 'USER'::"Rol", 0, true, false, NOW(), ${codigoRef}, ${avatarPorDefecto}
       )

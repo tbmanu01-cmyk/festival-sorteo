@@ -22,6 +22,19 @@ const nombrePropio = (msg: string) =>
 export const nombreSchema = nombrePropio("El nombre debe tener al menos 2 caracteres");
 export const apellidoSchema = nombrePropio("El apellido debe tener al menos 2 caracteres");
 
+const EDAD_MINIMA = 18;
+
+export function calcularEdad(fechaNacimiento: string | Date): number {
+  const nacimiento = typeof fechaNacimiento === "string" ? new Date(fechaNacimiento) : fechaNacimiento;
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+  const aunNoCumple =
+    hoy.getMonth() < nacimiento.getMonth() ||
+    (hoy.getMonth() === nacimiento.getMonth() && hoy.getDate() < nacimiento.getDate());
+  if (aunNoCumple) edad--;
+  return edad;
+}
+
 export const registroSchema = z
   .object({
     nombre:   nombreSchema,
@@ -31,6 +44,11 @@ export const registroSchema = z
     celular: z
       .string()
       .regex(/^3\d{9}$/, "El celular debe ser un número colombiano válido (10 dígitos, empieza por 3)"),
+    fechaNacimiento: z
+      .string()
+      .min(1, "Ingresa tu fecha de nacimiento")
+      .refine((v) => !Number.isNaN(new Date(v).getTime()), "Fecha de nacimiento inválida")
+      .refine((v) => calcularEdad(v) >= EDAD_MINIMA, `Debes ser mayor de ${EDAD_MINIMA} años para registrarte`),
     ciudad: z.string().min(2, "Selecciona una ciudad"),
     departamento: z.string().min(2, "Selecciona un departamento"),
     banco: z.string().min(2, "Selecciona un banco"),
@@ -43,6 +61,7 @@ export const registroSchema = z
       .regex(/[0-9]/, "Debe contener al menos un número"),
     confirmarPassword: z.string(),
     terminos: z.literal(true, "Debes aceptar los términos y condiciones"),
+    mayorEdad: z.literal(true, "Debes confirmar que eres mayor de edad"),
   })
   .refine((data) => data.password === data.confirmarPassword, {
     message: "Las contraseñas no coinciden",
