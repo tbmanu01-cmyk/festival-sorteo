@@ -738,8 +738,8 @@ function MembresiasInner() {
             {!modoPaquete ? (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div>
-                  <p className="font-extrabold text-green-800 text-base">🎁 Paga 5 y llévate una 6ª de regalo</p>
-                  <p className="text-green-700/80 text-sm">Arma un paquete de 5 membresías en un solo pago y te regalamos una gift card con el valor de una membresía más.</p>
+                  <p className="font-extrabold text-green-800 text-base">🎁 Paga 5 y recibe una gift card de regalo</p>
+                  <p className="text-green-700/80 text-sm">Arma un paquete de 5 membresías en un solo pago y te regalamos una gift card para una membresía adicional.</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <button

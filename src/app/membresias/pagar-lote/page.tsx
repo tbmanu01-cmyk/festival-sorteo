@@ -111,7 +111,7 @@ function PaginaPagarLoteInner() {
               </svg>
               Volver a membresías
             </Link>
-            <p className="text-blue-200 text-sm mb-1">🎁 Paquete de 5 {tipoMembresia.nombre} — lleva una 6ª de regalo</p>
+            <p className="text-blue-200 text-sm mb-1">🎁 Paquete de 5 {tipoMembresia.nombre} — recibe una gift card de regalo</p>
             <div className="flex flex-wrap gap-2 my-3">
               {numeros.map((n) => (
                 <span key={n} className="bg-white/10 border border-white/20 rounded-full px-3 py-1 text-lg font-extrabold text-[#ffbd1f]">#{n}</span>
