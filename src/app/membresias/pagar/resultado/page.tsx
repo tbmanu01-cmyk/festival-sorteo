@@ -21,6 +21,7 @@ function ResultadoInner() {
   const orderId = searchParams.get("bold-order-id") ?? "";
 
   const [numero, setNumero] = useState("");
+  const [numeros, setNumeros] = useState<string[]>([]);
   const [tier, setTier] = useState("");
   const [estado, setEstado] = useState<"PENDIENTE" | "APROBADO" | "RECHAZADO" | "ERROR">(
     orderId ? "PENDIENTE" : "ERROR"
@@ -33,8 +34,9 @@ function ResultadoInner() {
     const t = setTimeout(async () => {
       try {
         const res = await fetch(`/api/pagos/bold/estado?orderId=${encodeURIComponent(orderId)}`);
-        const json = await res.json() as { estado?: "PENDIENTE" | "APROBADO" | "RECHAZADO"; numeroCaja?: string; tier?: string };
+        const json = await res.json() as { estado?: "PENDIENTE" | "APROBADO" | "RECHAZADO"; numeroCaja?: string; numerosCaja?: string[]; tier?: string };
         if (json.numeroCaja) setNumero(json.numeroCaja);
+        if (json.numerosCaja && json.numerosCaja.length > 0) setNumeros(json.numerosCaja);
         if (json.tier) setTier(json.tier);
         if (res.ok && json.estado && json.estado !== "PENDIENTE") {
           setEstado(json.estado);
@@ -73,9 +75,21 @@ function ResultadoInner() {
                 </svg>
               </div>
               <h2 className="text-2xl font-extrabold text-gray-900 mb-2">¡Pago aprobado!</h2>
-              <p className="text-gray-500 mb-6 text-sm">
-                Tu membresía <strong className="text-[#102463]">#{numero}</strong> ya está activa. ¡Mucha suerte!
-              </p>
+              {numeros.length > 0 ? (
+                <>
+                  <p className="text-gray-500 mb-2 text-sm">Tus {numeros.length} membresías ya están activas. ¡Mucha suerte!</p>
+                  <div className="flex flex-wrap gap-2 justify-center mb-6">
+                    {numeros.map((n) => (
+                      <span key={n} className="bg-[#102463]/5 text-[#102463] font-bold text-sm px-3 py-1 rounded-full">#{n}</span>
+                    ))}
+                  </div>
+                  <p className="text-green-600 text-xs font-semibold mb-4">🎁 Si ya sumas 5 membresías, revisa tu billetera — puede que hayas ganado una gift card.</p>
+                </>
+              ) : (
+                <p className="text-gray-500 mb-6 text-sm">
+                  Tu membresía <strong className="text-[#102463]">#{numero}</strong> ya está activa. ¡Mucha suerte!
+                </p>
+              )}
               <Link href="/dashboard" className="block bg-[#102463] hover:bg-[#173592] text-white font-bold py-3.5 rounded-full text-center transition-all">
                 Ir a mi cuenta
               </Link>
@@ -90,9 +104,14 @@ function ResultadoInner() {
               </div>
               <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Pago no aprobado</h2>
               <p className="text-gray-500 mb-6 text-sm">
-                No pudimos confirmar tu pago para la membresía <strong>#{numero}</strong>. Puedes intentar de nuevo o pagar por transferencia.
+                {numeros.length > 0
+                  ? "No pudimos confirmar el pago de tu paquete de membresías. Puedes volver a intentarlo."
+                  : <>No pudimos confirmar tu pago para la membresía <strong>#{numero}</strong>. Puedes intentar de nuevo.</>}
               </p>
-              <Link href={`/membresias/pagar?tier=${tier}&numero=${numero}`} className="block bg-[#102463] hover:bg-[#173592] text-white font-bold py-3.5 rounded-full text-center transition-all">
+              <Link
+                href={numeros.length > 0 ? `/membresias/pagar-lote?tier=${tier}&numeros=${numeros.join(",")}` : `/membresias/pagar?tier=${tier}&numero=${numero}`}
+                className="block bg-[#102463] hover:bg-[#173592] text-white font-bold py-3.5 rounded-full text-center transition-all"
+              >
                 Intentar de nuevo
               </Link>
             </>

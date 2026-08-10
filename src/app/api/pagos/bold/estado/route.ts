@@ -18,5 +18,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ mensaje: "No encontrado." }, { status: 404 });
   }
 
-  return NextResponse.json({ estado: pago.estado, numeroCaja: pago.numeroCaja, tier: pago.tipoMembresia?.slug ?? null });
+  return NextResponse.json({
+    estado: pago.estado,
+    numeroCaja: pago.numeroCaja,
+    numerosCaja: pago.numerosCaja,
+    tier: pago.tipoMembresia?.slug ?? null,
+  });
 }

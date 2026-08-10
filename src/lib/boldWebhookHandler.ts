@@ -56,16 +56,26 @@ export async function manejarWebhookBold(req: NextRequest) {
       return NextResponse.json({ mensaje: "Orden sin tipo de membresía." }, { status: 200 });
     }
 
-    const { confirmarCompraMembresia } = await import("@/lib/confirmarCompra");
+    const { confirmarCompraMembresia, confirmarCompraMembresiaLote } = await import("@/lib/confirmarCompra");
     try {
-      await confirmarCompraMembresia({
-        usuarioId: pago.usuarioId,
-        numeroCaja: pago.numeroCaja,
-        tipoMembresiaId: pago.tipoMembresiaId,
-        monto: pago.monto,
-        descripcionTransaccion: `Membresía #${pago.numeroCaja} — pago con Bold (${evento.data.payment_id})`,
-        referenciaTransaccion: orderId,
-      });
+      if (pago.numerosCaja.length > 0) {
+        await confirmarCompraMembresiaLote({
+          usuarioId: pago.usuarioId,
+          numeros: pago.numerosCaja,
+          tipoMembresiaId: pago.tipoMembresiaId,
+          montoPorUnidad: pago.monto / pago.numerosCaja.length,
+          referenciaTransaccion: orderId,
+        });
+      } else {
+        await confirmarCompraMembresia({
+          usuarioId: pago.usuarioId,
+          numeroCaja: pago.numeroCaja,
+          tipoMembresiaId: pago.tipoMembresiaId,
+          monto: pago.monto,
+          descripcionTransaccion: `Membresía #${pago.numeroCaja} — pago con Bold (${evento.data.payment_id})`,
+          referenciaTransaccion: orderId,
+        });
+      }
       await prisma.pagoBold.update({
         where: { orderId },
         data: { estado: "APROBADO", paymentId: evento.data.payment_id },

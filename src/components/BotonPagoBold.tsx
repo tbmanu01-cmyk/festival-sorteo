@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 
 interface Props {
-  numeroCaja: string;
   tier: string;
+  numeroCaja?: string;
+  numeros?: string[];
 }
 
-export default function BotonPagoBold({ numeroCaja, tier }: Props) {
+export default function BotonPagoBold({ numeroCaja, numeros, tier }: Props) {
+  const esLote = Array.isArray(numeros) && numeros.length > 0;
   const contenedorRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -19,10 +21,10 @@ export default function BotonPagoBold({ numeroCaja, tier }: Props) {
       setCargando(true);
       setError(null);
       try {
-        const res = await fetch("/api/pagos/bold/firma", {
+        const res = await fetch(esLote ? "/api/pagos/bold/firma-lote" : "/api/pagos/bold/firma", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ numeroCaja, tier }),
+          body: JSON.stringify(esLote ? { numeros, tier } : { numeroCaja, tier }),
         });
         const json = await res.json() as {
           mensaje?: string;
@@ -54,7 +56,10 @@ export default function BotonPagoBold({ numeroCaja, tier }: Props) {
           script.setAttribute("data-api-key", json.apiKey);
           script.setAttribute("data-integrity-signature", json.signature!);
           script.setAttribute("data-redirection-url", redirectionUrl);
-          script.setAttribute("data-description", `Membresía #${numeroCaja} — Tienda 10K`);
+          script.setAttribute(
+            "data-description",
+            esLote ? `Paquete de ${numeros!.length} membresías — Tienda 10K` : `Membresía #${numeroCaja} — Tienda 10K`
+          );
           contenedorRef.current.appendChild(script);
         }
         setCargando(false);
@@ -70,7 +75,8 @@ export default function BotonPagoBold({ numeroCaja, tier }: Props) {
     return () => {
       cancelado = true;
     };
-  }, [numeroCaja, tier]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [numeroCaja, tier, esLote, numeros?.join(",")]);
 
   return (
     <div className="flex flex-col items-center gap-3 py-2">

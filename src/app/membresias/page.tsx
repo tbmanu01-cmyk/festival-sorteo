@@ -252,10 +252,12 @@ function CeldaCaja({
   caja,
   onClick,
   precio,
+  seleccionada = false,
 }: {
   caja: Caja;
   onClick: (caja: Caja) => void;
   precio: number;
+  seleccionada?: boolean;
 }) {
   const disponible = caja.estado === "DISPONIBLE";
   const reservada = caja.estado === "RESERVADA";
@@ -279,7 +281,9 @@ function CeldaCaja({
       className={`
         aspect-square flex flex-col items-center justify-center gap-1 rounded-[20px] border relative
         transition-all duration-150
-        ${disponible
+        ${seleccionada
+          ? "bg-green-100 border-green-500 ring-2 ring-green-500 text-green-900 scale-105 shadow-lg cursor-pointer"
+          : disponible
           ? "bg-green-50 border-green-300 text-green-800 hover:bg-green-100 hover:border-green-500 hover:scale-105 hover:shadow-lg cursor-pointer active:scale-95"
           : reservada
           ? "bg-orange-50 border-orange-300 text-orange-700 cursor-not-allowed opacity-80"
@@ -287,6 +291,9 @@ function CeldaCaja({
         }
       `}
     >
+      {seleccionada && (
+        <span className="absolute top-2 right-2 w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-black">✓</span>
+      )}
       <img src="/membresia.svg" alt="" style={{ width: "80%", maxWidth: 120, display: "block", margin: "0 auto 4px" }} />
       <span style={{ fontSize: 32, fontWeight: 900, letterSpacing: "0.12em", lineHeight: 1 }}>{caja.numero}</span>
       <span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1, opacity: 0.9 }}>
@@ -406,6 +413,11 @@ function MembresiasInner() {
   const [esSorpresa, setEsSorpresa] = useState(false);
   const [confirmado, setConfirmado] = useState<boolean | null>(null);
 
+  const TAMANO_PAQUETE = 5;
+  const [modoPaquete, setModoPaquete] = useState(false);
+  const [paquete, setPaquete] = useState<string[]>([]);
+  const [cargandoPaquete, setCargandoPaquete] = useState(false);
+
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -521,6 +533,38 @@ function MembresiasInner() {
     } finally {
       setBuscandoAleatoria(false);
     }
+  };
+
+  const toggleEnPaquete = (caja: Caja) => {
+    if (!session) { router.push("/login?redirect=/membresias"); return; }
+    setPaquete((prev) => {
+      if (prev.includes(caja.numero)) return prev.filter((n) => n !== caja.numero);
+      if (prev.length >= TAMANO_PAQUETE) return prev;
+      return [...prev, caja.numero];
+    });
+  };
+
+  const completarPaqueteAleatorio = async () => {
+    if (!session) { router.push("/login?redirect=/membresias"); return; }
+    if (!tier) return;
+    const faltan = TAMANO_PAQUETE - paquete.length;
+    if (faltan <= 0) return;
+    setCargandoPaquete(true);
+    try {
+      const res = await fetch(`/api/cajas/aleatoria?tier=${tier}&cantidad=${faltan}`);
+      const json = await res.json();
+      if (!res.ok) return;
+      const nuevos: string[] = json.numeros ?? (json.caja ? [json.caja.numero] : []);
+      setPaquete((prev) => Array.from(new Set([...prev, ...nuevos])).slice(0, TAMANO_PAQUETE));
+      setModoPaquete(true);
+    } finally {
+      setCargandoPaquete(false);
+    }
+  };
+
+  const cancelarPaquete = () => {
+    setModoPaquete(false);
+    setPaquete([]);
   };
 
   const abrirModal = (caja: Caja) => {
@@ -682,12 +726,84 @@ function MembresiasInner() {
             </div>
             <button
               onClick={elegirAleatoria}
-              disabled={buscandoAleatoria}
+              disabled={buscandoAleatoria || modoPaquete}
               className="shrink-0 bg-[#102463] hover:bg-[#173592] disabled:opacity-60 text-white font-bold px-6 py-3 rounded-full text-sm transition-all shadow-md flex items-center gap-2 whitespace-nowrap"
             >
               <span className={buscandoAleatoria ? "animate-spin inline-block" : "inline-block"}>🎲</span>
               {buscandoAleatoria ? "Eligiendo..." : "Membresía aleatoria"}
             </button>
+          </div>
+
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-2xl p-4 mb-4">
+            {!modoPaquete ? (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                  <p className="font-extrabold text-green-800 text-base">🎁 Paga 5 y llévate una 6ª de regalo</p>
+                  <p className="text-green-700/80 text-sm">Arma un paquete de 5 membresías en un solo pago y te regalamos una gift card con el valor de una membresía más.</p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    onClick={() => setModoPaquete(true)}
+                    className="bg-white border-2 border-green-600 text-green-700 hover:bg-green-50 font-bold px-4 py-2.5 rounded-full text-sm transition-all whitespace-nowrap"
+                  >
+                    Elegir yo mismo
+                  </button>
+                  <button
+                    onClick={completarPaqueteAleatorio}
+                    disabled={cargandoPaquete}
+                    className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold px-4 py-2.5 rounded-full text-sm transition-all shadow-md whitespace-nowrap flex items-center gap-1.5"
+                  >
+                    <span className={cargandoPaquete ? "animate-spin inline-block" : "inline-block"}>🎲</span>
+                    5 al azar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="font-extrabold text-green-800 text-base">Tu paquete ({paquete.length}/{TAMANO_PAQUETE})</p>
+                  <button onClick={cancelarPaquete} className="text-sm text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {paquete.length === 0 && (
+                    <span className="text-sm text-green-700/70">Toca hasta {TAMANO_PAQUETE} números disponibles en la grilla de abajo, o usa &quot;5 al azar&quot;.</span>
+                  )}
+                  {paquete.map((n) => (
+                    <span key={n} className="inline-flex items-center gap-1.5 bg-white border border-green-400 rounded-full pl-3 pr-1.5 py-1 text-sm font-bold text-green-800">
+                      #{n}
+                      <button
+                        onClick={() => setPaquete((p) => p.filter((x) => x !== n))}
+                        className="w-5 h-5 rounded-full bg-green-100 hover:bg-red-100 hover:text-red-600 flex items-center justify-center text-green-600 transition-colors"
+                        aria-label={`Quitar ${n}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  {paquete.length < TAMANO_PAQUETE ? (
+                    <button
+                      onClick={completarPaqueteAleatorio}
+                      disabled={cargandoPaquete}
+                      className="text-sm font-semibold text-green-700 hover:text-green-900 underline disabled:opacity-60"
+                    >
+                      🎲 Completar con {TAMANO_PAQUETE - paquete.length} al azar
+                    </button>
+                  ) : <span />}
+                  {paquete.length === TAMANO_PAQUETE ? (
+                    <Link
+                      href={`/membresias/pagar-lote?tier=${tier}&numeros=${paquete.join(",")}`}
+                      className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2.5 rounded-full text-sm shadow-md transition-all"
+                    >
+                      Continuar al pago — ${(precioCaja * TAMANO_PAQUETE).toLocaleString("es-CO", { maximumFractionDigits: 0 })}
+                    </Link>
+                  ) : (
+                    <span className="text-sm text-green-700/70">Selecciona {TAMANO_PAQUETE - paquete.length} más</span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
@@ -734,7 +850,7 @@ function MembresiasInner() {
                 ))}
                 <button
                   onClick={elegirAleatoria}
-                  disabled={buscandoAleatoria}
+                  disabled={buscandoAleatoria || modoPaquete}
                   title="Elegir número al azar"
                   className="px-4 py-2 rounded-full text-sm font-semibold bg-[#ffbd1f] hover:bg-yellow-300 text-[#102463] disabled:opacity-60 transition-all flex items-center gap-1.5"
                 >
@@ -770,7 +886,13 @@ function MembresiasInner() {
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
                 {datos.cajas.map((caja) => (
-                  <CeldaCaja key={caja.numero} caja={caja} onClick={abrirModal} precio={precioCaja} />
+                  <CeldaCaja
+                    key={caja.numero}
+                    caja={caja}
+                    onClick={modoPaquete ? toggleEnPaquete : abrirModal}
+                    precio={precioCaja}
+                    seleccionada={modoPaquete && paquete.includes(caja.numero)}
+                  />
                 ))}
               </div>
 

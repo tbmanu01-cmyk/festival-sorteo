@@ -598,6 +598,7 @@ model PagoBold {
   orderId         String         @unique
   usuarioId       String
   numeroCaja      String
+  numerosCaja     String[]       @default([])
   tipoMembresiaId String?
   monto           Float
   moneda          String         @default("COP")

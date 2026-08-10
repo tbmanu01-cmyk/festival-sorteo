@@ -27,6 +27,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ mensaje: "No hay membresías disponibles." }, { status: 404 });
   }
 
+  const cantidadParam = Number(req.nextUrl.searchParams.get("cantidad") ?? "1");
+  const cantidad = Number.isFinite(cantidadParam) ? Math.min(Math.max(Math.trunc(cantidadParam), 1), 20) : 1;
+
+  if (cantidad > 1) {
+    if (total < cantidad) {
+      return NextResponse.json({ mensaje: `Solo quedan ${total} membresías disponibles.` }, { status: 404 });
+    }
+    // Trae un lote generoso y baraja en memoria — evita N queries con skip aleatorio,
+    // y como no hay orden natural útil sobre 10.000 filas, el resultado ya sale variado.
+    const candidatas = await prisma.caja.findMany({
+      where: { estado: "DISPONIBLE", tipoMembresiaId: tipoMembresia.id },
+      take: Math.min(total, 200),
+      select: { numero: true },
+    });
+    const barajadas = candidatas.sort(() => Math.random() - 0.5).slice(0, cantidad);
+    return NextResponse.json({ numeros: barajadas.map((c) => c.numero), disponibles: total });
+  }
+
   const skip = Math.floor(Math.random() * total);
   const caja = await prisma.caja.findFirst({
     where: { estado: "DISPONIBLE", tipoMembresiaId: tipoMembresia.id },
