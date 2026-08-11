@@ -105,6 +105,7 @@ model User {
   verifyTokenExpiry  DateTime?
   twoFactorCode      String?
   twoFactorExpiry    DateTime?
+  sessionVersion     Int           @default(0)
 
   cajas           Caja[]
   transacciones   Transaccion[]
