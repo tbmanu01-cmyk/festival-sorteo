@@ -3,6 +3,11 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 const MAX_INTENTOS = 5;
 const BLOQUEO_MINUTOS = 15;
+const DOSFA_EXPIRA_MIN = 10;
+
+function generarCodigo2FA(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -11,12 +16,14 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         correo: { label: "Correo", type: "email" },
         password: { label: "Contraseña", type: "password" },
+        codigo2fa: { label: "Código", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.correo || !credentials?.password) return null;
 
         const bcrypt = (await import("bcryptjs")).default;
         const { prisma } = await import("./prisma");
+        const { checkRateLimit } = await import("./rateLimit");
 
         const user = await prisma.user.findUnique({
           where: { correo: credentials.correo },
@@ -24,6 +31,7 @@ export const authOptions: NextAuthOptions = {
             id: true, correo: true, nombre: true, apellido: true,
             password: true, rol: true, activo: true,
             loginIntentos: true, bloqueadoHasta: true,
+            twoFactorCode: true, twoFactorExpiry: true,
           },
         });
 
@@ -62,6 +70,41 @@ export const authOptions: NextAuthOptions = {
           }).catch(() => undefined);
 
           return null;
+        }
+
+        // Verificación en dos pasos — solo para administradores, la
+        // contraseña ya se validó arriba en ambos casos.
+        if (user.rol === "ADMIN") {
+          const rl = checkRateLimit(`2fa:${user.id}`, 8, 15 * 60 * 1000);
+          if (!rl.allowed) {
+            throw new Error("2FA_DEMASIADOS_INTENTOS");
+          }
+
+          const codigoIngresado = credentials.codigo2fa?.trim();
+
+          if (!codigoIngresado) {
+            // Primer paso: contraseña correcta, falta el código — generarlo y enviarlo
+            const codigo = generarCodigo2FA();
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { twoFactorCode: codigo, twoFactorExpiry: new Date(Date.now() + DOSFA_EXPIRA_MIN * 60 * 1000) },
+            });
+            import("./email").then(({ enviarCodigo2FA }) =>
+              enviarCodigo2FA({ correo: user.correo, nombre: user.nombre, codigo, expiraMin: DOSFA_EXPIRA_MIN })
+            ).catch((e) => console.error("Error enviando código 2FA:", e));
+            throw new Error("2FA_REQUERIDO");
+          }
+
+          const expirado = !user.twoFactorExpiry || user.twoFactorExpiry < new Date();
+          if (expirado || user.twoFactorCode !== codigoIngresado) {
+            throw new Error("2FA_INVALIDO");
+          }
+
+          // Código correcto — limpiarlo para que no se pueda reusar
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { twoFactorCode: null, twoFactorExpiry: null },
+          });
         }
 
         // Login exitoso — resetear contador

@@ -30,6 +30,12 @@ function FormularioLogin() {
   const [cargando, setCargando] = useState(false);
   const [verPassword, setVerPassword] = useState(false);
 
+  // Verificación en dos pasos (solo admins) — tras contraseña correcta, el
+  // backend pide un código enviado por correo antes de crear la sesión.
+  const [paso, setPaso] = useState<"credenciales" | "2fa">("credenciales");
+  const [credencialesPendientes, setCredencialesPendientes] = useState<{ correo: string; password: string } | null>(null);
+  const [codigo2fa, setCodigo2fa] = useState("");
+
   useEffect(() => {
     if (searchParams.get("registro") === "exitoso") {
       setExito("¡Cuenta creada exitosamente! Ya puedes iniciar sesión.");
@@ -48,6 +54,14 @@ function FormularioLogin() {
     resolver: zodResolver(loginSchema),
   });
 
+  async function completarLogin() {
+    const session = await getSession();
+    const rol = (session?.user as { rol?: string })?.rol;
+    if (rol === "ADMIN") router.push("/admin");
+    else router.push("/dashboard");
+    router.refresh();
+  }
+
   async function onSubmit(data: LoginFormData) {
     setCargando(true);
     setError("");
@@ -58,15 +72,88 @@ function FormularioLogin() {
     });
     setCargando(false);
 
+    if (result?.error === "2FA_REQUERIDO") {
+      setCredencialesPendientes({ correo: data.correo, password: data.password });
+      setPaso("2fa");
+      return;
+    }
+
     if (result?.error) {
       setError("Correo o contraseña incorrectos. Tras 5 intentos fallidos la cuenta se bloquea 15 minutos.");
     } else {
-      const session = await getSession();
-      const rol = (session?.user as { rol?: string })?.rol;
-      if (rol === "ADMIN") router.push("/admin");
-      else router.push("/dashboard");
-      router.refresh();
+      await completarLogin();
     }
+  }
+
+  async function onSubmit2fa(e: React.FormEvent) {
+    e.preventDefault();
+    if (!credencialesPendientes || codigo2fa.length !== 6) return;
+    setCargando(true);
+    setError("");
+    const result = await signIn("credentials", {
+      correo: credencialesPendientes.correo,
+      password: credencialesPendientes.password,
+      codigo2fa,
+      redirect: false,
+    });
+    setCargando(false);
+
+    if (result?.error === "2FA_INVALIDO") {
+      setError("Código incorrecto o expirado.");
+    } else if (result?.error === "2FA_DEMASIADOS_INTENTOS") {
+      setError("Demasiados intentos. Espera unos minutos e inicia sesión de nuevo.");
+      setPaso("credenciales");
+      setCredencialesPendientes(null);
+    } else if (result?.error) {
+      setError("No se pudo verificar el código. Intenta de nuevo.");
+    } else {
+      await completarLogin();
+    }
+  }
+
+  if (paso === "2fa") {
+    return (
+      <form onSubmit={onSubmit2fa} className="px-8 py-6 space-y-5">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <p className="text-blue-800 text-sm">
+            🔒 Te enviamos un código de 6 dígitos a <strong>{credencialesPendientes?.correo}</strong>.
+          </p>
+        </div>
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Código de verificación</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="000000"
+            maxLength={6}
+            autoFocus
+            value={codigo2fa}
+            onChange={(e) => setCodigo2fa(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 text-center text-2xl tracking-[0.4em] font-mono focus:outline-none focus:ring-2 focus:ring-[#102463] transition"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={cargando || codigo2fa.length !== 6}
+          className="w-full disabled:bg-gray-400 text-white font-bold py-3.5 rounded-full text-lg transition-all shadow-lg"
+          style={{ background: "#102463" }}
+        >
+          {cargando ? "Verificando..." : "Verificar e ingresar"}
+        </button>
+        <button
+          type="button"
+          onClick={() => { setPaso("credenciales"); setCredencialesPendientes(null); setCodigo2fa(""); setError(""); }}
+          className="w-full text-center text-sm text-gray-500 hover:text-gray-700"
+        >
+          Volver
+        </button>
+      </form>
+    );
   }
 
   return (

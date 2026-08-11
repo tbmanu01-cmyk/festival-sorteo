@@ -319,6 +319,37 @@ export async function enviarCodigoVerificacion(opts: {
   });
 }
 
+// ── Código de verificación en dos pasos (login admin) ────────────────────
+
+export async function enviarCodigo2FA(opts: {
+  correo: string;
+  nombre: string;
+  codigo: string;
+  expiraMin: number;
+}) {
+  const { correo, nombre, codigo, expiraMin } = opts;
+  const digitos = codigo.split("").map(d =>
+    `<span style="display:inline-block;width:44px;height:56px;line-height:56px;text-align:center;background:#f0f4ff;border:2px solid #c7d2fe;border-radius:10px;font-size:28px;font-weight:900;color:#1B4F8A;margin:0 4px;">${d}</span>`
+  ).join("");
+
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">Verificación en dos pasos 🔒</h2>
+    <p style="margin:0 0 20px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, alguien está iniciando sesión en tu cuenta de administrador. Ingresa este código para continuar.</p>
+    <div style="text-align:center;padding:24px 0;">
+      <p style="margin:0 0 12px;color:#888;font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">Tu código</p>
+      <div>${digitos}</div>
+      <p style="margin:16px 0 0;color:#999;font-size:13px;">Válido por <strong>${expiraMin} minutos</strong>.</p>
+    </div>
+    <p style="margin:16px 0 0;color:#999;font-size:13px;line-height:1.6;text-align:center;">
+      Si no fuiste tú, cambia tu contraseña de inmediato.
+    </p>`;
+  await enviarCorreo({
+    to: correo,
+    subject: `${codigo} es tu código de verificación — Tienda 10K`,
+    html: base(cuerpo),
+  });
+}
+
 // ── Código de verificación de retiro ─────────────────────────────────────
 
 export async function enviarCodigoRetiro(opts: {
