@@ -459,3 +459,27 @@ export async function enviarPagoManualRechazado(opts: {
     html: base(cuerpo, "#dc2626"),
   });
 }
+
+// ── Alerta de seguridad a administradores ─────────────────────────────────
+
+export async function enviarAlertaAdmin(opts: {
+  correo: string;
+  titulo: string;
+  detalle: string;
+}) {
+  const { correo, titulo, detalle } = opts;
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#dc2626;font-size:22px;">⚠️ Alerta de seguridad</h2>
+    <p style="margin:0 0 20px;color:#555;font-size:15px;font-weight:700;">${titulo}</p>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px 20px;color:#7f1d1d;font-size:14px;line-height:1.6;">
+      ${detalle}
+    </div>
+    <p style="margin:20px 0 0;color:#999;font-size:13px;line-height:1.6;">
+      Revisa el log de auditoría en el panel admin si necesitas más contexto.
+    </p>`;
+  await enviarCorreo({
+    to: correo,
+    subject: `🚨 ${titulo} — Tienda 10K`,
+    html: base(cuerpo, "#dc2626"),
+  });
+}

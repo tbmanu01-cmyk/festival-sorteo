@@ -69,6 +69,15 @@ export const authOptions: NextAuthOptions = {
             },
           }).catch(() => undefined);
 
+          if (bloquear) {
+            import("./alertas").then(({ enviarAlertaSeguridad }) =>
+              enviarAlertaSeguridad({
+                titulo: "Cuenta bloqueada por intentos fallidos de login",
+                detalle: `La cuenta <strong>${user.correo}</strong> se bloqueó 15 minutos tras ${MAX_INTENTOS} intentos de contraseña incorrectos seguidos.`,
+              })
+            ).catch(() => undefined);
+          }
+
           return null;
         }
 

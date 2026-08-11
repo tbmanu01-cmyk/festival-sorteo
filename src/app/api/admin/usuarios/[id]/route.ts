@@ -46,7 +46,7 @@ export async function PATCH(
 
   const { prisma } = await import("@/lib/prisma");
 
-  const userActual = await prisma.user.findUnique({ where: { id }, select: { id: true, correo: true, documento: true } });
+  const userActual = await prisma.user.findUnique({ where: { id }, select: { id: true, correo: true, documento: true, rol: true, nombre: true, apellido: true } });
   if (!userActual) return NextResponse.json({ mensaje: "Usuario no encontrado." }, { status: 404 });
 
   // ── Validar unicidad de correo y documento ──────────────────────────────
@@ -142,6 +142,15 @@ export async function PATCH(
     detalle: `Usuario ${id} — campos modificados: ${cambios.join(", ")}`,
     ip,
   });
+
+  if (typeof body.rol === "string" && body.rol !== userActual.rol) {
+    import("@/lib/alertas").then(({ enviarAlertaSeguridad }) =>
+      enviarAlertaSeguridad({
+        titulo: "Cambio de rol de usuario",
+        detalle: `${userActual.nombre} ${userActual.apellido} (${userActual.correo}) pasó de rol <strong>${userActual.rol}</strong> a <strong>${body.rol}</strong>.`,
+      })
+    ).catch(() => undefined);
+  }
 
   return NextResponse.json({ mensaje: "Usuario actualizado correctamente." });
 }

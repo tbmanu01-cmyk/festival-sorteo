@@ -3,6 +3,8 @@ import { verificarAdmin } from "@/lib/admin";
 import { registrarAuditoria } from "@/lib/auditoria";
 import { crearNotificacion } from "@/lib/notificaciones";
 
+const MONTO_ALERTA_RETIRO = 1_000_000;
+
 export async function POST(req: NextRequest) {
   const session = await verificarAdmin();
   if (!session) return NextResponse.json({ mensaje: "Acceso denegado." }, { status: 403 });
@@ -67,6 +69,15 @@ export async function POST(req: NextRequest) {
         detalle: `Retiro ${id} aprobado en lote. Neto: $${montoFinal.toLocaleString("es-CO")}`,
         ip: req.headers.get("x-forwarded-for") ?? "unknown",
       });
+
+      if (montoFinal >= MONTO_ALERTA_RETIRO) {
+        import("@/lib/alertas").then(({ enviarAlertaSeguridad }) =>
+          enviarAlertaSeguridad({
+            titulo: "Retiro grande aprobado",
+            detalle: `Se aprobó (en lote) un retiro de <strong>$${montoFinal.toLocaleString("es-CO")} COP</strong> para ${retiro.user.nombre} ${retiro.user.apellido} (${retiro.user.correo}). Cuenta destino: ${retiro.cuentaDestino}.`,
+          })
+        ).catch(() => undefined);
+      }
 
       // Notificación y email fire-and-forget
       Promise.all([

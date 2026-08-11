@@ -3,6 +3,12 @@ import { verificarAdmin } from "@/lib/admin";
 import { obtenerIP, registrarAuditoria } from "@/lib/auditoria";
 import { crearNotificacion } from "@/lib/notificaciones";
 
+// Retiros iguales o superiores a este monto disparan una alerta a los
+// administradores además del flujo normal — no bloquea la aprobación, solo
+// avisa (ej. para detectar una cuenta admin comprometida aprobándose
+// retiros grandes a sí misma).
+const MONTO_ALERTA_RETIRO = 1_000_000;
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -71,6 +77,15 @@ export async function PATCH(
       detalle: `Retiro ${id} aprobado. Monto bruto: $${retiro.monto.toLocaleString("es-CO")}. Neto pagado: $${montoFinal.toLocaleString("es-CO")}`,
       ip,
     });
+
+    if (montoFinal >= MONTO_ALERTA_RETIRO) {
+      import("@/lib/alertas").then(({ enviarAlertaSeguridad }) =>
+        enviarAlertaSeguridad({
+          titulo: "Retiro grande aprobado",
+          detalle: `Se aprobó un retiro de <strong>$${montoFinal.toLocaleString("es-CO")} COP</strong> para ${usuario?.nombre ?? "un usuario"} (${usuario?.correo ?? retiro.userId}). Cuenta destino: ${retiro.cuentaDestino}.`,
+        })
+      ).catch(() => undefined);
+    }
 
     if (usuario) {
       try {
