@@ -18,10 +18,28 @@ const nextConfig = {
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
           // Deshabilita acceso a cámara, micrófono y geolocalización
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
-          // La CSP se genera dinámicamente en src/proxy.ts (necesita un nonce
-          // distinto por request para poder quitar 'unsafe-inline'/'unsafe-eval'
-          // de script-src) — no se declara acá para evitar dos cabeceras CSP
-          // compitiendo en la misma respuesta.
+          // CSP: bloquea fuentes externas no autorizadas, evita clickjacking y XSS básico.
+          // Se intentó una versión con nonce por request (sin unsafe-inline/
+          // unsafe-eval en script-src) vía middleware — causaba que el RSC
+          // streaming se rompiera (React error #412 "Connection closed",
+          // login/dashboard se quedaban en "Cargando..." indefinidamente) en
+          // producción. Revertido a esta versión estable; retomar el
+          // endurecimiento más adelante con más tiempo para diagnosticar bien
+          // la causa antes de tocar producción de nuevo.
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.bold.co",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https:",
+              "font-src 'self' data:",
+              "connect-src 'self' https:",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join("; "),
+          },
         ],
       },
       // ── Logos e imágenes clave (no cachear en CDN para que los cambios sean inmediatos)
