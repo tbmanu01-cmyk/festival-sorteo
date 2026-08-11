@@ -18,21 +18,10 @@ const nextConfig = {
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
           // Deshabilita acceso a cámara, micrófono y geolocalización
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
-          // CSP: bloquea fuentes externas no autorizadas, evita clickjacking y XSS básico
-          {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.bold.co",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https:",
-              "font-src 'self' data:",
-              "connect-src 'self' https:",
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-            ].join("; "),
-          },
+          // La CSP se genera dinámicamente en src/proxy.ts (necesita un nonce
+          // distinto por request para poder quitar 'unsafe-inline'/'unsafe-eval'
+          // de script-src) — no se declara acá para evitar dos cabeceras CSP
+          // compitiendo en la misma respuesta.
         ],
       },
       // ── Logos e imágenes clave (no cachear en CDN para que los cambios sean inmediatos)
