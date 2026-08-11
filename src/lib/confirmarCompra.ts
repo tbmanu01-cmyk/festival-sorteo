@@ -21,12 +21,20 @@ export async function confirmarCompraMembresia(opts: {
 
   const idCompra = `COMPRA-${usuarioId}-${Date.now()}`;
 
-  await prisma.$transaction([
-    prisma.caja.update({
-      where: { cajaTierNumero: { tipoMembresiaId, numero: numeroCaja } },
+  await prisma.$transaction(async (tx) => {
+    // Update atómico con el estado como condición — el pago ya se confirmó
+    // externamente (Bold o transferencia manual) así que si alguien más se
+    // adelantó y ya vendió este número por otro medio justo en este
+    // instante, no podemos simplemente "reintentar": queda como excepción
+    // para que el caller decida (el webhook de Bold, por ejemplo, deja el
+    // pago PENDIENTE para revisión manual del admin en vez de perder el dinero).
+    const cajaVendida = await tx.caja.updateMany({
+      where: { tipoMembresiaId, numero: numeroCaja, estado: { not: "VENDIDA" } },
       data: { estado: "VENDIDA", userId: usuarioId, fechaCompra: new Date(), idCompra },
-    }),
-    prisma.transaccion.create({
+    });
+    if (cajaVendida.count === 0) throw new Error(`La membresía #${numeroCaja} ya fue vendida.`);
+
+    await tx.transaccion.create({
       data: {
         userId: usuarioId,
         tipo: "COMPRA",
@@ -34,8 +42,8 @@ export async function confirmarCompraMembresia(opts: {
         descripcion: descripcionTransaccion,
         referencia: idCompra,
       },
-    }),
-  ]);
+    });
+  });
 
   // Gift cards automáticas por umbral de membresías (propias o de la red de referidos) + notificación
   import("@/lib/giftCardsPorMembresias").then(({ emitirGiftCardsPorMembresias }) =>
@@ -86,10 +94,12 @@ export async function confirmarCompraMembresiaLote(opts: {
   await prisma.$transaction(async (tx) => {
     for (const numero of numeros) {
       const idCompra = `${idLote}-${numero}`;
-      await tx.caja.update({
-        where: { cajaTierNumero: { tipoMembresiaId, numero } },
+      const cajaVendida = await tx.caja.updateMany({
+        where: { tipoMembresiaId, numero, estado: { not: "VENDIDA" } },
         data: { estado: "VENDIDA", userId: usuarioId, fechaCompra: new Date(), idCompra },
       });
+      if (cajaVendida.count === 0) throw new Error(`La membresía #${numero} ya fue vendida.`);
+
       await tx.transaccion.create({
         data: {
           userId: usuarioId,

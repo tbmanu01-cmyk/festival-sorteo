@@ -112,10 +112,19 @@ export async function POST(req: NextRequest) {
       const ok: string[] = [];
       for (const numero of numeros) {
         const idCompra = `${idLote}-${numero}`;
-        await tx.caja.update({
-          where: { cajaTierNumero: { tipoMembresiaId: tipoMembresia.id, numero } },
+        // Update atómico con el estado como condición — evita que dos
+        // compras simultáneas (esta y una individual, o dos lotes que se
+        // solapan) vendan el mismo número dos veces.
+        const cajaVendida = await tx.caja.updateMany({
+          where: {
+            tipoMembresiaId: tipoMembresia.id,
+            numero,
+            OR: [{ estado: "DISPONIBLE" }, { estado: "RESERVADA", userId }],
+          },
           data: { estado: "VENDIDA", userId, fechaCompra: new Date(), idCompra },
         });
+        if (cajaVendida.count === 0) throw new Error(`CAJA_NO_DISPONIBLE:${numero}`);
+
         await tx.transaccion.create({
           data: {
             userId,
@@ -130,8 +139,18 @@ export async function POST(req: NextRequest) {
       return ok;
     }).catch((err) => {
       if (err instanceof Error && err.message === "SALDO_INSUFICIENTE") return null;
+      if (err instanceof Error && err.message.startsWith("CAJA_NO_DISPONIBLE:")) {
+        return { numeroConflicto: err.message.split(":")[1] };
+      }
       throw err;
     });
+
+    if (compradas && "numeroConflicto" in compradas) {
+      return NextResponse.json(
+        { mensaje: `La membresía #${compradas.numeroConflicto} acaba de ser tomada por otra compra. Actualiza la página e inténtalo de nuevo.` },
+        { status: 409 }
+      );
+    }
 
     if (!compradas) {
       return NextResponse.json(

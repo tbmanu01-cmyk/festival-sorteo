@@ -103,7 +103,7 @@ export async function POST(
       }
     }
 
-    const cajaActualizada = await prisma.$transaction(async (tx) => {
+    const resultado = await prisma.$transaction(async (tx) => {
       if (montoCobrado > 0) {
         // Descuento atómico — el WHERE saldoPuntos >= montoCobrado evita saldo negativo por condición de carrera
         const deducido = await tx.user.updateMany({
@@ -113,10 +113,19 @@ export async function POST(
         if (deducido.count === 0) throw new Error("SALDO_INSUFICIENTE");
       }
 
-      const actualizada = await tx.caja.update({
-        where: { cajaTierNumero: { tipoMembresiaId: tipoMembresia.id, numero } },
+      // Update atómico con el estado como condición — sin esto, dos compras
+      // simultáneas del mismo número podían pasar el chequeo de arriba antes
+      // de que cualquiera terminara, cobrándole a las dos personas por la
+      // misma membresía. count===0 significa que alguien más se adelantó.
+      const cajaVendida = await tx.caja.updateMany({
+        where: {
+          tipoMembresiaId: tipoMembresia.id,
+          numero,
+          OR: [{ estado: "DISPONIBLE" }, { estado: "RESERVADA", userId }],
+        },
         data: { estado: "VENDIDA", userId, fechaCompra: new Date(), idCompra },
       });
+      if (cajaVendida.count === 0) throw new Error("CAJA_NO_DISPONIBLE");
 
       await tx.transaccion.create({
         data: {
@@ -136,19 +145,36 @@ export async function POST(
         // emitirGiftCardsPorMembresias() para contar cuántas ya se pagaron.
         // Sobrescribirlo aquí borraba ese rastro y hacía que cada canje
         // pareciera "nunca entregado", regalando otra gift card sin fin.
-        await tx.giftCard.update({
-          where: { id: giftCard.id },
+        // updateMany + estado:"DISPONIBLE" evita que la misma gift card se
+        // use dos veces en compras simultáneas.
+        const gcUsada = await tx.giftCard.updateMany({
+          where: { id: giftCard.id, estado: "DISPONIBLE" },
           data: { estado: "USADA", usadaEn: new Date() },
         });
+        if (gcUsada.count === 0) throw new Error("GIFTCARD_NO_DISPONIBLE");
       }
 
-      return actualizada;
+      return true;
     }).catch((err) => {
-      if (err instanceof Error && err.message === "SALDO_INSUFICIENTE") return null;
+      if (err instanceof Error && ["SALDO_INSUFICIENTE", "CAJA_NO_DISPONIBLE", "GIFTCARD_NO_DISPONIBLE"].includes(err.message)) {
+        return err.message;
+      }
       throw err;
     });
 
-    if (!cajaActualizada) {
+    if (resultado === "CAJA_NO_DISPONIBLE") {
+      return NextResponse.json(
+        { mensaje: "Esta membresía acaba de ser comprada por otra persona. Elige otro número." },
+        { status: 409 }
+      );
+    }
+    if (resultado === "GIFTCARD_NO_DISPONIBLE") {
+      return NextResponse.json(
+        { mensaje: "Esa gift card ya fue utilizada. Actualiza la página e intenta de nuevo." },
+        { status: 409 }
+      );
+    }
+    if (resultado !== true) {
       return NextResponse.json(
         { mensaje: "Saldo insuficiente al momento de procesar. Intenta de nuevo o paga con tarjeta.", codigo: "SALDO_INSUFICIENTE" },
         { status: 402 }
@@ -179,7 +205,6 @@ export async function POST(
 
     return NextResponse.json({
       mensaje: `¡Membresía ${numero} comprada exitosamente!`,
-      caja: cajaActualizada,
       referencia: idCompra,
     });
   } catch (error) {

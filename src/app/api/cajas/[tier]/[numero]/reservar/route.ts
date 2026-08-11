@@ -83,8 +83,12 @@ export async function POST(
 
     const expira = new Date(Date.now() + MINUTOS_RESERVA * 60 * 1000);
 
-    const cajaReservada = await prisma.caja.update({
-      where: { cajaTierNumero: { tipoMembresiaId: tipoMembresia.id, numero } },
+    // Update atómico con el estado como condición — si dos personas reservan
+    // el mismo número casi al mismo tiempo, el chequeo de arriba (findUnique)
+    // no alcanza a evitar la carrera por sí solo; count===0 significa que
+    // alguien más ya la tomó entre el chequeo y este update.
+    const resultado = await prisma.caja.updateMany({
+      where: { tipoMembresiaId: tipoMembresia.id, numero, estado: "DISPONIBLE" },
       data: {
         estado: "RESERVADA",
         userId,
@@ -93,9 +97,15 @@ export async function POST(
       },
     });
 
+    if (resultado.count === 0) {
+      return NextResponse.json(
+        { mensaje: "Esta membresía ya está reservada o comprada. Elige otro número." },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json({
       mensaje: `Membresía ${numero} reservada por ${MINUTOS_RESERVA} minutos.`,
-      caja: cajaReservada,
       expira: expira.toISOString(),
     });
   } catch (error) {
@@ -138,10 +148,14 @@ export async function DELETE(
       return NextResponse.json({ mensaje: "Esta membresía no está reservada por ti." }, { status: 409 });
     }
 
-    await prisma.caja.update({
-      where: { cajaTierNumero: { tipoMembresiaId: tipoMembresia.id, numero } },
+    const resultado = await prisma.caja.updateMany({
+      where: { tipoMembresiaId: tipoMembresia.id, numero, estado: "RESERVADA", userId },
       data: { estado: "DISPONIBLE", userId: null, fechaCompra: null, idCompra: null },
     });
+
+    if (resultado.count === 0) {
+      return NextResponse.json({ mensaje: "Esta membresía no está reservada por ti." }, { status: 409 });
+    }
 
     return NextResponse.json({ mensaje: `Reserva de la membresía #${numero} cancelada. Queda disponible de nuevo.` });
   } catch (error) {
