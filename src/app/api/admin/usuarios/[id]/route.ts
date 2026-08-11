@@ -97,6 +97,18 @@ export async function PATCH(
     data.bloqueadoHasta = null;
   }
 
+  // Cierre de sesión forzado: cualquier cambio que afecte qué puede hacer
+  // esta cuenta (rol, desactivación, contraseña impuesta por un admin)
+  // invalida de inmediato cualquier sesión ya abierta — ver usuarioVigente()
+  // en src/lib/admin.ts, que compara este valor contra el del JWT en cada
+  // llamada a un endpoint /api/admin o /api/asistente.
+  const rolCambia = typeof body.rol === "string" && body.rol !== userActual.rol;
+  const seDesactiva = body.activo === false;
+  const passwordForzada = Object.prototype.hasOwnProperty.call(data, "password");
+  if (rolCambia || seDesactiva || passwordForzada) {
+    data.sessionVersion = { increment: 1 };
+  }
+
   if (Object.keys(data).length === 0 && !body.ajusteSaldo) {
     return NextResponse.json({ mensaje: "Sin cambios que aplicar." }, { status: 400 });
   }
@@ -193,6 +205,7 @@ export async function DELETE(
       eliminadoEn: new Date(),
       correo: `${prefijo}${user.correo}`,
       documento: `${prefijo}${user.documento}`,
+      sessionVersion: { increment: 1 },
     },
   });
 

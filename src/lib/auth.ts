@@ -32,6 +32,7 @@ export const authOptions: NextAuthOptions = {
             password: true, rol: true, activo: true,
             loginIntentos: true, bloqueadoHasta: true,
             twoFactorCode: true, twoFactorExpiry: true,
+            sessionVersion: true,
           },
         });
 
@@ -134,6 +135,7 @@ export const authOptions: NextAuthOptions = {
           email: user.correo,
           name: `${user.nombre} ${user.apellido}`,
           rol: user.rol,
+          sessionVersion: user.sessionVersion,
         };
       },
     }),
@@ -143,6 +145,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.rol = (user as unknown as { rol: string }).rol;
+        token.sessionVersion = (user as unknown as { sessionVersion: number }).sessionVersion;
       }
       return token;
     },
@@ -150,6 +153,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as unknown as { id: string }).id = token.id as string;
         (session.user as unknown as { rol: string }).rol = token.rol as string;
+        (session.user as unknown as { sessionVersion: number }).sessionVersion = token.sessionVersion as number;
       }
       return session;
     },
