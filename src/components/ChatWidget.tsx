@@ -98,6 +98,21 @@ export default function ChatWidget() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [abierto]);
 
+  // El estado "abierto" vive en un contexto montado una sola vez en el layout
+  // raíz, así que sobrevive a la navegación entre páginas (Next.js no
+  // desmonta el layout en cada cambio de ruta). Sin esto, el panel se queda
+  // abierto "en segundo plano" al cambiar de pantalla — hay que minimizarlo
+  // explícitamente cada vez que cambia el pathname.
+  const primerRenderRef = useRef(true);
+  useEffect(() => {
+    if (primerRenderRef.current) {
+      primerRenderRef.current = false;
+      return;
+    }
+    setAbierto(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
   // Mientras el panel está abierto y hay un asesor de por medio, refresca cada 5s
   useEffect(() => {
     if (!abierto || !conversacion) return;
