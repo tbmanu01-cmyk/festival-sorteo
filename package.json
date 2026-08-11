@@ -20,6 +20,11 @@
   "prisma": {
     "seed": "tsx prisma/seed-realistic.ts"
   },
+  "overrides": {
+    "next-auth": {
+      "nodemailer": "$nodemailer"
+    }
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/adapter-pg": "^7.7.0",
