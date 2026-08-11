@@ -103,6 +103,8 @@ model User {
   bloqueadoHasta     DateTime?
   verifyToken        String?       @unique
   verifyTokenExpiry  DateTime?
+  twoFactorCode      String?
+  twoFactorExpiry    DateTime?
 
   cajas           Caja[]
   transacciones   Transaccion[]
