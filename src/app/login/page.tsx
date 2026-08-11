@@ -57,7 +57,7 @@ function FormularioLogin() {
   async function completarLogin() {
     const session = await getSession();
     const rol = (session?.user as { rol?: string })?.rol;
-    if (rol === "ADMIN") router.push("/admin");
+    if (rol === "ADMIN") router.push("/");
     else router.push("/dashboard");
     router.refresh();
   }
