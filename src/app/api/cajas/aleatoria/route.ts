@@ -34,15 +34,17 @@ export async function GET(req: NextRequest) {
     if (total < cantidad) {
       return NextResponse.json({ mensaje: `Solo quedan ${total} membresías disponibles.` }, { status: 404 });
     }
-    // Trae un lote generoso y baraja en memoria — evita N queries con skip aleatorio,
-    // y como no hay orden natural útil sobre 10.000 filas, el resultado ya sale variado.
-    const candidatas = await prisma.caja.findMany({
-      where: { estado: "DISPONIBLE", tipoMembresiaId: tipoMembresia.id },
-      take: Math.min(total, 200),
-      select: { numero: true },
-    });
-    const barajadas = candidatas.sort(() => Math.random() - 0.5).slice(0, cantidad);
-    return NextResponse.json({ numeros: barajadas.map((c) => c.numero), disponibles: total });
+    // ORDER BY RANDOM() directo en Postgres — sin esto, un `take` sin orden
+    // devuelve las filas en el orden del índice (tipoMembresiaId, numero),
+    // es decir casi siempre los números más bajos disponibles (ej. 0000-0199),
+    // nunca un muestreo real de las 10.000.
+    const candidatas = await prisma.$queryRaw<{ numero: string }[]>`
+      SELECT numero FROM cajas
+      WHERE estado = 'DISPONIBLE'::"EstadoCaja" AND "tipoMembresiaId" = ${tipoMembresia.id}
+      ORDER BY RANDOM()
+      LIMIT ${cantidad}
+    `;
+    return NextResponse.json({ numeros: candidatas.map((c) => c.numero), disponibles: total });
   }
 
   const skip = Math.floor(Math.random() * total);
