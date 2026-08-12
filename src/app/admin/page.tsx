@@ -34,6 +34,10 @@ interface Retiro {
   user: { nombre: string; apellido: string; correo: string; celular: string; banco: string | null };
 }
 
+interface Concepto {
+  id: string; nombre: string; porcentaje: number;
+}
+
 type Tab = "stats" | "usuarios" | "cajas" | "retiros";
 
 function StatCard({
@@ -196,6 +200,7 @@ function TablaCajas() {
 function TablaRetiros() {
   const [retiros,    setRetiros]    = useState<Retiro[]>([]);
   const [pendientes, setPendientes] = useState<Retiro[]>([]);
+  const [conceptos,  setConceptos]  = useState<Concepto[]>([]);
   const [procesando, setProcesando] = useState<string | null>(null);
   const [procesandoMasivo, setProcesandoMasivo] = useState(false);
   const [mensaje,    setMensaje]    = useState<{ texto: string; tipo: "ok" | "error" } | null>(null);
@@ -206,22 +211,83 @@ function TablaRetiros() {
   const [modalConfirmar, setModalConfirmar] = useState<Retiro | null>(null);
   const [modalMasivo,    setModalMasivo]    = useState(false);
 
+  // Pre-aprobar y aprobar en un solo paso (sin esperar al asistente)
+  const [modalPreYAprobar, setModalPreYAprobar] = useState<{ id: string; monto: number; nombre: string } | null>(null);
+  const [retencionesElegidas, setRetencionesElegidas] = useState<Set<string>>(new Set());
+
   // Selección masiva
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
 
   const cargar = useCallback(() => {
-    fetch("/api/admin/retiros")
-      .then((r) => r.json())
-      .then((d) => {
-        setRetiros(d.retiros ?? []);
-        setPendientes(d.pendientes ?? []);
-        setSeleccionados(new Set()); // limpiar selección al recargar
-      });
+    Promise.all([
+      fetch("/api/admin/retiros").then((r) => r.json()),
+      fetch("/api/asistente/conceptos-retencion").then((r) => r.json()),
+    ]).then(([d, dc]) => {
+      setRetiros(d.retiros ?? []);
+      setPendientes(d.pendientes ?? []);
+      setConceptos(dc.conceptos ?? []);
+      setSeleccionados(new Set()); // limpiar selección al recargar
+    });
   }, []);
 
   useEffect(() => { cargar(); }, [cargar]);
 
   const fmt = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 0 });
+
+  const calcularRetenciones = (monto: number) => {
+    const lineas = conceptos
+      .filter((c) => retencionesElegidas.has(c.id))
+      .map((c) => ({ id: c.id, nombre: c.nombre, porcentaje: c.porcentaje, monto: Math.round(monto * (c.porcentaje / 100)) }));
+    const totalRetenido = lineas.reduce((s, l) => s + l.monto, 0);
+    return { lineas, totalRetenido, neto: monto - totalRetenido };
+  };
+
+  const { lineas: lineasPreYAprobar, totalRetenido: totalRetenidoPreYAprobar } = modalPreYAprobar
+    ? calcularRetenciones(modalPreYAprobar.monto)
+    : { lineas: [], totalRetenido: 0 };
+
+  function toggleRetencion(id: string) {
+    setRetencionesElegidas((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  // Reusa los dos endpoints ya existentes (pre-aprobar del asistente, aprobar
+  // del admin) en vez de duplicar la lógica de retenciones/transacción — si
+  // el segundo paso llegara a fallar, el retiro queda PRE_APROBADO (visible
+  // arriba para aprobarlo a mano), nunca en un estado roto a medias.
+  async function confirmarPreYAprobar() {
+    if (!modalPreYAprobar) return;
+    const { id } = modalPreYAprobar;
+    setProcesando(id);
+    const resPre = await fetch(`/api/asistente/retiros/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accion: "pre-aprobar", conceptosIds: Array.from(retencionesElegidas) }),
+    });
+    if (!resPre.ok) {
+      const json = await resPre.json();
+      setMensaje({ texto: json.mensaje, tipo: "error" });
+      setModalPreYAprobar(null);
+      setRetencionesElegidas(new Set());
+      setProcesando(null);
+      cargar();
+      return;
+    }
+    const resAprobar = await fetch(`/api/admin/retiros/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accion: "aprobar" }),
+    });
+    const json = await resAprobar.json();
+    setMensaje({ texto: json.mensaje, tipo: resAprobar.ok ? "ok" : "error" });
+    setModalPreYAprobar(null);
+    setRetencionesElegidas(new Set());
+    setProcesando(null);
+    cargar();
+  }
 
   // ── Individual ──────────────────────────────────────────────────────────────
   async function aprobarUno(id: string) {
@@ -425,12 +491,15 @@ function TablaRetiros() {
           <div className="flex items-center gap-2 mb-3">
             <span className="w-2.5 h-2.5 rounded-full bg-gray-400 inline-block" />
             <h3 className="font-bold text-gray-500 text-sm uppercase tracking-wide">
-              Esperando pre-aprobación del asistente ({pendientes.length})
+              Sin pre-aprobación del asistente ({pendientes.length})
             </h3>
           </div>
+          <p className="text-xs text-gray-400 mb-3">
+            No hace falta esperar al asistente — puedes pre-aprobar y aprobar tú mismo en un solo paso.
+          </p>
           <div className="space-y-3">
             {pendientes.map((r) => (
-              <div key={r.id} className="bg-gray-50 rounded-xl p-4 border border-gray-200 opacity-75">
+              <div key={r.id} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <p className="font-bold text-gray-700">{r.user.nombre} {r.user.apellido}</p>
@@ -440,10 +509,28 @@ function TablaRetiros() {
                   </div>
                   <div className="flex flex-col items-end gap-1.5">
                     <span className="text-lg font-extrabold text-gray-500">${fmt(r.monto)}</span>
-                    {r.confirmado
-                      ? <span className="text-xs bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg font-medium">En revisión</span>
-                      : <span className="text-xs bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-medium">⏳ Esperando OTP</span>
-                    }
+                    {!r.confirmado && (
+                      <span className="text-xs bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-medium">⏳ Esperando OTP</span>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setModalPreYAprobar({ id: r.id, monto: r.monto, nombre: `${r.user.nombre} ${r.user.apellido}` });
+                          setRetencionesElegidas(new Set());
+                        }}
+                        disabled={!!procesando || procesandoMasivo}
+                        className="bg-[#102463] hover:bg-[#173592] disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        {procesando === r.id ? "..." : "Pre-aprobar y aprobar"}
+                      </button>
+                      <button
+                        onClick={() => { setModalRechazo({ id: r.id, nombre: `${r.user.nombre} ${r.user.apellido}` }); setMotivoRechazo(""); }}
+                        disabled={!!procesando || procesandoMasivo}
+                        className="bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+                      >
+                        Rechazar
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -624,6 +711,106 @@ function TablaRetiros() {
                 className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
               >
                 {procesando ? "..." : "Confirmar rechazo"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal pre-aprobar y aprobar (admin, sin esperar al asistente) ── */}
+      {modalPreYAprobar && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+              <h2 className="text-lg font-extrabold text-[#102463]">Pre-aprobar y aprobar</h2>
+              <p className="text-gray-500 text-sm mt-0.5">{modalPreYAprobar.nombre}</p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+              <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Monto solicitado</span>
+                  <span className="font-bold">${fmt(modalPreYAprobar.monto)}</span>
+                </div>
+                {lineasPreYAprobar.map((l) => (
+                  <div key={l.id} className="flex justify-between text-red-600">
+                    <span>{l.nombre} ({l.porcentaje}%)</span>
+                    <span>− ${fmt(l.monto)}</span>
+                  </div>
+                ))}
+                {totalRetenidoPreYAprobar > 0 && (
+                  <div className="flex justify-between text-red-700 font-semibold border-t border-gray-200 pt-1.5">
+                    <span>Total retenido</span>
+                    <span>− ${fmt(totalRetenidoPreYAprobar)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-extrabold text-green-700 border-t border-gray-200 pt-1.5">
+                  <span>Monto neto a pagar</span>
+                  <span>${fmt(modalPreYAprobar.monto - totalRetenidoPreYAprobar)}</span>
+                </div>
+              </div>
+
+              {conceptos.length > 0 ? (
+                <div>
+                  <p className="text-sm font-bold text-gray-700 mb-3">Retenciones e impuestos a aplicar</p>
+                  <div className="space-y-2">
+                    {conceptos.map((c) => {
+                      const checked = retencionesElegidas.has(c.id);
+                      const montoConcepto = Math.round(modalPreYAprobar.monto * (c.porcentaje / 100));
+                      return (
+                        <label
+                          key={c.id}
+                          className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-colors ${
+                            checked ? "border-red-300 bg-red-50" : "border-gray-200 hover:border-gray-300 bg-white"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleRetencion(c.id)}
+                              className="w-4 h-4 rounded border-gray-300 text-[#102463] cursor-pointer"
+                            />
+                            <span className={`text-sm font-semibold ${checked ? "text-red-700" : "text-gray-700"}`}>
+                              {c.nombre}
+                            </span>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className={`text-sm font-bold ${checked ? "text-red-600" : "text-gray-500"}`}>
+                              {c.porcentaje}%
+                            </span>
+                            {checked && <p className="text-xs text-red-500">−${fmt(montoConcepto)}</p>}
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {retencionesElegidas.size === 0 && (
+                    <p className="text-xs text-gray-400 mt-2 text-center">
+                      Sin retenciones seleccionadas — se aprobará el monto completo.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-500 text-center">
+                  No hay conceptos configurados. Se aprobará el monto completo.
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+              <button
+                onClick={() => { setModalPreYAprobar(null); setRetencionesElegidas(new Set()); }}
+                className="flex-1 border border-gray-200 text-gray-600 font-semibold py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarPreYAprobar}
+                disabled={!!procesando}
+                className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
+              >
+                {procesando ? "Procesando..." : `Pagar — $${fmt(modalPreYAprobar.monto - totalRetenidoPreYAprobar)}`}
               </button>
             </div>
           </div>
