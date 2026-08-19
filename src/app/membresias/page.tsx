@@ -426,7 +426,7 @@ function MembresiasInner() {
   // Tamaños de paquete ofrecidos al comprador — mismo set que valida el
   // backend (comprar-lote, firma-lote). 5 sigue siendo el default porque es
   // el umbral que da gift card gratis.
-  const OPCIONES_PAQUETE = [1, 2, 3, 4, 5, 10] as const;
+  const OPCIONES_PAQUETE: number[] = [1, 2, 3, 4, 5, 10];
   const [modoPaquete, setModoPaquete] = useState(false);
   const [tamanoPaquete, setTamanoPaquete] = useState<number>(5);
   const [paquete, setPaquete] = useState<string[]>([]);
@@ -816,20 +816,22 @@ function MembresiasInner() {
               <p className="text-green-700/80 text-sm mb-2.5">
                 Elige cuántas quieres{tamanoPaquete >= 5 ? " — por cada 5, te regalamos una gift card adicional." : "."}
               </p>
-              <div className="flex items-center gap-2 flex-wrap">
-                {OPCIONES_PAQUETE.map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => cambiarTamanoPaquete(n)}
-                    className={`w-11 h-11 rounded-full text-sm font-extrabold border-2 transition-all ${
-                      tamanoPaquete === n
-                        ? "bg-green-600 border-green-600 text-white shadow-md"
-                        : "bg-white border-green-300 text-green-700 hover:border-green-500"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
+              <div className="flex items-center gap-4">
+                <input
+                  type="range"
+                  min={0}
+                  max={OPCIONES_PAQUETE.length - 1}
+                  step={1}
+                  value={OPCIONES_PAQUETE.indexOf(tamanoPaquete)}
+                  onChange={(e) => cambiarTamanoPaquete(OPCIONES_PAQUETE[Number(e.target.value)])}
+                  className="flex-1 h-2 accent-green-600"
+                />
+                <div className="w-16 shrink-0 text-center text-2xl font-extrabold text-green-700 border-2 border-green-600/20 bg-white rounded-xl py-1.5">
+                  {tamanoPaquete}
+                </div>
+              </div>
+              <div className="flex justify-between text-xs text-green-700/60 mt-1 px-0.5">
+                {OPCIONES_PAQUETE.map((n) => <span key={n}>{n}</span>)}
               </div>
             </div>
 
