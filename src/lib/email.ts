@@ -174,6 +174,37 @@ export async function enviarPremioGiftCard(opts: {
   });
 }
 
+// ── Gift card recibida (umbral de referidos/compras propias, o regalo) ────
+// Distinta de enviarPremioGiftCard: esa es solo para el premio de 1 cifra
+// del sorteo (menciona número ganador/categoría). Esta cubre los otros 2
+// orígenes de gift card, que antes NO enviaban ningún correo al beneficiario.
+
+export async function enviarGiftCardRecibida(opts: {
+  correo: string;
+  nombre: string;
+  codigoGiftCard: string;
+  valorGiftCard: number;
+  motivo: string;
+}) {
+  const { correo, nombre, codigoGiftCard, valorGiftCard, motivo } = opts;
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#16a34a;font-size:22px;">¡Recibiste una gift card! 🎁</h2>
+    <p style="margin:0 0 24px;color:#555;font-size:15px;">Hola <strong>${nombre}</strong>, ${motivo}</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eee;border-bottom:1px solid #eee;">
+      ${fila("Valor de tu gift card", `<span style="font-size:20px;font-weight:900;color:#16a34a;">$${valorGiftCard.toLocaleString("es-CO")} COP</span>`)}
+      ${fila("Código gift card", `<span style="font-family:monospace;font-size:20px;font-weight:900;color:#102463;letter-spacing:2px;">${codigoGiftCard}</span>`)}
+    </table>
+    <p style="margin:24px 0 0;color:#555;font-size:14px;line-height:1.6;">
+      Úsala al comprar tu próxima membresía, regálala a alguien más, o conviértela
+      en saldo de tu cuenta desde <strong>Mi cuenta → Gift cards</strong>.
+    </p>`;
+  await enviarCorreo({
+    to: correo,
+    subject: `¡Recibiste una gift card en Tienda 10K! 🎁`,
+    html: base(cuerpo, "#16a34a"),
+  });
+}
+
 // ── Retiro aprobado ───────────────────────────────────────────────────────
 
 export async function enviarRetiroAprobado(opts: {

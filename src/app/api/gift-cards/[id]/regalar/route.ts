@@ -62,6 +62,35 @@ export async function POST(
     }),
   ]);
 
+  // Notificación (campanita) + correo al destinatario — antes regalar una
+  // gift card no avisaba de ninguna forma a quien la recibía.
+  const remitente = await prisma.user.findUnique({ where: { id: userId }, select: { nombre: true } });
+  const mensajeExtra = `¡${remitente?.nombre ?? "Alguien"} te regaló una gift card!`;
+  await prisma.notificacion.create({
+    data: {
+      tipo: "MEMBRESIA",
+      titulo: "🎁 ¡Recibiste una gift card de regalo!",
+      cuerpo: `${mensajeExtra} Valor: $${gc.valor.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP — úsala en tu próxima membresía o conviértela en saldo desde tu panel.`,
+      icono: "🎁",
+      usuarioId: destinatario.id,
+    },
+  }).catch((err) => console.error("Notificación gift card regalada error:", err));
+
+  prisma.user.findUnique({ where: { id: destinatario.id }, select: { correo: true } })
+    .then((u) => {
+      if (!u) return;
+      import("@/lib/email").then(({ enviarGiftCardRecibida }) =>
+        enviarGiftCardRecibida({
+          correo: u.correo,
+          nombre: destinatario.nombre,
+          codigoGiftCard: nuevoCodigo,
+          valorGiftCard: gc.valor,
+          motivo: mensajeExtra,
+        }).catch((err) => console.error("Email gift card regalada error:", err))
+      );
+    })
+    .catch(() => undefined);
+
   return NextResponse.json({
     mensaje: `Gift card enviada a ${destinatario.nombre} correctamente.`,
   });

@@ -28,6 +28,23 @@ async function crearGiftCardYNotificar(opts: {
       usuarioId: opts.propietarioId,
     },
   }).catch((err) => console.error("Notificación gift card error:", err));
+
+  // Correo — antes esta gift card (por umbral de referidos/compras propias)
+  // solo generaba la notificación de campanita, nunca un correo al beneficiario.
+  prisma.user.findUnique({ where: { id: opts.propietarioId }, select: { nombre: true, correo: true } })
+    .then((u) => {
+      if (!u) return;
+      import("@/lib/email").then(({ enviarGiftCardRecibida }) =>
+        enviarGiftCardRecibida({
+          correo: u.correo,
+          nombre: u.nombre,
+          codigoGiftCard: gcCodigo,
+          valorGiftCard: opts.valor,
+          motivo: opts.mensajeExtra,
+        }).catch((err) => console.error("Email gift card por membresías error:", err))
+      );
+    })
+    .catch(() => undefined);
 }
 
 export async function emitirGiftCardsPorMembresias(opts: {
