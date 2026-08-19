@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-const TAMANO_PAQUETE = 5;
+// Tamaños de paquete ofrecidos en /membresias — mismo set que valida el frontend.
+const TAMANOS_VALIDOS = [1, 2, 3, 4, 5, 10];
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,8 +15,8 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json() as { numeros?: string[]; tier?: string };
     const numeros = Array.isArray(body.numeros) ? Array.from(new Set(body.numeros)) : [];
-    if (numeros.length !== TAMANO_PAQUETE) {
-      return NextResponse.json({ mensaje: `El paquete debe tener exactamente ${TAMANO_PAQUETE} membresías.` }, { status: 400 });
+    if (!TAMANOS_VALIDOS.includes(numeros.length)) {
+      return NextResponse.json({ mensaje: `El paquete debe tener ${TAMANOS_VALIDOS.join(", ")} membresías.` }, { status: 400 });
     }
     if (!numeros.every((n) => /^\d{4}$/.test(n))) {
       return NextResponse.json({ mensaje: "Número de membresía inválido." }, { status: 400 });
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const monto = tipoMembresia.precio * TAMANO_PAQUETE;
+    const monto = tipoMembresia.precio * numeros.length;
     const moneda = "COP";
     const orderId = `LOTE${numeros[0]}-${Date.now().toString(36).toUpperCase()}`;
 

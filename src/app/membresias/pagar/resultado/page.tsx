@@ -83,7 +83,7 @@ function ResultadoInner() {
                       <span key={n} className="bg-[#102463]/5 text-[#102463] font-bold text-sm px-3 py-1 rounded-full">#{n}</span>
                     ))}
                   </div>
-                  <p className="text-green-600 text-xs font-semibold mb-4">🎁 Si ya sumas 5 membresías, revisa tu billetera — puede que hayas ganado una gift card.</p>
+                  <p className="text-green-600 text-xs font-semibold mb-4">🎁 Revisa tu billetera — puede que hayas ganado una gift card por acumular membresías.</p>
                 </>
               ) : (
                 <p className="text-gray-500 mb-6 text-sm">

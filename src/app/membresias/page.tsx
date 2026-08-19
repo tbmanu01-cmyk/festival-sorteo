@@ -423,8 +423,12 @@ function MembresiasInner() {
   const [esSorpresa, setEsSorpresa] = useState(false);
   const [confirmado, setConfirmado] = useState<boolean | null>(null);
 
-  const TAMANO_PAQUETE = 5;
+  // Tamaños de paquete ofrecidos al comprador — mismo set que valida el
+  // backend (comprar-lote, firma-lote). 5 sigue siendo el default porque es
+  // el umbral que da gift card gratis.
+  const OPCIONES_PAQUETE = [1, 2, 3, 4, 5, 10] as const;
   const [modoPaquete, setModoPaquete] = useState(false);
+  const [tamanoPaquete, setTamanoPaquete] = useState<number>(5);
   const [paquete, setPaquete] = useState<string[]>([]);
   const [cargandoPaquete, setCargandoPaquete] = useState(false);
   const [reservandoPaquete, setReservandoPaquete] = useState(false);
@@ -552,15 +556,23 @@ function MembresiasInner() {
     if (!session) { router.push("/login?redirect=/membresias"); return; }
     setPaquete((prev) => {
       if (prev.includes(caja.numero)) return prev.filter((n) => n !== caja.numero);
-      if (prev.length >= TAMANO_PAQUETE) return prev;
+      if (prev.length >= tamanoPaquete) return prev;
       return [...prev, caja.numero];
     });
+  };
+
+  // Cambiar el tamaño recorta el paquete ya armado si excede el nuevo tamaño,
+  // en vez de forzar a empezar de cero.
+  const cambiarTamanoPaquete = (n: number) => {
+    setTamanoPaquete(n);
+    setPaquete((prev) => prev.slice(0, n));
+    setErrorPaquete(null);
   };
 
   const completarPaqueteAleatorio = async () => {
     if (!session) { router.push("/login?redirect=/membresias"); return; }
     if (!tier) return;
-    const faltan = TAMANO_PAQUETE - paquete.length;
+    const faltan = tamanoPaquete - paquete.length;
     if (faltan <= 0) return;
     setCargandoPaquete(true);
     try {
@@ -568,7 +580,7 @@ function MembresiasInner() {
       const json = await res.json();
       if (!res.ok) return;
       const nuevos: string[] = json.numeros ?? (json.caja ? [json.caja.numero] : []);
-      setPaquete((prev) => Array.from(new Set([...prev, ...nuevos])).slice(0, TAMANO_PAQUETE));
+      setPaquete((prev) => Array.from(new Set([...prev, ...nuevos])).slice(0, tamanoPaquete));
       setModoPaquete(true);
     } finally {
       setCargandoPaquete(false);
@@ -580,12 +592,12 @@ function MembresiasInner() {
     setPaquete([]);
   };
 
-  // Reserva las 5 membresías del paquete antes de navegar a pagar-lote — antes
-  // "Continuar al pago" navegaba directo sin reservar nada, dejando los 5
+  // Reserva las membresías del paquete antes de navegar a pagar-lote — antes
+  // "Continuar al pago" navegaba directo sin reservar nada, dejando los
   // números visibles como disponibles para cualquiera mientras se decidía el pago.
   const [errorPaquete, setErrorPaquete] = useState<string | null>(null);
   const continuarPaquete = async () => {
-    if (!tier || paquete.length !== TAMANO_PAQUETE) return;
+    if (!tier || paquete.length !== tamanoPaquete) return;
     setReservandoPaquete(true);
     setErrorPaquete(null);
     try {
@@ -600,7 +612,7 @@ function MembresiasInner() {
       if (fallidos.length > 0) {
         setPaquete((prev) => prev.filter((n) => !fallidos.some((f) => f.numero === n)));
         setErrorPaquete(
-          `Las membresías ${fallidos.map((f) => "#" + f.numero).join(", ")} ya no están disponibles — se quitaron de tu paquete. Elige otras para completar los ${TAMANO_PAQUETE}.`
+          `Las membresías ${fallidos.map((f) => "#" + f.numero).join(", ")} ya no están disponibles — se quitaron de tu paquete. Elige otras para completar los ${tamanoPaquete}.`
         );
         await fetchCajas(true);
         return;
@@ -799,38 +811,54 @@ function MembresiasInner() {
           </div>
 
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-2xl p-4 mb-4">
+            <div className="mb-3">
+              <p className="font-extrabold text-green-800 text-base mb-1">Compra varias membresías en un solo pago</p>
+              <p className="text-green-700/80 text-sm mb-2.5">
+                Elige cuántas quieres{tamanoPaquete >= 5 ? " — por cada 5, te regalamos una gift card adicional." : "."}
+              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                {OPCIONES_PAQUETE.map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => cambiarTamanoPaquete(n)}
+                    className={`w-11 h-11 rounded-full text-sm font-extrabold border-2 transition-all ${
+                      tamanoPaquete === n
+                        ? "bg-green-600 border-green-600 text-white shadow-md"
+                        : "bg-white border-green-300 text-green-700 hover:border-green-500"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {!modoPaquete ? (
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div>
-                  <p className="font-extrabold text-green-800 text-base">🎁 Paga 5 y recibe una gift card de regalo</p>
-                  <p className="text-green-700/80 text-sm">Arma un paquete de 5 membresías en un solo pago y te regalamos una gift card para una membresía adicional.</p>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <button
-                    onClick={() => setModoPaquete(true)}
-                    className="bg-white border-2 border-green-600 text-green-700 hover:bg-green-50 font-bold px-4 py-2.5 rounded-full text-sm transition-all whitespace-nowrap"
-                  >
-                    Elegir yo mismo
-                  </button>
-                  <button
-                    onClick={completarPaqueteAleatorio}
-                    disabled={cargandoPaquete}
-                    className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold px-4 py-2.5 rounded-full text-sm transition-all shadow-md whitespace-nowrap flex items-center gap-1.5"
-                  >
-                    <span className={cargandoPaquete ? "animate-spin inline-block" : "inline-block"}>🎲</span>
-                    5 al azar
-                  </button>
-                </div>
+              <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-2 border-t border-green-200/70">
+                <button
+                  onClick={() => setModoPaquete(true)}
+                  className="bg-white border-2 border-green-600 text-green-700 hover:bg-green-50 font-bold px-4 py-2.5 rounded-full text-sm transition-all whitespace-nowrap"
+                >
+                  Elegir yo mismo
+                </button>
+                <button
+                  onClick={completarPaqueteAleatorio}
+                  disabled={cargandoPaquete}
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold px-4 py-2.5 rounded-full text-sm transition-all shadow-md whitespace-nowrap flex items-center gap-1.5"
+                >
+                  <span className={cargandoPaquete ? "animate-spin inline-block" : "inline-block"}>🎲</span>
+                  {tamanoPaquete} al azar
+                </button>
               </div>
             ) : (
-              <div>
+              <div className="pt-2 border-t border-green-200/70">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="font-extrabold text-green-800 text-base">Tu paquete ({paquete.length}/{TAMANO_PAQUETE})</p>
+                  <p className="font-extrabold text-green-800 text-base">Tu paquete ({paquete.length}/{tamanoPaquete})</p>
                   <button onClick={cancelarPaquete} className="text-sm text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
                 </div>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {paquete.length === 0 && (
-                    <span className="text-sm text-green-700/70">Toca hasta {TAMANO_PAQUETE} números disponibles en la grilla de abajo, o usa &quot;5 al azar&quot;.</span>
+                    <span className="text-sm text-green-700/70">Toca hasta {tamanoPaquete} números disponibles en la grilla de abajo, o usa &quot;{tamanoPaquete} al azar&quot;.</span>
                   )}
                   {paquete.map((n) => (
                     <span key={n} className="inline-flex items-center gap-1.5 bg-white border border-green-400 rounded-full pl-3 pr-1.5 py-1 text-sm font-bold text-green-800">
@@ -849,25 +877,25 @@ function MembresiasInner() {
                   <p className="text-red-600 text-xs font-semibold mb-3">⚠ {errorPaquete}</p>
                 )}
                 <div className="flex items-center justify-between gap-3 flex-wrap">
-                  {paquete.length < TAMANO_PAQUETE ? (
+                  {paquete.length < tamanoPaquete ? (
                     <button
                       onClick={completarPaqueteAleatorio}
                       disabled={cargandoPaquete}
                       className="text-sm font-semibold text-green-700 hover:text-green-900 underline disabled:opacity-60"
                     >
-                      🎲 Completar con {TAMANO_PAQUETE - paquete.length} al azar
+                      🎲 Completar con {tamanoPaquete - paquete.length} al azar
                     </button>
                   ) : <span />}
-                  {paquete.length === TAMANO_PAQUETE ? (
+                  {paquete.length === tamanoPaquete ? (
                     <button
                       onClick={continuarPaquete}
                       disabled={reservandoPaquete}
                       className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold px-6 py-2.5 rounded-full text-sm shadow-md transition-all"
                     >
-                      {reservandoPaquete ? "Reservando..." : `Continuar al pago — $${(precioCaja * TAMANO_PAQUETE).toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
+                      {reservandoPaquete ? "Reservando..." : `Continuar al pago — $${(precioCaja * tamanoPaquete).toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
                     </button>
                   ) : (
-                    <span className="text-sm text-green-700/70">Selecciona {TAMANO_PAQUETE - paquete.length} más</span>
+                    <span className="text-sm text-green-700/70">Selecciona {tamanoPaquete - paquete.length} más</span>
                   )}
                 </div>
               </div>

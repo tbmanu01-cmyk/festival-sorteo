@@ -14,6 +14,9 @@ interface TipoMembresiaAPI {
   precio: number;
 }
 
+// Mismo set de tamaños ofrecidos en el selector de /membresias.
+const TAMANOS_VALIDOS = [1, 2, 3, 4, 5, 10];
+
 export default function PaginaPagarLote() {
   return (
     <Suspense fallback={null}>
@@ -43,16 +46,16 @@ function PaginaPagarLoteInner() {
       router.push(`/login?redirect=/membresias`);
       return;
     }
-    if (numeros.length !== 5 || !tier) {
+    if (!TAMANOS_VALIDOS.includes(numeros.length) || !tier) {
       router.push("/membresias");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, tier, router]);
 
-  // Reserva (o renueva) las 5 membresías al llegar aquí — cubre navegación
-  // directa/actualización de página sin pasar por "Continuar al pago".
+  // Reserva (o renueva) las membresías del paquete al llegar aquí — cubre
+  // navegación directa/actualización de página sin pasar por "Continuar al pago".
   useEffect(() => {
-    if (status !== "authenticated" || numeros.length !== 5 || !tier) return;
+    if (status !== "authenticated" || !TAMANOS_VALIDOS.includes(numeros.length) || !tier) return;
     let cancelado = false;
     setReservando(true);
     Promise.all(
@@ -94,9 +97,10 @@ function PaginaPagarLoteInner() {
   }, [status]);
 
   if (status === "loading" || !tipoMembresia) return null;
-  if (numeros.length !== 5 || !tier) return null;
+  if (!TAMANOS_VALIDOS.includes(numeros.length) || !tier) return null;
 
-  const monto = tipoMembresia.precio * 5;
+  const monto = tipoMembresia.precio * numeros.length;
+  const otorgaGiftCard = numeros.length >= 5;
   const alcanzaConSaldo = saldo !== null && saldo >= monto;
 
   async function pagarConSaldo() {
@@ -136,7 +140,10 @@ function PaginaPagarLoteInner() {
               </svg>
               Volver a membresías
             </Link>
-            <p className="text-blue-200 text-sm mb-1">🎁 Paquete de 5 {tipoMembresia.nombre} — recibe una gift card de regalo</p>
+            <p className="text-blue-200 text-sm mb-1">
+              {otorgaGiftCard ? "🎁 " : ""}Paquete de {numeros.length} {tipoMembresia.nombre}
+              {otorgaGiftCard ? " — recibe una gift card de regalo" : ""}
+            </p>
             <div className="flex flex-wrap gap-2 my-3">
               {numeros.map((n) => (
                 <span key={n} className="bg-white/10 border border-white/20 rounded-full px-3 py-1 text-lg font-extrabold text-[#ffbd1f]">#{n}</span>
@@ -150,7 +157,7 @@ function PaginaPagarLoteInner() {
           {reservando ? (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 text-center">
               <div className="w-10 h-10 border-4 border-gray-200 border-t-[#102463] rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-gray-500 text-sm">Reservando tus 5 membresías...</p>
+              <p className="text-gray-500 text-sm">Reservando tus {numeros.length} membresías...</p>
             </div>
           ) : errorReserva ? (
             <div className="bg-white rounded-2xl shadow-sm border border-red-100 p-6 mb-6 text-center">
@@ -184,7 +191,7 @@ function PaginaPagarLoteInner() {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">¡Paquete comprado!</h3>
               <p className="text-gray-600 text-sm mb-2">{resultadoSaldo.mensaje}</p>
-              <p className="text-green-600 text-xs font-semibold mb-5">🎁 Si ya sumas 5 membresías, revisa tu billetera — puede que hayas ganado una gift card.</p>
+              <p className="text-green-600 text-xs font-semibold mb-5">🎁 Revisa tu billetera — puede que hayas ganado una gift card por acumular membresías.</p>
               <Link
                 href="/dashboard"
                 className="inline-block bg-[#102463] hover:bg-[#173592] text-white font-bold py-3 px-6 rounded-full transition-all"
@@ -239,7 +246,7 @@ function PaginaPagarLoteInner() {
                   {alcanzaConSaldo ? "O paga con tarjeta, PSE o Nequi" : "Pago con tarjeta, PSE o Nequi"}
                 </h2>
                 <p className="text-gray-500 text-sm mb-5">
-                  Pago procesado por Bold. Tus 5 membresías se activan automáticamente al confirmarse.
+                  Pago procesado por Bold. Tus {numeros.length} membresías se activan automáticamente al confirmarse.
                 </p>
                 <BotonPagoBold numeros={numeros} tier={tier} />
               </div>
