@@ -181,6 +181,11 @@ model Caja {
   tipoSorteo      TipoSorteo     @default(PRINCIPAL)
   granSorteoId    String?
   tipoMembresiaId String?
+  // Dinero real cobrado en la venta vigente (excluye lo cubierto por gift
+  // card). null = disponible/reservada, o vendida antes de este campo
+  // (ventas previas al 19 ago 2026, sin dato histórico — no asumir $0 ni
+  // precio completo). 0 = cubierta 100% con gift card, sin dinero real.
+  montoPagado     Float?
 
   user            User?          @relation(fields: [userId], references: [id])
   granSorteo      GranSorteo?    @relation(fields: [granSorteoId], references: [id])
@@ -274,13 +279,18 @@ model Temporada {
 }
 
 model Premio {
-  id         String          @id @default(cuid())
-  sorteoId   String
-  userId     String
-  categoria  CategoriaPremio
-  monto      Float
-  pagado     Boolean         @default(false)
-  numeroCaja String?
+  id              String          @id @default(cuid())
+  sorteoId        String
+  userId          String
+  categoria       CategoriaPremio
+  monto           Float
+  pagado          Boolean         @default(false)
+  numeroCaja      String?
+  // Snapshot de Caja.montoPagado tomado EN EL MOMENTO del sorteo — la Caja
+  // ganadora se resetea a DISPONIBLE para la siguiente temporada, así que
+  // leerlo después desde Caja ya no reflejaría lo que pagó quien ganó.
+  // null = sin dato (premios de antes de este campo, o Caja sin montoPagado).
+  montoPagadoCaja Float?
 
   sorteo     Sorteo          @relation(fields: [sorteoId], references: [id])
   user       User            @relation(fields: [userId], references: [id])

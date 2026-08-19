@@ -14,6 +14,7 @@ export async function GET() {
       numero: true,
       fechaCompra: true,
       idCompra: true,
+      montoPagado: true,
       tipoMembresia: { select: { slug: true, nombre: true, precio: true } },
       user: { select: { nombre: true, apellido: true, correo: true, celular: true, ciudad: true } },
     },

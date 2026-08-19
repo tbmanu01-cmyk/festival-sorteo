@@ -123,7 +123,7 @@ export async function POST(
           numero,
           OR: [{ estado: "DISPONIBLE" }, { estado: "RESERVADA", userId }],
         },
-        data: { estado: "VENDIDA", userId, fechaCompra: new Date(), idCompra },
+        data: { estado: "VENDIDA", userId, fechaCompra: new Date(), idCompra, montoPagado: montoCobrado },
       });
       if (cajaVendida.count === 0) throw new Error("CAJA_NO_DISPONIBLE");
 

@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
             numero,
             OR: [{ estado: "DISPONIBLE" }, { estado: "RESERVADA", userId }],
           },
-          data: { estado: "VENDIDA", userId, fechaCompra: new Date(), idCompra },
+          data: { estado: "VENDIDA", userId, fechaCompra: new Date(), idCompra, montoPagado: precioCaja },
         });
         if (cajaVendida.count === 0) throw new Error(`CAJA_NO_DISPONIBLE:${numero}`);
 

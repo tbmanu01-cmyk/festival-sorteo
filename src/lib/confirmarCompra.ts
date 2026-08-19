@@ -30,7 +30,7 @@ export async function confirmarCompraMembresia(opts: {
     // pago PENDIENTE para revisión manual del admin en vez de perder el dinero).
     const cajaVendida = await tx.caja.updateMany({
       where: { tipoMembresiaId, numero: numeroCaja, estado: { not: "VENDIDA" } },
-      data: { estado: "VENDIDA", userId: usuarioId, fechaCompra: new Date(), idCompra },
+      data: { estado: "VENDIDA", userId: usuarioId, fechaCompra: new Date(), idCompra, montoPagado: monto },
     });
     if (cajaVendida.count === 0) throw new Error(`La membresía #${numeroCaja} ya fue vendida.`);
 
@@ -96,7 +96,7 @@ export async function confirmarCompraMembresiaLote(opts: {
       const idCompra = `${idLote}-${numero}`;
       const cajaVendida = await tx.caja.updateMany({
         where: { tipoMembresiaId, numero, estado: { not: "VENDIDA" } },
-        data: { estado: "VENDIDA", userId: usuarioId, fechaCompra: new Date(), idCompra },
+        data: { estado: "VENDIDA", userId: usuarioId, fechaCompra: new Date(), idCompra, montoPagado: montoPorUnidad },
       });
       if (cajaVendida.count === 0) throw new Error(`La membresía #${numero} ya fue vendida.`);
 

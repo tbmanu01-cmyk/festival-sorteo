@@ -12,6 +12,7 @@ interface CajaVenta {
   numero: string;
   fechaCompra: string | null;
   idCompra: string | null;
+  montoPagado: number | null;
   tipoMembresia: { slug: string; nombre: string; precio: number };
   user: { nombre: string; apellido: string; correo: string; celular: string; ciudad: string } | null;
 }
@@ -22,6 +23,7 @@ interface PremioReporte {
   monto: number;
   pagado: boolean;
   numeroCaja: string | null;
+  montoPagadoCaja: number | null;
   user: { nombre: string; apellido: string; correo: string; celular: string };
 }
 
@@ -140,20 +142,32 @@ function ReporteVentas() {
       .finally(() => setCargando(false));
   }, []);
 
-  // Recaudo real = suma del precio de cada membresía según SU tier — antes
-  // se multiplicaba el total por $10.000 fijo (precio de la caja original de
-  // antes de existir los 3 niveles 10k/25k/50k), dando un recaudo incorrecto
-  // en cuanto hay ventas de más de un tier o el precio ya no es $10.000.
-  const recaudoReal = datos ? datos.cajas.reduce((sum, c) => sum + (c.tipoMembresia?.precio ?? 0), 0) : 0;
+  // Recaudo confirmado = suma de Caja.montoPagado (dinero real cobrado, excluye
+  // lo cubierto por gift card) — antes se multiplicaba el total por $10.000 fijo
+  // (precio de la caja original de antes de existir los 3 niveles 10k/25k/50k),
+  // y luego por el precio de tabla sin distinguir ventas gratuitas por gift card.
+  // Las ventas de antes del 19 ago 2026 no tienen este dato (montoPagado null) —
+  // se cuentan aparte en vez de asumir que fueron pagadas completas.
+  const conDato = datos ? datos.cajas.filter((c) => c.montoPagado !== null) : [];
+  const sinDato = datos ? datos.cajas.length - conDato.length : 0;
+  const recaudoConfirmado = conDato.reduce((sum, c) => sum + (c.montoPagado ?? 0), 0);
+  const gratuitas = conDato.filter((c) => c.montoPagado === 0).length;
+
+  function montoPagadoTexto(c: CajaVenta) {
+    if (c.montoPagado === null) return "Sin dato";
+    if (c.montoPagado === 0) return "Gratis (gift card)";
+    return `$${c.montoPagado.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`;
+  }
 
   function exportarCSV() {
     if (!datos) return;
-    descargarCSV("reporte_ventas", ["#", "Número Membresía", "Membresía", "Nombre", "Correo", "Celular", "Ciudad", "Fecha Compra", "ID Compra"], datos.cajas.map((c, i) => [
+    descargarCSV("reporte_ventas", ["#", "Número Membresía", "Membresía", "Nombre", "Correo", "Celular", "Ciudad", "Fecha Compra", "ID Compra", "Monto pagado"], datos.cajas.map((c, i) => [
       i + 1, c.numero, c.tipoMembresia?.nombre ?? "—",
       c.user ? `${c.user.nombre} ${c.user.apellido}` : "—",
       c.user?.correo ?? "—", c.user?.celular ?? "—", c.user?.ciudad ?? "—",
       c.fechaCompra ? new Date(c.fechaCompra).toLocaleString("es-CO") : "—",
       c.idCompra ?? "—",
+      montoPagadoTexto(c),
     ]));
   }
 
@@ -168,11 +182,13 @@ function ReporteVentas() {
       <td>${c.user?.ciudad ?? "—"}</td>
       <td>${c.fechaCompra ? new Date(c.fechaCompra).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" }) : "—"}</td>
       <td style="font-family:monospace;font-size:10px;">${c.idCompra ?? "—"}</td>
+      <td>${montoPagadoTexto(c)}</td>
     </tr>`).join("");
     abrirPDF(
       "Reporte de Ventas",
-      `Total vendidas: ${datos.total} membresías · Recaudo: $${recaudoReal.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP`,
-      `<table><thead><tr><th>#</th><th>Membresía</th><th>Tier</th><th>Comprador</th><th>Correo</th><th>Celular</th><th>Ciudad</th><th>Fecha</th><th>ID Compra</th></tr></thead><tbody>${filas}</tbody></table>`
+      `Total vendidas: ${datos.total} membresías · Recaudo confirmado: $${recaudoConfirmado.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP` +
+      (sinDato > 0 ? ` · ${sinDato} sin dato histórico` : ""),
+      `<table><thead><tr><th>#</th><th>Membresía</th><th>Tier</th><th>Comprador</th><th>Correo</th><th>Celular</th><th>Ciudad</th><th>Fecha</th><th>ID Compra</th><th>Monto pagado</th></tr></thead><tbody>${filas}</tbody></table>`
     );
   }
 
@@ -185,8 +201,14 @@ function ReporteVentas() {
         <div>
           <p className="text-sm text-gray-500">
             Total: <strong>{datos.total}</strong> membresías vendidas ·{" "}
-            Recaudo: <strong className="text-green-600">${recaudoReal.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</strong>
+            Recaudo confirmado: <strong className="text-green-600">${recaudoConfirmado.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</strong>
+            {gratuitas > 0 && <> · <strong className="text-[#F5A623]">{gratuitas}</strong> gratuitas (gift card)</>}
           </p>
+          {sinDato > 0 && (
+            <p className="text-xs text-gray-400 mt-0.5">
+              {sinDato} ventas de antes del 19 ago 2026 sin dato de monto pagado (no se incluyen en el recaudo confirmado)
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
           <button onClick={exportarCSV} className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
@@ -212,6 +234,7 @@ function ReporteVentas() {
                 <th className="px-4 py-3 font-semibold">Ciudad</th>
                 <th className="px-4 py-3 font-semibold">Fecha</th>
                 <th className="px-4 py-3 font-semibold text-xs font-mono">ID Compra</th>
+                <th className="px-4 py-3 font-semibold">Monto pagado</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -228,6 +251,15 @@ function ReporteVentas() {
                     {c.fechaCompra ? new Date(c.fechaCompra).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" }) : "—"}
                   </td>
                   <td className="px-4 py-3 text-gray-300 font-mono text-xs max-w-xs truncate">{c.idCompra ?? "—"}</td>
+                  <td className="px-4 py-3 text-xs">
+                    {c.montoPagado === null ? (
+                      <span className="text-gray-300">Sin dato</span>
+                    ) : c.montoPagado === 0 ? (
+                      <span className="text-[#F5A623] font-semibold">Gratis (gift card)</span>
+                    ) : (
+                      <span className="text-green-600 font-semibold">${c.montoPagado.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -295,18 +327,24 @@ function ReporteSorteo() {
     }
   }
 
+  function origenTexto(p: PremioReporte) {
+    if (p.montoPagadoCaja === null) return "Sin dato";
+    return p.montoPagadoCaja === 0 ? "Gift card" : "Compra real";
+  }
+
   function exportarCSV() {
     if (!seleccionado) return;
     const s = seleccionado;
     descargarCSV(
       `seleccion_${new Date(s.fecha).toISOString().slice(0, 10)}`,
-      ["Categoría", "N° Membresía", "Ganador", "Correo", "Celular", "Monto Premio", "Pagado"],
+      ["Categoría", "N° Membresía", "Ganador", "Correo", "Celular", "Monto Premio", "Origen membresía", "Pagado"],
       s.premios.map((p) => [
         NOMBRE_CAT[p.categoria] ?? p.categoria,
         p.numeroCaja ?? "—",
         `${p.user.nombre} ${p.user.apellido}`,
         p.user.correo, p.user.celular,
         `$${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}`,
+        origenTexto(p),
         p.pagado ? "Sí" : "No",
       ])
     );
@@ -327,8 +365,8 @@ function ReporteSorteo() {
         <tr><td style="padding:7px 16px;">Ganancia operación</td><td style="padding:7px 16px;font-weight:700;">$${s.ganancia.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td></tr>
       </table>
       <h2 style="color:#1B4F8A;">Ganadores</h2>
-      <table><thead><tr><th>Categoría</th><th>N° Membresía</th><th>Nombre</th><th>Correo</th><th>Celular</th><th>Premio</th><th>Pagado</th></tr></thead>
-      <tbody>${s.premios.map((p) => `<tr><td>${NOMBRE_CAT[p.categoria] ?? p.categoria}</td><td style="font-family:monospace;font-weight:700;">${p.numeroCaja ?? "—"}</td><td>${p.user.nombre} ${p.user.apellido}</td><td>${p.user.correo}</td><td>${p.user.celular}</td><td>$${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td><td>${p.pagado ? "Sí" : "No"}</td></tr>`).join("")}</tbody></table>`;
+      <table><thead><tr><th>Categoría</th><th>N° Membresía</th><th>Nombre</th><th>Correo</th><th>Celular</th><th>Premio</th><th>Origen membresía</th><th>Pagado</th></tr></thead>
+      <tbody>${s.premios.map((p) => `<tr><td>${NOMBRE_CAT[p.categoria] ?? p.categoria}</td><td style="font-family:monospace;font-weight:700;">${p.numeroCaja ?? "—"}</td><td>${p.user.nombre} ${p.user.apellido}</td><td>${p.user.correo}</td><td>${p.user.celular}</td><td>$${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td><td>${origenTexto(p)}</td><td>${p.pagado ? "Sí" : "No"}</td></tr>`).join("")}</tbody></table>`;
     abrirPDF(
       "Reporte de Selección Aleatoria",
       `Números ganadores: ${nums.join(", ")} · Fecha: ${new Date(s.fecha).toLocaleDateString("es-CO")}`,
@@ -492,6 +530,47 @@ function ReporteSorteo() {
             ))}
           </div>
 
+          {/* Balance: ganadores por compra real vs. por gift card gratuita —
+              la membresía ganadora se resetea a DISPONIBLE tras el sorteo, así
+              que este dato viene del snapshot Premio.montoPagadoCaja (tomado en
+              el momento del sorteo), no de Caja (que ya cambió de dueño). */}
+          {(() => {
+            const reales = s.premios.filter((p) => p.montoPagadoCaja !== null && p.montoPagadoCaja > 0);
+            const gratis = s.premios.filter((p) => p.montoPagadoCaja === 0);
+            const sinDatoP = s.premios.filter((p) => p.montoPagadoCaja === null);
+            const montoReales = reales.reduce((sum, p) => sum + p.monto, 0);
+            const montoGratis = gratis.reduce((sum, p) => sum + p.monto, 0);
+            if (s.premios.length === 0) return null;
+            return (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
+                <h3 className="font-bold text-gray-800 mb-3">Balance: compra real vs. gift card gratuita</h3>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <p className="text-xs text-gray-500 mb-1">Ganaron con membresía comprada</p>
+                    <p className="text-2xl font-extrabold text-green-600">{reales.length}</p>
+                    <p className="text-xs text-gray-500 mt-1">${montoReales.toLocaleString("es-CO", { maximumFractionDigits: 0 })} en premios</p>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                    <p className="text-xs text-gray-500 mb-1">Ganaron con membresía gratis (gift card)</p>
+                    <p className="text-2xl font-extrabold text-[#F5A623]">{gratis.length}</p>
+                    <p className="text-xs text-gray-500 mt-1">${montoGratis.toLocaleString("es-CO", { maximumFractionDigits: 0 })} en premios</p>
+                  </div>
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <p className="text-xs text-gray-500 mb-1">Sin dato histórico</p>
+                    <p className="text-2xl font-extrabold text-gray-400">{sinDatoP.length}</p>
+                    <p className="text-xs text-gray-400 mt-1">de antes del 19 ago 2026</p>
+                  </div>
+                </div>
+                {(montoReales + montoGratis) > 0 && (
+                  <p className="text-xs text-gray-500 mt-3">
+                    El {((montoGratis / (montoReales + montoGratis)) * 100).toFixed(1)}% del fondo de premios pagado en esta selección
+                    (con dato conocido) fue a ganadores que no pagaron dinero real por su membresía.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Tabla de ganadores */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="px-5 py-3 border-b border-gray-100">
@@ -507,6 +586,7 @@ function ReporteSorteo() {
                     <th className="px-4 py-3 font-semibold">Correo</th>
                     <th className="px-4 py-3 font-semibold">Celular</th>
                     <th className="px-4 py-3 font-semibold">Premio</th>
+                    <th className="px-4 py-3 font-semibold">Origen membresía</th>
                     <th className="px-4 py-3 font-semibold">Estado</th>
                   </tr>
                 </thead>
@@ -526,6 +606,15 @@ function ReporteSorteo() {
                       <td className="px-4 py-3 text-gray-500 text-xs">{p.user.correo}</td>
                       <td className="px-4 py-3 text-gray-500 text-xs">{p.user.celular}</td>
                       <td className="px-4 py-3 font-bold text-[#F5A623]">${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td>
+                      <td className="px-4 py-3">
+                        {p.montoPagadoCaja === null ? (
+                          <span className="text-xs text-gray-400">Sin dato</span>
+                        ) : p.montoPagadoCaja === 0 ? (
+                          <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-full">Gift card</span>
+                        ) : (
+                          <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">Compra real</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${p.pagado ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
                           {p.pagado ? "Pagado" : "Pendiente"}

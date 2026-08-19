@@ -6,6 +6,7 @@
 interface CajaConUser {
   numero: string;
   userId: string | null;
+  montoPagado: number | null;
 }
 
 type Resultado =
@@ -45,7 +46,7 @@ export async function ejecutarSeleccionPrincipal(opts: {
 
   const cajasVendidas: CajaConUser[] = await prisma.caja.findMany({
     where: { estado: "VENDIDA", userId: { not: null }, tipoSorteo: "PRINCIPAL", tipoMembresiaId },
-    select: { numero: true, userId: true },
+    select: { numero: true, userId: true, montoPagado: true },
   });
 
   if (cajasVendidas.length === 0) {
@@ -138,6 +139,7 @@ export async function ejecutarSeleccionPrincipal(opts: {
         categoria: "CUATRO_CIFRAS" as const,
         monto: i === all4Winners.length - 1 ? monto4Last : monto4Early,
         numeroCaja: c.numero,
+        montoPagadoCaja: c.montoPagado,
       })),
       ...g3.map((c) => ({
         sorteoId: nuevoSorteo.id,
@@ -145,6 +147,7 @@ export async function ejecutarSeleccionPrincipal(opts: {
         categoria: "TRES_CIFRAS" as const,
         monto: monto3,
         numeroCaja: c.numero,
+        montoPagadoCaja: c.montoPagado,
       })),
       ...g2.map((c) => ({
         sorteoId: nuevoSorteo.id,
@@ -152,6 +155,7 @@ export async function ejecutarSeleccionPrincipal(opts: {
         categoria: "DOS_CIFRAS" as const,
         monto: monto2,
         numeroCaja: c.numero,
+        montoPagadoCaja: c.montoPagado,
       })),
       ...g1.map((c) => ({
         sorteoId: nuevoSorteo.id,
@@ -159,6 +163,7 @@ export async function ejecutarSeleccionPrincipal(opts: {
         categoria: "UNA_CIFRA" as const,
         monto: monto1,
         numeroCaja: c.numero,
+        montoPagadoCaja: c.montoPagado,
       })),
     ];
 
