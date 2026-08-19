@@ -783,16 +783,21 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
     if (res.ok) cargarTodo();
   }
 
+  // Meta acumulada (no un contador que reinicia a 0 al completar el ciclo) —
+  // así alguien con 25 referidos ve "25 de 30", no "0 de 5", que confundía
+  // pensando que el progreso se había perdido al ganar la gift card.
   const comprados = datos?.comprados ?? 0;
   const enCiclo = comprados % 5;
+  const proximaMeta = Math.floor(comprados / 5) * 5 + 5;
   const barPct = (enCiclo / 5) * 100;
-  const faltan = enCiclo === 0 ? 5 : 5 - enCiclo;
+  const faltan = proximaMeta - comprados;
 
   const mpgc = datos?.mpgc ?? 5;
   const comprasPropias = datos?.comprasPropias ?? 0;
   const enCicloPropio = comprasPropias % mpgc;
+  const proximaMetaPropia = Math.floor(comprasPropias / mpgc) * mpgc + mpgc;
   const barPctPropio = (enCicloPropio / mpgc) * 100;
-  const faltanPropias = enCicloPropio === 0 ? mpgc : mpgc - enCicloPropio;
+  const faltanPropias = proximaMetaPropia - comprasPropias;
 
   const gcDisponibles = giftCards.filter((g) => g.estado === "DISPONIBLE");
 
@@ -912,8 +917,7 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
           {!cargando && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-bold text-gray-700">{enCiclo} de 5 amigos han comprado</span>
-                {comprados > 0 && <span className="text-xs text-gray-400">{comprados} en total</span>}
+                <span className="text-sm font-bold text-gray-700">{comprados} de {proximaMeta} amigos han comprado</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
                 <div
@@ -935,8 +939,7 @@ function SeccionReferidos({ cuentaConfirmada }: { cuentaConfirmada: boolean }) {
           {!cargando && (
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-bold text-gray-700">{enCicloPropio} de {mpgc} membresías propias</span>
-                {comprasPropias > 0 && <span className="text-xs text-gray-400">{comprasPropias} en total</span>}
+                <span className="text-sm font-bold text-gray-700">{comprasPropias} de {proximaMetaPropia} membresías propias</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
                 <div
