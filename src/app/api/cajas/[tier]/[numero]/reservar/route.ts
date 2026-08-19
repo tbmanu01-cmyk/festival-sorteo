@@ -74,7 +74,12 @@ export async function POST(
       return NextResponse.json({ mensaje: "Membresía no encontrada." }, { status: 404 });
     }
 
-    if (caja.estado !== "DISPONIBLE") {
+    // Reservar de nuevo el mismo número que ya tengo RESERVADA renueva el
+    // conteo de 15 min en vez de fallar — esto permite reservar automáticamente
+    // al seleccionar (modal) y de nuevo al llegar a la página de pago sin que
+    // la segunda llamada choque contra la primera.
+    const esReservadaMia = caja.estado === "RESERVADA" && caja.userId === userId;
+    if (caja.estado !== "DISPONIBLE" && !esReservadaMia) {
       return NextResponse.json(
         { mensaje: "Esta membresía ya está reservada o comprada. Elige otro número." },
         { status: 409 }
@@ -88,7 +93,11 @@ export async function POST(
     // no alcanza a evitar la carrera por sí solo; count===0 significa que
     // alguien más ya la tomó entre el chequeo y este update.
     const resultado = await prisma.caja.updateMany({
-      where: { tipoMembresiaId: tipoMembresia.id, numero, estado: "DISPONIBLE" },
+      where: {
+        tipoMembresiaId: tipoMembresia.id,
+        numero,
+        OR: [{ estado: "DISPONIBLE" }, { estado: "RESERVADA", userId }],
+      },
       data: {
         estado: "RESERVADA",
         userId,

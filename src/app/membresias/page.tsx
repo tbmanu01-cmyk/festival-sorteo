@@ -47,15 +47,16 @@ interface ModalProps {
   giftCardCodigo: string | null;
   esSorpresa: boolean;
   onCerrar: () => void;
-  onConfirmar: (numero: string) => Promise<void>;
   onComprarConGiftCard: (numero: string) => Promise<void>;
   cargando: boolean;
   resultado: { ok: boolean; mensaje: string; expira?: string; compra?: boolean } | null;
   freezeActivo: boolean;
   freezeMinutos: number | null;
+  autoReservando: boolean;
+  expiraReserva: string | null;
 }
 
-function ModalReserva({ caja, tier, precio, giftCardId, giftCardValor, giftCardCodigo, esSorpresa, onCerrar, onConfirmar, onComprarConGiftCard, cargando, resultado, freezeActivo, freezeMinutos }: ModalProps) {
+function ModalReserva({ caja, tier, precio, giftCardId, giftCardValor, giftCardCodigo, esSorpresa, onCerrar, onComprarConGiftCard, cargando, resultado, freezeActivo, freezeMinutos, autoReservando, expiraReserva }: ModalProps) {
   const [confirmandoPago, setConfirmandoPago] = useState(false);
   if (!caja) return null;
   const descuento = giftCardId ? Math.min(giftCardValor, precio) : 0;
@@ -70,7 +71,12 @@ function ModalReserva({ caja, tier, precio, giftCardId, giftCardValor, giftCardC
         className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        {resultado ? (
+        {autoReservando ? (
+          <div className="text-center py-8">
+            <div className="w-10 h-10 border-4 border-gray-200 border-t-[#102463] rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-500 text-sm">Reservando la membresía #{caja.numero}...</p>
+          </div>
+        ) : resultado ? (
           resultado.ok ? (
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -175,8 +181,12 @@ function ModalReserva({ caja, tier, precio, giftCardId, giftCardValor, giftCardC
                 </>
               )}
               <div className="flex justify-between text-sm pt-1">
-                <span className="text-gray-500">Reserva válida por</span>
-                <span className="font-bold text-orange-600">15 minutos</span>
+                <span className="text-gray-500">Reservada hasta las</span>
+                <span className="font-bold text-orange-600">
+                  {expiraReserva
+                    ? new Date(expiraReserva).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })
+                    : "—"}
+                </span>
               </div>
             </div>
 
@@ -187,13 +197,6 @@ function ModalReserva({ caja, tier, precio, giftCardId, giftCardValor, giftCardC
                 className="flex-1 border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-semibold py-3 rounded-xl transition-colors disabled:opacity-50 text-sm"
               >
                 Volver
-              </button>
-              <button
-                onClick={() => onConfirmar(caja.numero)}
-                disabled={cargando || freezeActivo}
-                className="flex-1 border-2 border-[#102463] text-[#102463] hover:bg-[#102463]/5 font-bold py-3 rounded-xl transition-all disabled:opacity-50 text-sm"
-              >
-                {cargando ? "..." : "Reservar"}
               </button>
               {giftCardId ? (
                 <button
@@ -409,6 +412,13 @@ function MembresiasInner() {
     expira?: string;
     compra?: boolean;
   } | null>(null);
+  // Reserva automática al abrir el modal (antes solo se reservaba si el
+  // usuario pulsaba un botón "Reservar" aparte de "Pagar" — casi nadie lo
+  // usaba, así que el número quedaba disponible para cualquiera mientras
+  // alguien lo tenía seleccionado o estaba decidiendo cómo pagar).
+  const [autoReservando, setAutoReservando] = useState(false);
+  const [expiraReserva, setExpiraReserva] = useState<string | null>(null);
+  const [reservaConfirmada, setReservaConfirmada] = useState(false);
   const [buscandoAleatoria, setBuscandoAleatoria] = useState(false);
   const [esSorpresa, setEsSorpresa] = useState(false);
   const [confirmado, setConfirmado] = useState<boolean | null>(null);
@@ -417,6 +427,7 @@ function MembresiasInner() {
   const [modoPaquete, setModoPaquete] = useState(false);
   const [paquete, setPaquete] = useState<string[]>([]);
   const [cargandoPaquete, setCargandoPaquete] = useState(false);
+  const [reservandoPaquete, setReservandoPaquete] = useState(false);
 
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -530,6 +541,8 @@ function MembresiasInner() {
       setEsSorpresa(true);
       setCajaSeleccionada({ numero: json.caja.numero, estado: "DISPONIBLE" });
       setResultadoReserva(null);
+      setExpiraReserva(null);
+      setReservaConfirmada(false);
     } finally {
       setBuscandoAleatoria(false);
     }
@@ -567,6 +580,37 @@ function MembresiasInner() {
     setPaquete([]);
   };
 
+  // Reserva las 5 membresías del paquete antes de navegar a pagar-lote — antes
+  // "Continuar al pago" navegaba directo sin reservar nada, dejando los 5
+  // números visibles como disponibles para cualquiera mientras se decidía el pago.
+  const [errorPaquete, setErrorPaquete] = useState<string | null>(null);
+  const continuarPaquete = async () => {
+    if (!tier || paquete.length !== TAMANO_PAQUETE) return;
+    setReservandoPaquete(true);
+    setErrorPaquete(null);
+    try {
+      const resultados = await Promise.all(
+        paquete.map((numero) =>
+          fetch(`/api/cajas/${tier}/${numero}/reservar`, { method: "POST" })
+            .then(async (res) => ({ numero, ok: res.ok, json: await res.json() }))
+            .catch(() => ({ numero, ok: false, json: { mensaje: "Error de conexión." } }))
+        )
+      );
+      const fallidos = resultados.filter((r) => !r.ok);
+      if (fallidos.length > 0) {
+        setPaquete((prev) => prev.filter((n) => !fallidos.some((f) => f.numero === n)));
+        setErrorPaquete(
+          `Las membresías ${fallidos.map((f) => "#" + f.numero).join(", ")} ya no están disponibles — se quitaron de tu paquete. Elige otras para completar los ${TAMANO_PAQUETE}.`
+        );
+        await fetchCajas(true);
+        return;
+      }
+      router.push(`/membresias/pagar-lote?tier=${tier}&numeros=${paquete.join(",")}`);
+    } finally {
+      setReservandoPaquete(false);
+    }
+  };
+
   const abrirModal = (caja: Caja) => {
     if (!session) {
       router.push("/login?redirect=/membresias");
@@ -575,31 +619,51 @@ function MembresiasInner() {
     setEsSorpresa(false);
     setCajaSeleccionada(caja);
     setResultadoReserva(null);
+    setExpiraReserva(null);
+    setReservaConfirmada(false);
   };
+
+  // Reserva automática apenas se abre el modal (selección manual o "sorpresa") —
+  // desde este momento el número queda bloqueado 15 min para cualquier otra
+  // persona, en vez de quedar "disponible" mientras el usuario decide cómo pagar.
+  useEffect(() => {
+    if (!cajaSeleccionada || !tier) return;
+    let cancelado = false;
+    setAutoReservando(true);
+    setReservaConfirmada(false);
+    fetch(`/api/cajas/${tier}/${cajaSeleccionada.numero}/reservar`, { method: "POST" })
+      .then(async (res) => {
+        const json = await res.json();
+        if (cancelado) return;
+        if (!res.ok) {
+          setResultadoReserva({ ok: false, mensaje: json.mensaje });
+        } else {
+          setExpiraReserva(json.expira ?? null);
+          setReservaConfirmada(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelado) setResultadoReserva({ ok: false, mensaje: "Error de conexión. Intenta nuevamente." });
+      })
+      .finally(() => {
+        if (!cancelado) setAutoReservando(false);
+      });
+    return () => { cancelado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cajaSeleccionada?.numero, tier]);
 
   const cerrarModal = () => {
     if (resultadoReserva?.ok) fetchCajas(true);
+    // Si se alcanzó a reservar pero el usuario no completó la compra, liberar
+    // de inmediato en vez de dejar el número bloqueado 15 min sin necesidad.
+    if (reservaConfirmada && !resultadoReserva?.ok && tier && cajaSeleccionada) {
+      fetch(`/api/cajas/${tier}/${cajaSeleccionada.numero}/reservar`, { method: "DELETE" }).catch(() => undefined);
+    }
     setCajaSeleccionada(null);
     setResultadoReserva(null);
+    setExpiraReserva(null);
+    setReservaConfirmada(false);
     setEsSorpresa(false);
-  };
-
-  const confirmarReserva = async (numero: string) => {
-    if (!tier) return;
-    setReservandoCaja(true);
-    try {
-      const res = await fetch(`/api/cajas/${tier}/${numero}/reservar`, { method: "POST" });
-      const json = await res.json();
-      setResultadoReserva({
-        ok: res.ok,
-        mensaje: json.mensaje,
-        expira: json.expira,
-      });
-    } catch {
-      setResultadoReserva({ ok: false, mensaje: "Error de conexión. Intenta nuevamente." });
-    } finally {
-      setReservandoCaja(false);
-    }
   };
 
   const comprarConGiftCard = async (numero: string) => {
@@ -781,6 +845,9 @@ function MembresiasInner() {
                     </span>
                   ))}
                 </div>
+                {errorPaquete && (
+                  <p className="text-red-600 text-xs font-semibold mb-3">⚠ {errorPaquete}</p>
+                )}
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   {paquete.length < TAMANO_PAQUETE ? (
                     <button
@@ -792,12 +859,13 @@ function MembresiasInner() {
                     </button>
                   ) : <span />}
                   {paquete.length === TAMANO_PAQUETE ? (
-                    <Link
-                      href={`/membresias/pagar-lote?tier=${tier}&numeros=${paquete.join(",")}`}
-                      className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2.5 rounded-full text-sm shadow-md transition-all"
+                    <button
+                      onClick={continuarPaquete}
+                      disabled={reservandoPaquete}
+                      className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold px-6 py-2.5 rounded-full text-sm shadow-md transition-all"
                     >
-                      Continuar al pago — ${(precioCaja * TAMANO_PAQUETE).toLocaleString("es-CO", { maximumFractionDigits: 0 })}
-                    </Link>
+                      {reservandoPaquete ? "Reservando..." : `Continuar al pago — $${(precioCaja * TAMANO_PAQUETE).toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
+                    </button>
                   ) : (
                     <span className="text-sm text-green-700/70">Selecciona {TAMANO_PAQUETE - paquete.length} más</span>
                   )}
@@ -944,12 +1012,13 @@ function MembresiasInner() {
         giftCardCodigo={giftCardCodigo}
         esSorpresa={esSorpresa}
         onCerrar={cerrarModal}
-        onConfirmar={confirmarReserva}
         onComprarConGiftCard={comprarConGiftCard}
         cargando={reservandoCaja}
         resultado={resultadoReserva}
         freezeActivo={freezeActivo}
         freezeMinutos={freezeMinutos}
+        autoReservando={autoReservando}
+        expiraReserva={expiraReserva}
       />
     </div>
   );

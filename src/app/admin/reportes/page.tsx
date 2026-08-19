@@ -12,6 +12,7 @@ interface CajaVenta {
   numero: string;
   fechaCompra: string | null;
   idCompra: string | null;
+  tipoMembresia: { slug: string; nombre: string; precio: number };
   user: { nombre: string; apellido: string; correo: string; celular: string; ciudad: string } | null;
 }
 
@@ -139,10 +140,16 @@ function ReporteVentas() {
       .finally(() => setCargando(false));
   }, []);
 
+  // Recaudo real = suma del precio de cada membresía según SU tier — antes
+  // se multiplicaba el total por $10.000 fijo (precio de la caja original de
+  // antes de existir los 3 niveles 10k/25k/50k), dando un recaudo incorrecto
+  // en cuanto hay ventas de más de un tier o el precio ya no es $10.000.
+  const recaudoReal = datos ? datos.cajas.reduce((sum, c) => sum + (c.tipoMembresia?.precio ?? 0), 0) : 0;
+
   function exportarCSV() {
     if (!datos) return;
-    descargarCSV("reporte_ventas", ["#", "Número Membresía", "Nombre", "Correo", "Celular", "Ciudad", "Fecha Compra", "ID Compra"], datos.cajas.map((c, i) => [
-      i + 1, c.numero,
+    descargarCSV("reporte_ventas", ["#", "Número Membresía", "Membresía", "Nombre", "Correo", "Celular", "Ciudad", "Fecha Compra", "ID Compra"], datos.cajas.map((c, i) => [
+      i + 1, c.numero, c.tipoMembresia?.nombre ?? "—",
       c.user ? `${c.user.nombre} ${c.user.apellido}` : "—",
       c.user?.correo ?? "—", c.user?.celular ?? "—", c.user?.ciudad ?? "—",
       c.fechaCompra ? new Date(c.fechaCompra).toLocaleString("es-CO") : "—",
@@ -154,15 +161,18 @@ function ReporteVentas() {
     if (!datos) return;
     const filas = datos.cajas.map((c, i) => `<tr>
       <td>${i + 1}</td><td><strong>${c.numero}</strong></td>
+      <td>${c.tipoMembresia?.nombre ?? "—"}</td>
       <td>${c.user ? `${c.user.nombre} ${c.user.apellido}` : "—"}</td>
       <td>${c.user?.correo ?? "—"}</td>
       <td>${c.user?.celular ?? "—"}</td>
-      <td>${c.fechaCompra ? new Date(c.fechaCompra).toLocaleDateString("es-CO") : "—"}</td>
+      <td>${c.user?.ciudad ?? "—"}</td>
+      <td>${c.fechaCompra ? new Date(c.fechaCompra).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" }) : "—"}</td>
+      <td style="font-family:monospace;font-size:10px;">${c.idCompra ?? "—"}</td>
     </tr>`).join("");
     abrirPDF(
       "Reporte de Ventas",
-      `Total vendidas: ${datos.total} membresías · Recaudo: $${(datos.total * 10000).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP`,
-      `<table><thead><tr><th>#</th><th>Membresía</th><th>Comprador</th><th>Correo</th><th>Celular</th><th>Fecha</th></tr></thead><tbody>${filas}</tbody></table>`
+      `Total vendidas: ${datos.total} membresías · Recaudo: $${recaudoReal.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP`,
+      `<table><thead><tr><th>#</th><th>Membresía</th><th>Tier</th><th>Comprador</th><th>Correo</th><th>Celular</th><th>Ciudad</th><th>Fecha</th><th>ID Compra</th></tr></thead><tbody>${filas}</tbody></table>`
     );
   }
 
@@ -175,7 +185,7 @@ function ReporteVentas() {
         <div>
           <p className="text-sm text-gray-500">
             Total: <strong>{datos.total}</strong> membresías vendidas ·{" "}
-            Recaudo: <strong className="text-green-600">${(datos.total * 10_000).toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</strong>
+            Recaudo: <strong className="text-green-600">${recaudoReal.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP</strong>
           </p>
         </div>
         <div className="flex gap-2">
@@ -195,6 +205,7 @@ function ReporteVentas() {
               <tr className="bg-[#1B4F8A] text-white text-left">
                 <th className="px-4 py-3 font-semibold">#</th>
                 <th className="px-4 py-3 font-semibold">Membresía</th>
+                <th className="px-4 py-3 font-semibold">Tier</th>
                 <th className="px-4 py-3 font-semibold">Comprador</th>
                 <th className="px-4 py-3 font-semibold">Correo</th>
                 <th className="px-4 py-3 font-semibold">Celular</th>
@@ -208,6 +219,7 @@ function ReporteVentas() {
                 <tr key={c.numero} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 text-gray-400 text-xs">{i + 1}</td>
                   <td className="px-4 py-3 font-extrabold text-[#1B4F8A] tracking-wider">{c.numero}</td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">{c.tipoMembresia?.nombre ?? "—"}</td>
                   <td className="px-4 py-3 font-medium">{c.user ? `${c.user.nombre} ${c.user.apellido}` : "—"}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{c.user?.correo ?? "—"}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{c.user?.celular ?? "—"}</td>
@@ -315,8 +327,8 @@ function ReporteSorteo() {
         <tr><td style="padding:7px 16px;">Ganancia operación</td><td style="padding:7px 16px;font-weight:700;">$${s.ganancia.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td></tr>
       </table>
       <h2 style="color:#1B4F8A;">Ganadores</h2>
-      <table><thead><tr><th>Categoría</th><th>N° Membresía</th><th>Nombre</th><th>Correo</th><th>Premio</th></tr></thead>
-      <tbody>${s.premios.map((p) => `<tr><td>${NOMBRE_CAT[p.categoria] ?? p.categoria}</td><td style="font-family:monospace;font-weight:700;">${p.numeroCaja ?? "—"}</td><td>${p.user.nombre} ${p.user.apellido}</td><td>${p.user.correo}</td><td>$${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td></tr>`).join("")}</tbody></table>`;
+      <table><thead><tr><th>Categoría</th><th>N° Membresía</th><th>Nombre</th><th>Correo</th><th>Celular</th><th>Premio</th><th>Pagado</th></tr></thead>
+      <tbody>${s.premios.map((p) => `<tr><td>${NOMBRE_CAT[p.categoria] ?? p.categoria}</td><td style="font-family:monospace;font-weight:700;">${p.numeroCaja ?? "—"}</td><td>${p.user.nombre} ${p.user.apellido}</td><td>${p.user.correo}</td><td>${p.user.celular}</td><td>$${p.monto.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td><td>${p.pagado ? "Sí" : "No"}</td></tr>`).join("")}</tbody></table>`;
     abrirPDF(
       "Reporte de Selección Aleatoria",
       `Números ganadores: ${nums.join(", ")} · Fecha: ${new Date(s.fecha).toLocaleDateString("es-CO")}`,
@@ -563,17 +575,21 @@ function ReporteUsuarios() {
     const filas = datos.usuarios.map((u, i) => `<tr>
       <td>${i + 1}</td>
       <td>${u.nombre} ${u.apellido}</td>
+      <td>${u.documento}</td>
       <td>${u.correo}</td>
       <td>${u.celular}</td>
       <td>${u.ciudad}</td>
+      <td>${u.departamento}</td>
       <td>${u.banco ? `${u.banco} ${u.tipoCuenta ?? ""} ${u.cuentaBancaria ?? ""}`.trim() : "—"}</td>
       <td>$${u.saldoPuntos.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</td>
       <td>${u._count.cajas}</td>
+      <td>${u.activo ? "Sí" : "No"}</td>
+      <td>${new Date(u.fechaRegistro).toLocaleDateString("es-CO")}</td>
     </tr>`).join("");
     abrirPDF(
       "Reporte de Usuarios",
       `Total registrados: ${datos.total}`,
-      `<table><thead><tr><th>#</th><th>Nombre</th><th>Correo</th><th>Celular</th><th>Ciudad</th><th>Cuenta</th><th>Saldo</th><th>Membresías</th></tr></thead><tbody>${filas}</tbody></table>`
+      `<table><thead><tr><th>#</th><th>Nombre</th><th>Documento</th><th>Correo</th><th>Celular</th><th>Ciudad</th><th>Depto</th><th>Cuenta</th><th>Saldo</th><th>Membresías</th><th>Activo</th><th>Registro</th></tr></thead><tbody>${filas}</tbody></table>`
     );
   }
 
@@ -690,17 +706,19 @@ function ReporteRetiros() {
     const filas = retirosFiltrados.map((r, i) => `<tr>
       <td>${i + 1}</td>
       <td><strong>${r.user.nombre} ${r.user.apellido}</strong><br><small>${r.user.correo}</small></td>
+      <td>${r.user.celular}</td>
+      <td>${r.user.banco ?? "—"}</td>
       <td>${r.cuentaDestino}</td>
       <td>$${fmt(r.monto)}</td>
       <td style="color:#dc2626">${r.retencion ? `−$${fmt(r.retencion)}` : "—"}</td>
       <td style="color:#16a34a;font-weight:700">$${fmt(r.montoNeto ?? r.monto)}</td>
       <td>${r.estado}</td>
-      <td>${new Date(r.fecha).toLocaleDateString("es-CO")}</td>
+      <td>${new Date(r.fecha).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })}</td>
     </tr>`).join("");
     abrirPDF(
       "Historial de Retiros",
       `Total pagado: $${fmt(datos.totalPagado)} COP · ${retirosFiltrados.length} registros`,
-      `<table><thead><tr><th>#</th><th>Usuario</th><th>Cuenta destino</th><th>Monto</th><th>Retención</th><th>Neto</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>${filas}</tbody></table>`
+      `<table><thead><tr><th>#</th><th>Usuario</th><th>Celular</th><th>Banco</th><th>Cuenta destino</th><th>Monto</th><th>Retención</th><th>Neto</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>${filas}</tbody></table>`
     );
   }
 

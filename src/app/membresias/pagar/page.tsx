@@ -35,6 +35,8 @@ function PaginaPagarInner() {
   const [confirmandoSaldo, setConfirmandoSaldo] = useState(false);
   const [pagandoSaldo, setPagandoSaldo] = useState(false);
   const [resultadoSaldo, setResultadoSaldo] = useState<{ ok: boolean; mensaje: string } | null>(null);
+  const [reservando, setReservando] = useState(true);
+  const [errorReserva, setErrorReserva] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -45,6 +47,25 @@ function PaginaPagarInner() {
       router.push("/membresias");
     }
   }, [status, numero, tier, router]);
+
+  // Reserva (o renueva la reserva) al llegar a esta página — cubre navegación
+  // directa/actualización de página sin pasar por el modal de /membresias.
+  useEffect(() => {
+    if (status !== "authenticated" || !numero || !/^\d{4}$/.test(numero) || !tier) return;
+    let cancelado = false;
+    setReservando(true);
+    fetch(`/api/cajas/${tier}/${numero}/reservar`, { method: "POST" })
+      .then(async (res) => {
+        if (cancelado) return;
+        if (!res.ok) {
+          const json = await res.json().catch(() => ({ mensaje: "Esta membresía ya no está disponible." }));
+          setErrorReserva(json.mensaje);
+        }
+      })
+      .catch(() => { if (!cancelado) setErrorReserva("Error de conexión. Intenta nuevamente."); })
+      .finally(() => { if (!cancelado) setReservando(false); });
+    return () => { cancelado = true; };
+  }, [status, tier, numero]);
 
   useEffect(() => {
     fetch("/api/config")
@@ -117,7 +138,23 @@ function PaginaPagarInner() {
             </p>
           </div>
 
-          {confirmado === false ? (
+          {reservando ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 text-center">
+              <div className="w-10 h-10 border-4 border-gray-200 border-t-[#102463] rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-gray-500 text-sm">Reservando tu membresía...</p>
+            </div>
+          ) : errorReserva ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-red-100 p-6 mb-6 text-center">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No disponible</h3>
+              <p className="text-gray-600 text-sm mb-5">{errorReserva}</p>
+              <Link
+                href="/membresias"
+                className="inline-block bg-[#102463] hover:bg-[#173592] text-white font-bold py-3 px-6 rounded-full transition-all"
+              >
+                Elegir otra membresía
+              </Link>
+            </div>
+          ) : confirmado === false ? (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 mb-6 text-center">
               <p className="text-amber-800 font-semibold text-sm mb-3">
                 ⚠ Debes verificar tu correo electrónico antes de pagar una membresía.
