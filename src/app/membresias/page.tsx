@@ -817,21 +817,23 @@ function MembresiasInner() {
                 Elige cuántas quieres{tamanoPaquete >= 5 ? " — por cada 5, te regalamos una gift card adicional." : "."}
               </p>
               <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min={0}
-                  max={OPCIONES_PAQUETE.length - 1}
-                  step={1}
-                  value={OPCIONES_PAQUETE.indexOf(tamanoPaquete)}
-                  onChange={(e) => cambiarTamanoPaquete(OPCIONES_PAQUETE[Number(e.target.value)])}
-                  className="flex-1 h-2 accent-green-600"
-                />
+                <div className="flex-1">
+                  <input
+                    type="range"
+                    min={0}
+                    max={OPCIONES_PAQUETE.length - 1}
+                    step={1}
+                    value={OPCIONES_PAQUETE.indexOf(tamanoPaquete)}
+                    onChange={(e) => cambiarTamanoPaquete(OPCIONES_PAQUETE[Number(e.target.value)])}
+                    className="w-full h-2 accent-green-600"
+                  />
+                  <div className="flex justify-between text-xs text-green-700/60 mt-1 px-0.5">
+                    {OPCIONES_PAQUETE.map((n) => <span key={n}>{n}</span>)}
+                  </div>
+                </div>
                 <div className="w-16 shrink-0 text-center text-2xl font-extrabold text-green-700 border-2 border-green-600/20 bg-white rounded-xl py-1.5">
                   {tamanoPaquete}
                 </div>
-              </div>
-              <div className="flex justify-between text-xs text-green-700/60 mt-1 px-0.5">
-                {OPCIONES_PAQUETE.map((n) => <span key={n}>{n}</span>)}
               </div>
             </div>
 
