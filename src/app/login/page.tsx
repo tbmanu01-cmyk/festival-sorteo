@@ -35,6 +35,15 @@ function FormularioLogin() {
   const [paso, setPaso] = useState<"credenciales" | "2fa">("credenciales");
   const [credencialesPendientes, setCredencialesPendientes] = useState<{ correo: string; password: string } | null>(null);
   const [codigo2fa, setCodigo2fa] = useState("");
+  const [reenviando2fa, setReenviando2fa] = useState(false);
+  const [cooldown2fa, setCooldown2fa] = useState(0);
+  const [avisoReenvio, setAvisoReenvio] = useState("");
+
+  useEffect(() => {
+    if (cooldown2fa <= 0) return;
+    const t = setInterval(() => setCooldown2fa((c) => c - 1), 1000);
+    return () => clearInterval(t);
+  }, [cooldown2fa]);
 
   useEffect(() => {
     if (searchParams.get("registro") === "exitoso") {
@@ -75,6 +84,7 @@ function FormularioLogin() {
     if (result?.error === "2FA_REQUERIDO") {
       setCredencialesPendientes({ correo: data.correo, password: data.password });
       setPaso("2fa");
+      setCooldown2fa(60);
       return;
     }
 
@@ -111,6 +121,29 @@ function FormularioLogin() {
     }
   }
 
+  async function reenviarCodigo2fa() {
+    if (!credencialesPendientes || cooldown2fa > 0) return;
+    setReenviando2fa(true);
+    setError("");
+    setAvisoReenvio("");
+    const result = await signIn("credentials", {
+      correo: credencialesPendientes.correo,
+      password: credencialesPendientes.password,
+      redirect: false,
+    });
+    setReenviando2fa(false);
+    setCooldown2fa(60);
+    if (result?.error === "2FA_DEMASIADOS_INTENTOS") {
+      setError("Demasiados intentos. Espera unos minutos e inicia sesión de nuevo.");
+      setPaso("credenciales");
+      setCredencialesPendientes(null);
+    } else if (result?.error === "2FA_REQUERIDO") {
+      setAvisoReenvio("Te enviamos un nuevo código.");
+    } else {
+      setError("No pudimos reenviar el código. Intenta de nuevo en unos minutos.");
+    }
+  }
+
   if (paso === "2fa") {
     return (
       <form onSubmit={onSubmit2fa} className="px-8 py-6 space-y-5">
@@ -122,6 +155,11 @@ function FormularioLogin() {
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
             <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
+        {avisoReenvio && (
+          <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+            <p className="text-green-700 text-sm">✅ {avisoReenvio}</p>
           </div>
         )}
         <div>
@@ -147,7 +185,15 @@ function FormularioLogin() {
         </button>
         <button
           type="button"
-          onClick={() => { setPaso("credenciales"); setCredencialesPendientes(null); setCodigo2fa(""); setError(""); }}
+          onClick={reenviarCodigo2fa}
+          disabled={reenviando2fa || cooldown2fa > 0}
+          className="w-full text-center text-sm font-semibold text-[#102463] hover:underline disabled:text-gray-400 disabled:no-underline"
+        >
+          {reenviando2fa ? "Enviando..." : cooldown2fa > 0 ? `Reenviar código (${cooldown2fa}s)` : "Reenviar código"}
+        </button>
+        <button
+          type="button"
+          onClick={() => { setPaso("credenciales"); setCredencialesPendientes(null); setCodigo2fa(""); setError(""); setAvisoReenvio(""); setCooldown2fa(0); }}
           className="w-full text-center text-sm text-gray-500 hover:text-gray-700"
         >
           Volver
