@@ -1021,6 +1021,7 @@ export default function Dashboard() {
   const [mensajeVerify, setMensajeVerify] = useState<{ texto: string; ok: boolean } | null>(null);
   const [codigoVerif, setCodigoVerif] = useState("");
   const [verificando, setVerificando] = useState(false);
+  const [cooldownReenvio, setCooldownReenvio] = useState(0);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -1051,6 +1052,12 @@ export default function Dashboard() {
   useEffect(() => {
     if (status === "authenticated") cargarDatos();
   }, [status, cargarDatos]);
+
+  useEffect(() => {
+    if (cooldownReenvio <= 0) return;
+    const t = setInterval(() => setCooldownReenvio((c) => c - 1), 1000);
+    return () => clearInterval(t);
+  }, [cooldownReenvio]);
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -1159,17 +1166,19 @@ export default function Dashboard() {
                   </button>
                   <button
                     onClick={async () => {
+                      if (cooldownReenvio > 0) return;
                       setReenviando(true);
                       setMensajeVerify(null);
                       const res = await fetch("/api/auth/reenviar-verificacion", { method: "POST" });
                       const j = await res.json() as { mensaje: string };
                       setMensajeVerify({ texto: j.mensaje, ok: res.ok });
                       setReenviando(false);
+                      setCooldownReenvio(60);
                     }}
-                    disabled={reenviando}
+                    disabled={reenviando || cooldownReenvio > 0}
                     className="flex-shrink-0 text-amber-800 hover:text-amber-900 underline disabled:opacity-50 font-semibold text-xs px-2 py-2.5 transition-colors"
                   >
-                    {reenviando ? "Enviando..." : "Reenviar código"}
+                    {reenviando ? "Enviando..." : cooldownReenvio > 0 ? `Reenviar código (${cooldownReenvio}s)` : "Reenviar código"}
                   </button>
                 </div>
               </div>
