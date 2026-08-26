@@ -69,14 +69,22 @@ export default function TerminosPage() {
 
             <Seccion n="2" titulo="Naturaleza jurídica del club">
               <p>
-                <Pendiente>
-                  definir si opera como fundación sin ánimo de lucro o como sociedad comercial, y confirmar con
-                  asesoría legal la estructura óptima frente a la normativa de juegos de suerte y azar
-                </Pendiente>
-                . Mientras este punto no esté resuelto, este documento no debe considerarse una autorización ni
-                confirmación de que la actividad cuenta con los permisos que la ley colombiana exige para mecánicas de
-                selección aleatoria con premios en dinero (Ley 643 de 2001 y normas que regulan a Coljuegos como
-                autoridad de los juegos de suerte y azar en Colombia).
+                Tienda 10K opera bajo un modelo de <strong>red de referidos multinivel</strong>: la membresía es el
+                valor de participar en la red, y el programa de referidos que describe la sección 8 es el mecanismo
+                central de crecimiento y beneficio del club. La selección aleatoria de membresías es la forma en que
+                se redistribuye entre los propios participantes el fondo formado por lo recaudado en la venta de
+                membresías de esa temporada — <strong>es un mecanismo cerrado</strong>: si en una temporada se venden,
+                por ejemplo, 4.000 membresías de las 10.000 disponibles, la selección se realiza únicamente entre esas
+                4.000 vendidas, nunca sobre números que no fueron adquiridos por un usuario real. Es la posición de la
+                empresa que, por esta estructura (participación mediante membresía en una red, no apuesta directa
+                sobre un resultado externo), el club no constituye un juego de suerte y azar en los términos de la
+                Ley 643 de 2001.
+              </p>
+              <p className="text-sm text-gray-500">
+                Esta caracterización es la posición de la empresa y no ha sido validada todavía ante Coljuegos ni por
+                asesoría legal externa especializada; <Pendiente>confirmar con abogado la estructura societaria
+                óptima (fundación sin ánimo de lucro o sociedad comercial) y revisar esta caracterización antes de que
+                el documento se trate como definitivo</Pendiente>.
               </p>
             </Seccion>
 
@@ -91,15 +99,19 @@ export default function TerminosPage() {
                 </li>
                 <li>Una cuenta por persona. No está permitido registrar cuentas adicionales para eludir límites o reglas de la plataforma.</li>
                 <li>
-                  Alcance geográfico: <Pendiente>
-                    definir si el servicio está dirigido solo a residentes en Colombia, a colombianos en el exterior,
-                    o también a extranjeros — hoy la plataforma no aplica ninguna restricción técnica por país
-                  </Pendiente>.
+                  El servicio está dirigido principalmente a personas en Colombia. Podemos habilitar en el futuro
+                  selecciones aleatorias específicas para otros países (por ejemplo, Venezuela), con membresías cuyo
+                  valor y condiciones se adapten a la moneda y economía local de cada mercado; cuando eso ocurra, se
+                  publicarán condiciones particulares para ese país, sujetas además a su propia normativa local.{" "}
+                  <Pendiente>la expansión a otro país requiere su propia revisión legal en ese país, no solo esta
+                  versión colombiana del documento</Pendiente>.
                 </li>
                 <li>
-                  <Pendiente>
-                    definir si empleados, colaboradores o familiares directos de la empresa pueden participar
-                  </Pendiente>.
+                  Los empleados o colaboradores de la empresa <strong>sin acceso</strong> al panel administrativo ni a
+                  la ejecución de selecciones pueden participar como cualquier otro usuario. Quedan excluidos de
+                  participar en una selección los administradores, asistentes y demás personas con acceso al panel
+                  que ejecuta esa selección, así como sus familiares directos, para evitar cualquier conflicto de
+                  interés con quien tiene la capacidad técnica de intervenir en el resultado.
                 </li>
               </ul>
             </Seccion>
@@ -134,23 +146,29 @@ export default function TerminosPage() {
                 </li>
                 <li>
                   La fecha de cada selección aleatoria la define la plataforma y se muestra en la página
-                  correspondiente antes de la compra. No se garantiza que todos los números de una temporada se
-                  vendan antes de la fecha programada.
+                  correspondiente antes de la compra. No es necesario que se vendan las 10.000 membresías de una
+                  temporada para que la selección se ejecute: se realiza igual en la fecha programada, únicamente
+                  entre los números efectivamente vendidos hasta ese momento (ver sección 6).
                 </li>
                 <li>
-                  <strong>Actualmente no ofrecemos reembolsos</strong> de membresías compradas, incluyendo casos donde
-                  la temporada no se completa antes de la fecha de selección.{" "}
-                  <Pendiente>confirmar si se quiere ofrecer alguna política de reembolso a futuro</Pendiente>.
+                  <strong>No ofrecemos reembolsos</strong> de membresías compradas, bajo ninguna circunstancia,
+                  incluyendo que la temporada no llegue a venderse por completo.
                 </li>
               </ul>
             </Seccion>
 
             <Seccion n="6" titulo="Cómo funciona la selección aleatoria">
               <p>
-                Cada temporada asigna premios a los números cuyas últimas cifras coinciden con el número resultante de
-                la selección, en distintas categorías (coincidencia de 4, 3, 2 o 1 cifras). La distribución exacta del
-                fondo de premios entre categorías, así como la cantidad estimada de ganadores por categoría, se
-                publica de forma transparente en{" "}
+                La selección aleatoria de cada temporada se realiza <strong>únicamente entre las membresías
+                efectivamente vendidas</strong> de esa temporada, nunca sobre números no adquiridos por un usuario —
+                si se venden 4.000 de las 10.000 disponibles, el resultado sale de esas 4.000. El fondo de premios que
+                se reparte proviene del dinero recaudado por la venta de esa misma temporada.
+              </p>
+              <p>
+                Se asignan premios a los números cuyas últimas cifras coinciden con el número resultante, en distintas
+                categorías (coincidencia de 4, 3, 2 o 1 cifras). La distribución exacta del fondo de premios entre
+                categorías, así como la cantidad estimada de ganadores por categoría, se publica de forma transparente
+                en{" "}
                 <Link href="/probabilidades" className="text-[#1B4F8A] underline font-medium">/probabilidades</Link>{" "}
                 y puede variar entre temporadas.
               </p>
@@ -159,13 +177,14 @@ export default function TerminosPage() {
                 membresía, no como dinero en efectivo.
               </p>
               <p>
-                El número resultante de cada selección se genera mediante un proceso interno del sistema (aleatorio
-                por software), sin intervención de una lotería, casa de apuestas o entidad externa. Este mecanismo{" "}
-                <Pendiente>
-                  no cuenta hoy con auditoría externa, notario ni transmisión pública — definir si se quiere sumar
-                  algún mecanismo de verificación independiente antes de presentarlo como "auditado" o "verificable"
-                  ante los usuarios
-                </Pendiente>.
+                El número resultante se genera mediante un proceso interno del sistema, sin intervención de una
+                lotería, casa de apuestas o entidad externa. Está previsto transmitir la ejecución de cada selección
+                en vivo por el canal oficial de YouTube de Tienda 10K, mostrando en tiempo real la animación de la
+                ruleta y la revelación del número ganador, para que cualquier persona pueda presenciar el momento
+                exacto en que se determina el resultado.{" "}
+                <Pendiente>este mecanismo todavía no cuenta con auditoría externa ni notario — evaluar si, además de
+                la transmisión en vivo, conviene eliminar la opción de ingresar el número manualmente para poder
+                afirmar sin matices que el resultado es imposible de manipular</Pendiente>.
               </p>
             </Seccion>
 
@@ -177,9 +196,10 @@ export default function TerminosPage() {
                 la empresa.
               </p>
               <p>
-                Todos los premios ofrecidos hoy son en dinero (COP) o gift cards. La plataforma no tiene actualmente
-                mecanismos para entregar premios físicos (vehículos, inmuebles, etc.);{" "}
-                <Pendiente>si en el futuro se ofrecen premios físicos, definir aquí quién asume impuestos, trámites de traspaso y logística de entrega</Pendiente>.
+                Todos los premios ofrecidos hoy son en dinero (COP) o gift cards. Si en el futuro se ofrece un premio
+                físico (por ejemplo un vehículo o un inmueble), <strong>Tienda 10K asume por su cuenta todos los
+                impuestos, trámites de traspaso y la logística de entrega</strong> asociados a ese premio — el
+                ganador recibe el bien sin costos adicionales a su cargo por ese concepto.
               </p>
             </Seccion>
 
@@ -230,12 +250,14 @@ export default function TerminosPage() {
                 <li>Cada solicitud de retiro se confirma con un código de un solo uso enviado a tu correo, y hay un tiempo de espera de 24 horas entre una solicitud y la siguiente.</li>
                 <li>No cobramos comisión por procesar tu retiro.</li>
                 <li>
-                  Antes de aprobar un retiro podemos aplicar una retención tributaria sobre el monto, cuando
-                  corresponda según la normativa fiscal colombiana aplicable a este tipo de ingresos. El porcentaje y
-                  el monto neto a pagar se te informan antes de completar el retiro.{" "}
+                  <strong>Tienda 10K asume por su cuenta cualquier retención tributaria aplicable</strong> sobre los
+                  premios y el saldo retirado, de modo que recibís el monto anunciado sin descuentos por este
+                  concepto.{" "}
                   <Pendiente>
-                    confirmar con el contador de la empresa el porcentaje correcto de retención en la fuente aplicable
-                    (ganancias ocasionales u otro concepto), y si se emitirá certificado tributario a los ganadores
+                    esto no elimina las obligaciones tributarias propias de la empresa frente a la DIAN por los pagos
+                    realizados — confirmar con el contador de la empresa cómo se cumple esa obligación internamente
+                    (asumir la retención "por dentro" del monto entregado vs. pagarla aparte) y si corresponde emitir
+                    algún certificado tributario a quienes reciben premios
                   </Pendiente>.
                 </li>
                 <li>No garantizamos un plazo fijo de procesamiento; las solicitudes se revisan y aprueban manualmente por el equipo.</li>
@@ -246,10 +268,14 @@ export default function TerminosPage() {
             <Seccion n="12" titulo="Juego responsable">
               <p>
                 Te recomendamos participar únicamente con dinero que estés en condiciones de destinar a
-                entretenimiento, sin afectar tus obligaciones ni tu estabilidad financiera.{" "}
+                entretenimiento, sin afectar tus obligaciones ni tu estabilidad financiera. Si en algún momento querés
+                dejar de participar, podés solicitar la desactivación o eliminación de tu cuenta escribiéndonos (ver
+                sección 21).{" "}
                 <Pendiente>
-                  la plataforma no cuenta hoy con límites de gasto configurables por el usuario ni con mecanismo de
-                  autoexclusión temporal — evaluar si conviene incorporarlos antes del lanzamiento definitivo
+                  se recomienda además incorporar, antes del lanzamiento definitivo, una pausa temporal de compras
+                  independiente de eliminar la cuenta (que mantenga tu historial y red intactos mientras dura la
+                  pausa) y un límite de gasto mensual que cada usuario pueda fijarse a sí mismo desde su perfil —
+                  ninguno de los dos existe todavía en la plataforma
                 </Pendiente>.
               </p>
             </Seccion>
@@ -275,7 +301,7 @@ export default function TerminosPage() {
                 Los textos, diseño, marca "Tienda 10K"/"Club 10K", logotipos y demás contenido de la plataforma son de
                 titularidad de la empresa operadora o de sus licenciantes. No está permitido reproducirlos,
                 distribuirlos ni usarlos comercialmente sin autorización previa por escrito.{" "}
-                <Pendiente>confirmar si la marca ya está registrada ante la Superintendencia de Industria y Comercio</Pendiente>.
+                <Pendiente>la marca aún no está registrada ante la Superintendencia de Industria y Comercio — se está evaluando gestionar el registro</Pendiente>.
               </p>
             </Seccion>
 
@@ -312,19 +338,25 @@ export default function TerminosPage() {
 
             <Seccion n="19" titulo="Cierre de operaciones">
               <p>
-                <Pendiente>
-                  definir la política de la empresa ante un eventual cierre de operaciones: si se liquidarían saldos y
-                  gift cards vigentes, en qué plazo, y de qué forma se comunicaría a los usuarios
-                </Pendiente>.
+                Si la empresa decide cesar operaciones, lo comunicará a los usuarios con al menos 30 días de
+                anticipación por correo electrónico y aviso visible en la plataforma. Durante ese plazo, los usuarios
+                con saldo disponible que alcance el mínimo de retiro podrán solicitarlo con normalidad, y las gift
+                cards vigentes podrán usarse para retirar (si la cuenta está confirmada) o regalarse a otro usuario
+                antes del cierre definitivo. Los saldos y gift cards que no se hayan reclamado al finalizar ese plazo
+                se tratarán conforme a lo que exija la normativa aplicable en ese momento.{" "}
+                <Pendiente>revisar esta cláusula con abogado antes de publicarla como definitiva</Pendiente>.
               </p>
             </Seccion>
 
             <Seccion n="20" titulo="Ley aplicable y resolución de conflictos">
               <p>
                 Estos Términos se rigen por las leyes de la República de Colombia, incluyendo el Estatuto del
-                Consumidor (Ley 1480 de 2011). Cualquier controversia se someterá a los jueces competentes de{" "}
-                <Pendiente>ciudad de domicilio legal de la empresa, aún pendiente de definir en la sección 1</Pendiente>,
-                sin perjuicio de los mecanismos de protección al consumidor y las acciones judiciales que la ley
+                Consumidor (Ley 1480 de 2011). Cualquier controversia se someterá a los jueces competentes del
+                domicilio de la empresa —{" "}
+                <Pendiente>la ciudad exacta es la que quede registrada como domicilio principal ante la Cámara de
+                Comercio al formalizar la entidad (ver sección 1); mientras eso no esté definido, este campo queda
+                pendiente</Pendiente>{" "}
+                — sin perjuicio de los mecanismos de protección al consumidor y las acciones judiciales que la ley
                 colombiana reconoce a los usuarios, incluyendo la acción de grupo, que no es objeto de renuncia por
                 este documento.
               </p>
@@ -333,7 +365,12 @@ export default function TerminosPage() {
             <Seccion n="21" titulo="Contacto">
               <p>
                 Para preguntas sobre estos Términos, escribinos a{" "}
-                <Pendiente>correo de contacto/soporte oficial de la empresa</Pendiente>.
+                <span className="font-mono text-sm">soporte@tienda10k.com</span>.{" "}
+                <Pendiente>
+                  este correo todavía no está creado — se recomienda crearlo en el proveedor donde está el dominio
+                  tienda10k.com (o vía Google Workspace) y configurarlo para reenviar automáticamente a la cuenta de
+                  Gmail principal, así ningún mensaje se pierde mientras no se revise a diario
+                </Pendiente>.
               </p>
             </Seccion>
 
