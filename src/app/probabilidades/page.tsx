@@ -6,23 +6,26 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 // ── Constantes del modelo ────────────────────────────────────────────────────
+// Membresía estándar: Tienda 10K 25K (los tiers 10k/50k quedaron inactivos,
+// solo se activan más adelante — no mencionar en copy público).
 const TOTAL_CAJAS  = 10_000;
-const PRECIO       = 50_000;
-const N_SORTEOS_4C = 4;
+const PRECIO       = 25_000;
+const N_SORTEOS_4C = 1; // ganadores4Cifras real en Config — un solo gran ganador
 
 // Ganadores exclusivos (categorías mutuamente excluyentes)
-const W4   = N_SORTEOS_4C; // 4 ganadores exactos (uno por sorteo)
+const W4   = N_SORTEOS_4C; // 1 ganador exacto (el gran ganador de la temporada)
 const W3   = 9;            // últimas 3 iguales, ≠ 4 cifras
 const W2   = 90;           // últimas 2 iguales, ≠ 3-4 cifras
 const W1   = 900;          // última 1 igual, ≠ 2-3-4 cifras
-const W_AL = W4 + W3 + W2 + W1; // 1.003 posibles ganadores
+const W_AL = W4 + W3 + W2 + W1; // 1.000 posibles ganadores
 
-// Premios — escenario 7.000 membresías × $50.000 = $350M recaudo
-const REC  = 350_000_000;
-const P4   = (REC * 0.20) / W4;   // $17.500.000 c/u
-const P3   = (REC * 0.10) / W3;   // ~$3.900.000 c/u
-const P2   = (REC * 0.15) / W2;   // ~$583.000  c/u
-const P1   = (REC * 0.25) / W1;   // ~$97.000   c/u
+// Premios — escenario de venta completa: 10.000 membresías × $25.000 = $250M recaudo.
+// Porcentajes reales de Config: 25% / 20% / 15% / 0% (1 cifra = membresía gratis, no plata).
+const REC  = 250_000_000;
+const P4   = (REC * 0.25) / W4;   // $62.500.000 (el único ganador se lleva todo el fondo de 4 cifras)
+const P3   = (REC * 0.20) / W3;   // ~$5.555.556 c/u
+const P2   = (REC * 0.15) / W2;   // ~$416.667  c/u
+const P1   = PRECIO;              // 1 cifra no reparte plata — cada ganador recibe una membresía gratis ($25.000 en gift card)
 
 // ── Funciones de cálculo ─────────────────────────────────────────────────────
 function pWin(n: number, w: number) {
@@ -52,7 +55,7 @@ export default function PaginaProbabilidades() {
 
   const calc = useMemo(() => ({
     inversion: n * PRECIO,
-    retorno:   n * PRECIO * 0.70,
+    retorno:   n * PRECIO * 0.60,
     p4:   pWin(n, W4),
     p3:   pWin(n, W3),
     p2:   pWin(n, W2),
@@ -104,8 +107,8 @@ export default function PaginaProbabilidades() {
             <div className="flex flex-wrap justify-center gap-4">
               {[
                 { label: "Total membresías", val: "10.000" },
-                { label: "Precio por membresía", val: "$50.000 COP" },
-                { label: "Selecciones de 4 cifras", val: `${N_SORTEOS_4C} selecciones` },
+                { label: "Precio por membresía", val: "$25.000 COP" },
+                { label: "Gran ganador 4 cifras", val: "1 por temporada" },
                 { label: "Categorías de premio", val: "4 categorías" },
               ].map((x) => (
                 <div key={x.label} className="bg-white/10 border border-white/20 rounded-2xl px-6 py-4 text-center">
@@ -152,7 +155,7 @@ export default function PaginaProbabilidades() {
             <div className="text-center mb-10">
               <h2 className="text-3xl font-extrabold text-[#1B4F8A] mb-2">Con 1 membresía</h2>
               <p className="text-gray-500 text-sm">
-                Probabilidades exactas calculadas para 10.000 membresías con un valor de $50.000 cada una (0000–9999)
+                Probabilidades exactas calculadas para 10.000 membresías con un valor de $25.000 cada una (0000–9999)
               </p>
               <p className="text-gray-500 text-sm mt-1">
                 Comprando una sola membresía numerada participas en las siguientes modalidades de selección de membresías:
@@ -240,7 +243,7 @@ export default function PaginaProbabilidades() {
                 </table>
               </div>
               <p className="px-6 py-3 text-xs text-gray-400 border-t border-gray-100">
-                * Premios aproximados con escenario de $350M de recaudo (7.000 membresías vendidas × $50.000).
+                * Premios aproximados con escenario de venta completa: $250M de recaudo (10.000 membresías × $25.000).
                 Las categorías son mutuamente excluyentes: ganar 3 cifras excluye ganar 4 cifras, etc.
               </p>
             </div>
@@ -353,12 +356,12 @@ export default function PaginaProbabilidades() {
                 <div className="bg-[#1B4F8A]/5 border border-[#1B4F8A]/10 rounded-xl p-5">
                   <p className="text-xs text-gray-500 mb-1">Inversión total</p>
                   <p className="text-3xl font-extrabold text-[#1B4F8A]">${fmt(calc.inversion)}</p>
-                  <p className="text-xs text-gray-400 mt-1">{n} × $50.000</p>
+                  <p className="text-xs text-gray-400 mt-1">{n} × $25.000</p>
                 </div>
                 <div className="bg-green-50 border border-green-100 rounded-xl p-5">
                   <p className="text-xs text-gray-500 mb-1">Retorno esperado en premios</p>
                   <p className="text-3xl font-extrabold text-green-600">${fmt(calc.retorno)}</p>
-                  <p className="text-xs text-gray-400 mt-1">70% del recaudo → premios</p>
+                  <p className="text-xs text-gray-400 mt-1">60% del recaudo → premios</p>
                 </div>
               </div>
 
@@ -413,7 +416,7 @@ export default function PaginaProbabilidades() {
                 {
                   qty: "×1", n: 1,
                   title: "Participación base",
-                  desc: "1 de cada 10 miembros gana algún premio. Con una sola membresía existe la posibilidad real de multiplicar tu inversión hasta 350 veces con el gran premio de 4 cifras.",
+                  desc: "1 de cada 10 miembros gana algún premio. Con una sola membresía existe la posibilidad real de multiplicar tu inversión hasta 2.500 veces con el gran premio de 4 cifras.",
                   tag: "Entrada al club", tagBg: "bg-gray-100 text-gray-700",
                   border: "border-gray-200",
                 },
