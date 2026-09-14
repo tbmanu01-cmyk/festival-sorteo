@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     sorteo,
     temporadaActual: { ...temporadaActual, vendidasActuales, reservadasActivas },
+    metaMinimaVenta: tipoMembresia.metaMinimaVenta,
   });
 }
 

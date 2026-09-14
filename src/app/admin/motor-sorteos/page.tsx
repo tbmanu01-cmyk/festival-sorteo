@@ -395,6 +395,7 @@ function TabPrincipal() {
   const [tier, setTier] = useState<string>("");
   const [sorteoExistente, setSorteoExistente] = useState<SorteoData | null>(null);
   const [temporadaActual, setTemporadaActual] = useState<TemporadaActual | null>(null);
+  const [metaMinimaVenta, setMetaMinimaVenta] = useState<number | null>(null);
   const [resumen, setResumen] = useState<Resumen | null>(null);
   const [modo, setModo] = useState<"auto" | "manual">("auto");
   const [numeroManual, setNumeroManual] = useState("");
@@ -423,6 +424,7 @@ function TabPrincipal() {
     const d = await fetch(`/api/admin/sorteo?tier=${tier}`).then((r) => r.json());
     setSorteoExistente(d.sorteo);
     setTemporadaActual(d.temporadaActual);
+    setMetaMinimaVenta(d.metaMinimaVenta ?? null);
   }, [tier]);
 
   useEffect(() => {
@@ -569,6 +571,36 @@ function TabPrincipal() {
                 <p className="text-gray-500 text-xs mt-0.5">Reservas activas</p>
               </div>
             </div>
+
+            {metaMinimaVenta != null && (
+              <div className="mt-4">
+                {(() => {
+                  const alcanzada = temporadaActual.vendidasActuales >= metaMinimaVenta;
+                  const pct = Math.min(100, Math.round((temporadaActual.vendidasActuales / metaMinimaVenta) * 100));
+                  return (
+                    <div className={`rounded-xl p-4 ${alcanzada ? "bg-green-50" : "bg-amber-50"}`}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className={`text-xs font-bold ${alcanzada ? "text-green-700" : "text-amber-700"}`}>
+                          {alcanzada ? "✅ Meta mínima alcanzada — lista para sortear" : "⏳ Aún no se alcanza la meta mínima recomendada"}
+                        </p>
+                        <p className={`text-xs font-semibold ${alcanzada ? "text-green-700" : "text-amber-700"}`}>
+                          {temporadaActual.vendidasActuales.toLocaleString("es-CO")} / {metaMinimaVenta.toLocaleString("es-CO")}
+                        </p>
+                      </div>
+                      <div className="w-full h-2 bg-white rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${alcanzada ? "bg-green-500" : "bg-amber-400"}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      {!alcanzada && (
+                        <p className="text-[11px] text-amber-600 mt-1.5">Solo informativo — igual puedes ejecutar la selección cuando quieras, esto no bloquea el botón.</p>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
         )}
 

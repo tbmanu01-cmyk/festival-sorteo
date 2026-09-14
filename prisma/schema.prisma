@@ -105,6 +105,7 @@ model User {
   verifyTokenExpiry  DateTime?
   twoFactorCode      String?
   twoFactorExpiry    DateTime?
+  twoFactorCodigos   Json?
   sessionVersion     Int           @default(0)
 
   cajas           Caja[]
@@ -205,6 +206,10 @@ model TipoMembresia {
   activo          Boolean   @default(true)
   fechaSorteo     DateTime?
   linkPagoBoldUrl String?
+  // Meta de venta mínima recomendada antes de ejecutar la selección de esta
+  // temporada — solo informativa (no bloquea el botón de ejecutar), pensada
+  // para las primeras temporadas cuando todavía no hay una fecha fija.
+  metaMinimaVenta Int?
   orden           Int       @default(0)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

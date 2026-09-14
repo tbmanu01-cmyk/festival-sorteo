@@ -15,10 +15,14 @@ export async function PATCH(
     activo?: boolean;
     fechaSorteo?: string | null;
     linkPagoBoldUrl?: string | null;
+    metaMinimaVenta?: number | null;
   };
 
   if (body.precio !== undefined && (!Number.isFinite(body.precio) || body.precio <= 0)) {
     return NextResponse.json({ mensaje: "El precio debe ser un número mayor a 0." }, { status: 400 });
+  }
+  if (body.metaMinimaVenta != null && (!Number.isInteger(body.metaMinimaVenta) || body.metaMinimaVenta < 0 || body.metaMinimaVenta > 10_000)) {
+    return NextResponse.json({ mensaje: "La meta mínima debe ser un número entero entre 0 y 10.000." }, { status: 400 });
   }
 
   const { prisma } = await import("@/lib/prisma");
@@ -29,6 +33,7 @@ export async function PATCH(
       activo: body.activo,
       fechaSorteo: body.fechaSorteo !== undefined ? (body.fechaSorteo ? new Date(body.fechaSorteo) : null) : undefined,
       linkPagoBoldUrl: body.linkPagoBoldUrl !== undefined ? (body.linkPagoBoldUrl || null) : undefined,
+      metaMinimaVenta: body.metaMinimaVenta !== undefined ? body.metaMinimaVenta : undefined,
     },
   });
 

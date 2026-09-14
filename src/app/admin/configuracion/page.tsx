@@ -603,6 +603,7 @@ interface TipoMembresiaAdmin {
   activo: boolean;
   fechaSorteo: string | null;
   linkPagoBoldUrl: string | null;
+  metaMinimaVenta: number | null;
 }
 
 function TarjetaTipoMembresia({ tipo, onGuardado }: { tipo: TipoMembresiaAdmin; onGuardado: () => void }) {
@@ -612,6 +613,7 @@ function TarjetaTipoMembresia({ tipo, onGuardado }: { tipo: TipoMembresiaAdmin; 
     tipo.fechaSorteo ? new Date(tipo.fechaSorteo).toISOString().slice(0, 16) : ""
   );
   const [linkPagoBoldUrl, setLinkPagoBoldUrl] = useState(tipo.linkPagoBoldUrl ?? "");
+  const [metaMinimaVenta, setMetaMinimaVenta] = useState(tipo.metaMinimaVenta ?? "");
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
 
@@ -627,6 +629,7 @@ function TarjetaTipoMembresia({ tipo, onGuardado }: { tipo: TipoMembresiaAdmin; 
           activo,
           fechaSorteo: fechaSorteo || null,
           linkPagoBoldUrl: linkPagoBoldUrl || null,
+          metaMinimaVenta: metaMinimaVenta === "" ? null : Number(metaMinimaVenta),
         }),
       });
       const json = await res.json() as { mensaje: string };
@@ -672,6 +675,21 @@ function TarjetaTipoMembresia({ tipo, onGuardado }: { tipo: TipoMembresiaAdmin; 
               className="w-full pl-7 pr-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 mb-1">Meta mínima de venta antes de sortear</label>
+          <input
+            type="number"
+            min={0}
+            max={10_000}
+            step={100}
+            value={metaMinimaVenta}
+            onChange={(e) => setMetaMinimaVenta(e.target.value === "" ? "" : Number(e.target.value))}
+            placeholder="Ej. 2000 (dejar vacío = sin meta)"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B4F8A]/30 focus:border-[#1B4F8A]"
+          />
+          <p className="text-xs text-gray-400 mt-1">Solo informativa — se muestra como aviso en Motor de Selecciones, no bloquea el botón de ejecutar.</p>
         </div>
 
         <div>
