@@ -56,6 +56,7 @@ interface TipoMembresiaAdmin {
   nombre: string;
   precio: number;
   activo: boolean;
+  fechaSorteo: string | null;
 }
 
 interface Ganador {
@@ -555,8 +556,15 @@ function TabPrincipal() {
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Temporada actual</p>
                 <h2 className="text-2xl font-extrabold text-[#1B4F8A]">Temporada #{temporadaActual.numero}</h2>
               </div>
-              <p className="text-gray-400 text-xs">
+              <p className="text-gray-400 text-xs text-right">
                 Iniciada el {new Date(temporadaActual.inicio).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}
+                <br />
+                {(() => {
+                  const fs = tipos.find((t) => t.slug === tier)?.fechaSorteo;
+                  return fs
+                    ? <span className="text-[#1B4F8A] font-semibold">Próxima selección: {new Date(fs).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}</span>
+                    : <span className="text-gray-300">Sin fecha de próxima selección programada</span>;
+                })()}
               </p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
