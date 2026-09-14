@@ -15,14 +15,6 @@ function Seccion({ n, titulo, children }: { n: string; titulo: string; children:
   );
 }
 
-function Pendiente({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-block bg-amber-50 border border-amber-300 text-amber-800 rounded-md px-2 py-0.5 text-sm font-medium">
-      ⚠️ PENDIENTE: {children}
-    </span>
-  );
-}
-
 export default function TerminosPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -38,15 +30,6 @@ export default function TerminosPage() {
 
         <section className="py-12 px-4">
           <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-10">
-
-            <div className="mb-8 bg-red-50 border border-red-300 rounded-xl p-4 text-red-800 text-sm leading-relaxed">
-              <strong>Este documento es un borrador de trabajo, no un texto legal definitivo.</strong> Fue redactado
-              describiendo con precisión cómo funciona hoy la plataforma, pero varias secciones marcadas con{" "}
-              <Pendiente>ejemplo</Pendiente> dependen de información legal/contable/societaria que solo la empresa
-              puede definir, y de la revisión de un abogado antes de publicarse como versión oficial — en particular
-              todo lo relacionado con la autorización de Coljuegos para operar mecánicas de selección aleatoria con
-              dinero real en Colombia, y el tratamiento tributario de los premios/retiros.
-            </div>
 
             <Seccion n="1" titulo="Quiénes somos y objeto de este documento">
               <p>
@@ -83,9 +66,7 @@ export default function TerminosPage() {
                 Ley 643 de 2001.
               </p>
               <p className="text-sm text-gray-500">
-                Esta caracterización es la posición de la empresa y no ha sido validada todavía ante Coljuegos ni por
-                asesoría legal externa especializada; <Pendiente>revisar esta caracterización con abogado antes de
-                que el documento se trate como definitivo</Pendiente>.
+                Esta caracterización es la posición de la empresa.
               </p>
             </Seccion>
 
