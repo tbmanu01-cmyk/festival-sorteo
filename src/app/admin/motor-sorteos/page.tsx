@@ -415,7 +415,11 @@ function TabPrincipal() {
       .then((r) => r.json())
       .then((d: { tipos: TipoMembresiaAdmin[] }) => {
         setTipos(d.tipos ?? []);
-        setTier((actual) => actual || d.tipos?.[0]?.slug || "");
+        // Preferir la primera membresía ACTIVA como selección por defecto —
+        // antes tomaba tipos[0] sin más (orden desc), que hoy es 50K aunque
+        // esté inactiva, obligando a abrir el selector cada vez para 25K.
+        const porDefecto = d.tipos?.find((t) => t.activo) ?? d.tipos?.[0];
+        setTier((actual) => actual || porDefecto?.slug || "");
       });
   }, []);
 
