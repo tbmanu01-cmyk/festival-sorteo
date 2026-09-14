@@ -58,10 +58,10 @@ export default function TerminosPage() {
                 ("el usuario", "vos", "tú").
               </p>
               <p>
-                Entidad operadora: <strong>Tienda 10K S.A.S.</strong>, identificada con NIT{" "}
-                <span className="font-mono text-sm">902.065.208-6</span>, domiciliada en Bogotá D.C., Colombia.{" "}
-                <Pendiente>confirmar razón social exacta y representante legal según el certificado de Cámara de
-                Comercio antes de tratar este documento como definitivo</Pendiente>.
+                Entidad operadora: <strong>Comercializadora Multimarcas.com S.A.S.</strong>, sociedad comercial
+                identificada con NIT <span className="font-mono text-sm">902.065.208-6</span>, domiciliada en Bogotá
+                D.C., Colombia. <Pendiente>confirmar el representante legal registrado según el certificado de
+                Cámara de Comercio antes de tratar este documento como definitivo</Pendiente>.
               </p>
               <p>
                 Al registrarte y usar la plataforma aceptás estos Términos en su totalidad. Si no estás de acuerdo,
@@ -84,9 +84,8 @@ export default function TerminosPage() {
               </p>
               <p className="text-sm text-gray-500">
                 Esta caracterización es la posición de la empresa y no ha sido validada todavía ante Coljuegos ni por
-                asesoría legal externa especializada; <Pendiente>confirmar con abogado la estructura societaria
-                óptima (fundación sin ánimo de lucro o sociedad comercial) y revisar esta caracterización antes de que
-                el documento se trate como definitivo</Pendiente>.
+                asesoría legal externa especializada; <Pendiente>revisar esta caracterización con abogado antes de
+                que el documento se trate como definitivo</Pendiente>.
               </p>
             </Seccion>
 

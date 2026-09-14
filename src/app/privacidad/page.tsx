@@ -49,8 +49,8 @@ export default function PrivacidadPage() {
               <p>
                 Esta Política aplica a los datos personales que recolecta Tienda 10K a través de{" "}
                 <span className="font-mono text-sm">tienda10k.com</span>. Entidad responsable:{" "}
-                <strong>Tienda 10K S.A.S.</strong>, NIT <span className="font-mono text-sm">902.065.208-6</span>,
-                domiciliada en Bogotá D.C., Colombia.
+                <strong>Comercializadora Multimarcas.com S.A.S.</strong>, sociedad comercial con NIT{" "}
+                <span className="font-mono text-sm">902.065.208-6</span>, domiciliada en Bogotá D.C., Colombia.
               </p>
             </Seccion>
 
