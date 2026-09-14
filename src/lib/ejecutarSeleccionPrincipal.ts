@@ -54,7 +54,13 @@ export async function ejecutarSeleccionPrincipal(opts: {
   }
 
   const totalVendidas = cajasVendidas.length;
-  const totalRecaudo  = totalVendidas * PRECIO_CAJA;
+  // Recaudo REAL: suma de lo efectivamente cobrado por cada membresía
+  // (Caja.montoPagado), NO "vendidas × precio de tabla" — esa cuenta
+  // asumía que toda membresía vendida se pagó completa, sobreestimando el
+  // fondo de premios cuando hay ventas gratuitas (gift card de referidos o
+  // de premio de 1 cifra). Sin dato histórico (montoPagado null, ventas de
+  // antes del 19 ago 2026) se trata como $0 para no prometer de más.
+  const totalRecaudo = cajasVendidas.reduce((s, c) => s + (c.montoPagado ?? 0), 0);
   const fondoPremios  = totalRecaudo * (PCT_4 + PCT_3 + PCT_2 + PCT_1);
   const ganancia      = totalRecaudo * cfg.margenGanancia;
 
