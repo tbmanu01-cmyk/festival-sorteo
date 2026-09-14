@@ -9,13 +9,13 @@ import Footer from "@/components/Footer";
 import { mascararCuenta } from "@/lib/mascara";
 import { AVATAR_PRESETS, esCustom, esPreset } from "@/lib/avatares";
 
-type Seccion = "personal" | "ubicacion" | "banco" | "password" | "avatar" | null;
+type Seccion = "personal" | "ubicacion" | "banco" | "password" | "avatar" | "limite" | null;
 
 interface DatosPerfil {
   nombre: string; apellido: string; correo: string; celular: string;
   ciudad: string; departamento: string;
   banco: string | null; tipoCuenta: string | null; cuentaBancaria: string | null;
-  avatar: string | null;
+  avatar: string | null; limiteGastoMensual: number | null;
 }
 
 // ── Icono flecha derecha ───────────────────────────────────────────────────────
@@ -151,6 +151,14 @@ export default function PaginaPerfil() {
   const [confirmarPassword, setConfirmarPassword] = useState("");
   const [verActual, setVerActual] = useState(false);
   const [verNueva, setVerNueva] = useState(false);
+  // Límite de gasto mensual
+  const [limiteGasto, setLimiteGasto] = useState("");
+  const [guardandoLimite, setGuardandoLimite] = useState(false);
+  // Eliminar cuenta
+  const [modalEliminar, setModalEliminar] = useState(false);
+  const [passwordEliminar, setPasswordEliminar] = useState("");
+  const [eliminando, setEliminando] = useState(false);
+  const [errorEliminar, setErrorEliminar] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") { router.push("/login"); return; }
@@ -165,6 +173,7 @@ export default function PaginaPerfil() {
           setBanco(u.banco ?? ""); setTipoCuenta(u.tipoCuenta ?? "");
           setCuentaBancaria(u.cuentaBancaria ?? "");
           setAvatarActual(u.avatar ?? null); setAvatarPrev(u.avatar ?? null);
+          setLimiteGasto(u.limiteGastoMensual ? String(u.limiteGastoMensual) : "");
         });
     }
   }, [status, router]);
@@ -222,6 +231,43 @@ export default function PaginaPerfil() {
     };
     reader.readAsDataURL(archivo);
     e.target.value = "";
+  }
+
+  async function guardarLimite() {
+    setGuardandoLimite(true);
+    const valor = limiteGasto.trim() === "" ? null : Number(limiteGasto);
+    if (valor !== null && (!Number.isFinite(valor) || valor <= 0)) {
+      mostrarMensaje("limite", false, "Ingresa un monto válido mayor a 0, o deja el campo vacío para quitar el límite.");
+      setGuardandoLimite(false);
+      return;
+    }
+    const res = await fetch("/api/usuario/perfil", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ limiteGastoMensual: valor }),
+    });
+    const json = await res.json() as { mensaje: string };
+    setGuardandoLimite(false);
+    mostrarMensaje("limite", res.ok, json.mensaje);
+    if (res.ok) setDatos((d) => d ? { ...d, limiteGastoMensual: valor } : d);
+  }
+
+  async function eliminarCuenta() {
+    setEliminando(true);
+    setErrorEliminar("");
+    const res = await fetch("/api/usuario/perfil", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: passwordEliminar }),
+    });
+    const json = await res.json() as { mensaje: string };
+    if (!res.ok) {
+      setErrorEliminar(json.mensaje);
+      setEliminando(false);
+      return;
+    }
+    const { signOut } = await import("next-auth/react");
+    await signOut({ callbackUrl: "/" });
   }
 
   async function guardar(seccion: Seccion) {
@@ -580,6 +626,58 @@ export default function PaginaPerfil() {
             <BtnGuardar guardando={guardando} onClick={() => guardar("password")} />
           </FilaSeccion>
 
+          {/* Límite de gasto mensual */}
+          <FilaSeccion
+            icono="🛡️"
+            titulo="Límite de gasto mensual"
+            subtitulo={datos.limiteGastoMensual ? `$${datos.limiteGastoMensual.toLocaleString("es-CO", { maximumFractionDigits: 0 })} COP / mes` : "Sin límite configurado"}
+            abierta={seccionAbierta === "limite"}
+            onToggle={() => toggleSeccion("limite")}
+          >
+            <p className="text-xs text-[#6b7693]">
+              Fija un tope de cuánto gastar en membresías cada mes calendario. Al llegar al límite, la plataforma
+              bloquea nuevas compras hasta el mes siguiente. Podés cambiarlo o quitarlo cuando quieras.
+            </p>
+            <Campo
+              label="Límite mensual (COP)"
+              value={limiteGasto}
+              onChange={setLimiteGasto}
+              type="number"
+              placeholder="Ej: 200000 — vacío = sin límite"
+            />
+            {mensajes.limite && (
+              <p className={`text-xs font-bold ${mensajes.limite.ok ? "text-[#0a8a4a]" : "text-[#c8312a]"}`}>
+                {mensajes.limite.ok ? "✓" : "⚠"} {mensajes.limite.texto}
+              </p>
+            )}
+            <button
+              onClick={guardarLimite}
+              disabled={guardandoLimite}
+              className="w-full py-3.5 rounded-2xl font-extrabold text-sm text-white transition-all disabled:opacity-50"
+              style={{
+                background: guardandoLimite ? "#98a2bf" : "linear-gradient(135deg, #102463, #173592)",
+                boxShadow: guardandoLimite ? "none" : "0 8px 20px -4px rgba(16,36,99,0.45)",
+              }}
+            >
+              {guardandoLimite ? "Guardando..." : "Guardar límite"}
+            </button>
+          </FilaSeccion>
+
+        </div>
+
+        {/* Zona de peligro */}
+        <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-red-100 p-5">
+          <p className="text-sm font-extrabold text-[#c8312a] mb-1">Eliminar cuenta</p>
+          <p className="text-xs text-[#98a2bf] mb-3">
+            Bloquea tu acceso de inmediato y libera tu correo/documento para un nuevo registro. Tu historial de
+            compras, retiros y referidos se conserva.
+          </p>
+          <button
+            onClick={() => { setErrorEliminar(""); setPasswordEliminar(""); setModalEliminar(true); }}
+            className="text-xs font-bold text-[#c8312a] border border-red-200 hover:bg-red-50 rounded-xl px-4 py-2.5 transition-colors"
+          >
+            🗑️ Eliminar mi cuenta
+          </button>
         </div>
 
         {/* Pie */}
@@ -588,6 +686,46 @@ export default function PaginaPerfil() {
         </p>
 
       </main>
+
+      {/* Modal eliminar cuenta */}
+      {modalEliminar && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center text-2xl mx-auto mb-4 bg-red-100">🗑️</div>
+            <h3 className="text-lg font-extrabold text-[#0e1424] mb-2">¿Eliminar tu cuenta?</h3>
+            <p className="text-xs text-[#6b7693] bg-[#f7f8fc] rounded-xl px-4 py-3 mb-4 text-left space-y-1.5">
+              <span className="block">✓ Se bloqueará tu acceso de inmediato.</span>
+              <span className="block">✓ Tu correo y documento quedan libres — podés registrarte de nuevo si querés volver.</span>
+              <span className="block">✓ Tu historial se conserva intacto.</span>
+            </p>
+            <input
+              type="password"
+              value={passwordEliminar}
+              onChange={(e) => setPasswordEliminar(e.target.value)}
+              placeholder="Confirma tu contraseña"
+              className="w-full px-4 py-3 mb-3 bg-[#f7f8fc] border border-[#e3e7f2] rounded-2xl text-sm text-center focus:outline-none focus:ring-2 focus:ring-red-300"
+            />
+            {errorEliminar && <p className="text-xs text-[#c8312a] font-semibold mb-3">⚠ {errorEliminar}</p>}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setModalEliminar(false)}
+                disabled={eliminando}
+                className="flex-1 py-2.5 border border-[#e3e7f2] rounded-xl text-[#0e1424] font-semibold text-sm hover:bg-[#f7f8fc] transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={eliminarCuenta}
+                disabled={eliminando || !passwordEliminar}
+                className="flex-1 py-2.5 rounded-xl text-white font-bold text-sm transition-colors bg-red-600 hover:bg-red-700 disabled:opacity-50"
+              >
+                {eliminando ? "Eliminando..." : "Sí, eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );

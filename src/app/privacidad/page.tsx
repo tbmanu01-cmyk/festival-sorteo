@@ -1,7 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const ACTUALIZADO = "25 de agosto de 2026";
+const ACTUALIZADO = "14 de septiembre de 2026";
 
 function Seccion({ n, titulo, children }: { n: string; titulo: string; children: React.ReactNode }) {
   return (
@@ -49,7 +49,8 @@ export default function PrivacidadPage() {
               <p>
                 Esta Política aplica a los datos personales que recolecta Tienda 10K a través de{" "}
                 <span className="font-mono text-sm">tienda10k.com</span>. Entidad responsable:{" "}
-                <Pendiente>razón social completa, NIT y domicilio — mismo dato pendiente que en Términos y Condiciones, sección 1</Pendiente>.
+                <strong>Tienda 10K S.A.S.</strong>, NIT <span className="font-mono text-sm">902.065.208-6</span>,
+                domiciliada en Bogotá D.C., Colombia.
               </p>
             </Seccion>
 
@@ -128,8 +129,9 @@ export default function PrivacidadPage() {
 
             <Seccion n="6" titulo="Cuánto tiempo conservamos tus datos">
               <p>
-                Conservamos tus datos mientras tu cuenta esté activa. Si solicitás la eliminación de tu cuenta, la
-                desactivamos y dejamos de usarla operativamente, pero{" "}
+                Conservamos tus datos mientras tu cuenta esté activa. Podés solicitar la eliminación de tu cuenta en
+                cualquier momento desde tu perfil — tu acceso se bloquea de inmediato y dejamos de usar tus datos
+                operativamente, pero{" "}
                 <Pendiente>
                   definir con el contador de la empresa el plazo mínimo que hay que conservar cierta información
                   (comprobantes de pago, historial de premios y retiros) por obligaciones contables/tributarias antes
@@ -152,8 +154,8 @@ export default function PrivacidadPage() {
               </ul>
               <p>
                 Podés ejercer cualquiera de estos derechos escribiéndonos a{" "}
-                <span className="font-mono text-sm">soporte@tienda10k.com</span> (ver nota sobre este correo en{" "}
-                <a href="/terminos" className="underline">Términos y Condiciones</a>, sección 21).
+                <span className="font-mono text-sm">soporte@tienda10k.com</span>, o desde el chat de soporte
+                disponible dentro de la plataforma.
               </p>
             </Seccion>
 
@@ -183,7 +185,8 @@ export default function PrivacidadPage() {
             <Seccion n="11" titulo="Contacto">
               <p>
                 Para preguntas sobre esta Política o para ejercer tus derechos, escribinos a{" "}
-                <span className="font-mono text-sm">soporte@tienda10k.com</span>.
+                <span className="font-mono text-sm">soporte@tienda10k.com</span> o por el chat de soporte de la
+                plataforma (preguntas frecuentes o atención directa con un asesor).
               </p>
             </Seccion>
 

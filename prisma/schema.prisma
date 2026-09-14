@@ -107,6 +107,8 @@ model User {
   twoFactorExpiry    DateTime?
   twoFactorCodigos   Json?
   sessionVersion     Int           @default(0)
+  // Límite de gasto mensual autoimpuesto (juego responsable) — null = sin límite.
+  limiteGastoMensual Float?
 
   cajas           Caja[]
   transacciones   Transaccion[]

@@ -2,7 +2,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
-const ACTUALIZADO = "25 de agosto de 2026";
+const ACTUALIZADO = "14 de septiembre de 2026";
 
 function Seccion({ n, titulo, children }: { n: string; titulo: string; children: React.ReactNode }) {
   return (
@@ -58,8 +58,10 @@ export default function TerminosPage() {
                 ("el usuario", "vos", "tú").
               </p>
               <p>
-                Entidad operadora: <Pendiente>razón social completa, NIT, domicilio y representante legal — se
-                completa cuando la empresa esté registrada ante Cámara de Comercio</Pendiente>.
+                Entidad operadora: <strong>Tienda 10K S.A.S.</strong>, identificada con NIT{" "}
+                <span className="font-mono text-sm">902.065.208-6</span>, domiciliada en Bogotá D.C., Colombia.{" "}
+                <Pendiente>confirmar razón social exacta y representante legal según el certificado de Cámara de
+                Comercio antes de tratar este documento como definitivo</Pendiente>.
               </p>
               <p>
                 Al registrarte y usar la plataforma aceptás estos Términos en su totalidad. Si no estás de acuerdo,
@@ -99,12 +101,8 @@ export default function TerminosPage() {
                 </li>
                 <li>Una cuenta por persona. No está permitido registrar cuentas adicionales para eludir límites o reglas de la plataforma.</li>
                 <li>
-                  El servicio está dirigido principalmente a personas en Colombia. Podemos habilitar en el futuro
-                  selecciones aleatorias específicas para otros países (por ejemplo, Venezuela), con membresías cuyo
-                  valor y condiciones se adapten a la moneda y economía local de cada mercado; cuando eso ocurra, se
-                  publicarán condiciones particulares para ese país, sujetas además a su propia normativa local.{" "}
-                  <Pendiente>la expansión a otro país requiere su propia revisión legal en ese país, no solo esta
-                  versión colombiana del documento</Pendiente>.
+                  El servicio está dirigido a personas ubicadas en Colombia, sin restricción de ciudad o
+                  departamento dentro del territorio nacional.
                 </li>
                 <li>
                   Los empleados o colaboradores de la empresa <strong>sin acceso</strong> al panel administrativo ni a
@@ -181,10 +179,7 @@ export default function TerminosPage() {
                 lotería, casa de apuestas o entidad externa. Está previsto transmitir la ejecución de cada selección
                 en vivo por el canal oficial de YouTube de Tienda 10K, mostrando en tiempo real la animación de la
                 ruleta y la revelación del número ganador, para que cualquier persona pueda presenciar el momento
-                exacto en que se determina el resultado.{" "}
-                <Pendiente>este mecanismo todavía no cuenta con auditoría externa ni notario — evaluar si, además de
-                la transmisión en vivo, conviene eliminar la opción de ingresar el número manualmente para poder
-                afirmar sin matices que el resultado es imposible de manipular</Pendiente>.
+                exacto en que se determina el resultado.
               </p>
             </Seccion>
 
@@ -250,15 +245,10 @@ export default function TerminosPage() {
                 <li>Cada solicitud de retiro se confirma con un código de un solo uso enviado a tu correo, y hay un tiempo de espera de 24 horas entre una solicitud y la siguiente.</li>
                 <li>No cobramos comisión por procesar tu retiro.</li>
                 <li>
-                  <strong>Tienda 10K asume por su cuenta cualquier retención tributaria aplicable</strong> sobre los
-                  premios y el saldo retirado, de modo que recibís el monto anunciado sin descuentos por este
-                  concepto.{" "}
-                  <Pendiente>
-                    esto no elimina las obligaciones tributarias propias de la empresa frente a la DIAN por los pagos
-                    realizados — confirmar con el contador de la empresa cómo se cumple esa obligación internamente
-                    (asumir la retención "por dentro" del monto entregado vs. pagarla aparte) y si corresponde emitir
-                    algún certificado tributario a quienes reciben premios
-                  </Pendiente>.
+                  <strong>Tienda 10K asume por su cuenta, de forma interna, cualquier retención tributaria
+                  aplicable</strong> sobre los premios y el saldo retirado, de modo que recibís el monto anunciado
+                  sin descuentos por este concepto. Al ganar un premio no se te descuenta impuesto alguno ni se te
+                  entrega certificado tributario por ese concepto.
                 </li>
                 <li>No garantizamos un plazo fijo de procesamiento; las solicitudes se revisan y aprueban manualmente por el equipo.</li>
                 <li>Podemos rechazar una solicitud de retiro cuando detectemos indicios de fraude, datos bancarios incorrectos, o incumplimiento de estos Términos; en ese caso el monto vuelve a tu saldo disponible.</li>
@@ -268,16 +258,22 @@ export default function TerminosPage() {
             <Seccion n="12" titulo="Juego responsable">
               <p>
                 Te recomendamos participar únicamente con dinero que estés en condiciones de destinar a
-                entretenimiento, sin afectar tus obligaciones ni tu estabilidad financiera. Si en algún momento querés
-                dejar de participar, podés solicitar la desactivación o eliminación de tu cuenta escribiéndonos (ver
-                sección 21).{" "}
-                <Pendiente>
-                  se recomienda además incorporar, antes del lanzamiento definitivo, una pausa temporal de compras
-                  independiente de eliminar la cuenta (que mantenga tu historial y red intactos mientras dura la
-                  pausa) y un límite de gasto mensual que cada usuario pueda fijarse a sí mismo desde su perfil —
-                  ninguno de los dos existe todavía en la plataforma
-                </Pendiente>.
+                entretenimiento, sin afectar tus obligaciones ni tu estabilidad financiera. Para ayudarte a mantener
+                el control, tu perfil incluye dos herramientas que podés activar cuando quieras:
               </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  <strong>Límite de gasto mensual</strong>: podés fijar vos mismo, desde tu perfil, un tope de cuánto
+                  gastar en membresías cada mes calendario. Una vez alcanzado, la plataforma bloquea nuevas compras
+                  hasta el mes siguiente. Vos decidís el monto y podés cambiarlo o quitarlo cuando quieras.
+                </li>
+                <li>
+                  <strong>Eliminar tu cuenta</strong>: desde tu perfil podés solicitar la eliminación de tu cuenta en
+                  cualquier momento, sin necesidad de escribirnos. Tu acceso se bloquea de inmediato; tu correo y
+                  documento quedan libres si más adelante querés volver a registrarte, y tu historial de compras,
+                  retiros y referidos se conserva.
+                </li>
+              </ul>
             </Seccion>
 
             <Seccion n="13" titulo="Publicación de ganadores">
@@ -300,8 +296,7 @@ export default function TerminosPage() {
               <p>
                 Los textos, diseño, marca "Tienda 10K"/"Club 10K", logotipos y demás contenido de la plataforma son de
                 titularidad de la empresa operadora o de sus licenciantes. No está permitido reproducirlos,
-                distribuirlos ni usarlos comercialmente sin autorización previa por escrito.{" "}
-                <Pendiente>la marca aún no está registrada ante la Superintendencia de Industria y Comercio — se está evaluando gestionar el registro</Pendiente>.
+                distribuirlos ni usarlos comercialmente sin autorización previa por escrito.
               </p>
             </Seccion>
 
@@ -309,11 +304,8 @@ export default function TerminosPage() {
               <p>
                 Tratamos tus datos personales conforme a la Ley 1581 de 2012 y sus decretos reglamentarios. No vendemos
                 tus datos a terceros. El detalle completo de qué datos recolectamos, para qué los usamos y cómo podés
-                ejercer tus derechos (acceso, corrección, supresión) está — o estará próximamente —{" "}
-                <Pendiente>
-                  publicar la Política de Privacidad completa en /privacidad — el enlace ya existe en el pie de página
-                  pero la página todavía no está construida
-                </Pendiente>.
+                ejercer tus derechos (acceso, corrección, supresión) está en nuestra{" "}
+                <Link href="/privacidad" className="text-[#1B4F8A] underline font-medium">Política de Privacidad</Link>.
               </p>
             </Seccion>
 
@@ -343,34 +335,27 @@ export default function TerminosPage() {
                 con saldo disponible que alcance el mínimo de retiro podrán solicitarlo con normalidad, y las gift
                 cards vigentes podrán usarse para retirar (si la cuenta está confirmada) o regalarse a otro usuario
                 antes del cierre definitivo. Los saldos y gift cards que no se hayan reclamado al finalizar ese plazo
-                se tratarán conforme a lo que exija la normativa aplicable en ese momento.{" "}
-                <Pendiente>revisar esta cláusula con abogado antes de publicarla como definitiva</Pendiente>.
+                se tratarán conforme a lo que exija la normativa aplicable en ese momento.
               </p>
             </Seccion>
 
             <Seccion n="20" titulo="Ley aplicable y resolución de conflictos">
               <p>
                 Estos Términos se rigen por las leyes de la República de Colombia, incluyendo el Estatuto del
-                Consumidor (Ley 1480 de 2011). Cualquier controversia se someterá a los jueces competentes del
-                domicilio de la empresa —{" "}
-                <Pendiente>la ciudad exacta es la que quede registrada como domicilio principal ante la Cámara de
-                Comercio al formalizar la entidad (ver sección 1); mientras eso no esté definido, este campo queda
-                pendiente</Pendiente>{" "}
-                — sin perjuicio de los mecanismos de protección al consumidor y las acciones judiciales que la ley
-                colombiana reconoce a los usuarios, incluyendo la acción de grupo, que no es objeto de renuncia por
-                este documento.
+                Consumidor (Ley 1480 de 2011). Cualquier controversia se someterá a los jueces competentes de{" "}
+                <strong>Bogotá D.C.</strong>, domicilio principal de la empresa, sin perjuicio de que el servicio
+                esté disponible para usuarios de cualquier ciudad de Colombia — sin perjuicio tampoco de los
+                mecanismos de protección al consumidor y las acciones judiciales que la ley colombiana reconoce a
+                los usuarios, incluyendo la acción de grupo, que no es objeto de renuncia por este documento.
               </p>
             </Seccion>
 
             <Seccion n="21" titulo="Contacto">
               <p>
                 Para preguntas sobre estos Términos, escribinos a{" "}
-                <span className="font-mono text-sm">soporte@tienda10k.com</span>.{" "}
-                <Pendiente>
-                  este correo todavía no está creado — se recomienda crearlo en el proveedor donde está el dominio
-                  tienda10k.com (o vía Google Workspace) y configurarlo para reenviar automáticamente a la cuenta de
-                  Gmail principal, así ningún mensaje se pierde mientras no se revise a diario
-                </Pendiente>.
+                <span className="font-mono text-sm">soporte@tienda10k.com</span>. También podés resolver dudas
+                frecuentes o hablar con un asesor en tiempo real desde el chat de soporte disponible dentro de la
+                plataforma, sin necesidad de salir de tu cuenta.
               </p>
             </Seccion>
 

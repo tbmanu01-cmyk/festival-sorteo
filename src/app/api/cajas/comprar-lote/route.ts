@@ -89,6 +89,13 @@ export async function POST(req: NextRequest) {
     }
 
     const total = precioCaja * numeros.length;
+
+    const { verificarLimiteGasto } = await import("@/lib/limiteGasto");
+    const limite = await verificarLimiteGasto(prisma, userId, total);
+    if (!limite.ok) {
+      return NextResponse.json({ mensaje: limite.mensaje, codigo: "LIMITE_GASTO_MENSUAL" }, { status: 403 });
+    }
+
     if (usuarioCheck.saldoPuntos < total) {
       return NextResponse.json(
         {

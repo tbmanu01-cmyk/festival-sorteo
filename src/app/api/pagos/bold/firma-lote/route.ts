@@ -78,6 +78,13 @@ export async function POST(req: NextRequest) {
 
     const monto = tipoMembresia.precio * numeros.length;
     const moneda = "COP";
+
+    const { verificarLimiteGasto } = await import("@/lib/limiteGasto");
+    const limite = await verificarLimiteGasto(prisma, userId, monto);
+    if (!limite.ok) {
+      return NextResponse.json({ mensaje: limite.mensaje, codigo: "LIMITE_GASTO_MENSUAL" }, { status: 403 });
+    }
+
     const orderId = `LOTE${numeros[0]}-${Date.now().toString(36).toUpperCase()}`;
 
     await prisma.pagoBold.create({

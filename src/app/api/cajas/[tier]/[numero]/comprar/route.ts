@@ -86,6 +86,14 @@ export async function POST(
     const montoDescuento = giftCard ? Math.min(giftCard.valor, precioCaja) : 0;
     const montoCobrado = precioCaja - montoDescuento;
 
+    if (montoCobrado > 0) {
+      const { verificarLimiteGasto } = await import("@/lib/limiteGasto");
+      const limite = await verificarLimiteGasto(prisma, userId, montoCobrado);
+      if (!limite.ok) {
+        return NextResponse.json({ mensaje: limite.mensaje, codigo: "LIMITE_GASTO_MENSUAL" }, { status: 403 });
+      }
+    }
+
     // El resto (si lo hay tras la gift card) se paga con saldo de la cuenta —
     // esta ruta es solo para pago interno (saldo/gift card); si no alcanza,
     // el frontend debe ofrecer pagar con Bold en vez de reintentar aquí.
