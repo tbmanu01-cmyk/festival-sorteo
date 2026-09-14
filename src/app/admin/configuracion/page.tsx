@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SubirImagen from "@/components/SubirImagen";
 import ModalConfirmar from "@/components/ModalConfirmar";
+import { bogotaInputAUtcISO, utcAInputBogota } from "@/lib/horaBogota";
 
 interface Config {
   margenGanancia:        number;
@@ -609,9 +610,7 @@ interface TipoMembresiaAdmin {
 function TarjetaTipoMembresia({ tipo, onGuardado }: { tipo: TipoMembresiaAdmin; onGuardado: () => void }) {
   const [precio, setPrecio] = useState(tipo.precio);
   const [activo, setActivo] = useState(tipo.activo);
-  const [fechaSorteo, setFechaSorteo] = useState(
-    tipo.fechaSorteo ? new Date(tipo.fechaSorteo).toISOString().slice(0, 16) : ""
-  );
+  const [fechaSorteo, setFechaSorteo] = useState(utcAInputBogota(tipo.fechaSorteo));
   const [linkPagoBoldUrl, setLinkPagoBoldUrl] = useState(tipo.linkPagoBoldUrl ?? "");
   const [metaMinimaVenta, setMetaMinimaVenta] = useState(tipo.metaMinimaVenta ?? "");
   const [guardando, setGuardando] = useState(false);
@@ -627,7 +626,7 @@ function TarjetaTipoMembresia({ tipo, onGuardado }: { tipo: TipoMembresiaAdmin; 
         body: JSON.stringify({
           precio,
           activo,
-          fechaSorteo: fechaSorteo || null,
+          fechaSorteo: fechaSorteo ? bogotaInputAUtcISO(fechaSorteo) : null,
           linkPagoBoldUrl: linkPagoBoldUrl || null,
           metaMinimaVenta: metaMinimaVenta === "" ? null : Number(metaMinimaVenta),
         }),

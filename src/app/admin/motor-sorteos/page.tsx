@@ -557,12 +557,12 @@ function TabPrincipal() {
                 <h2 className="text-2xl font-extrabold text-[#1B4F8A]">Temporada #{temporadaActual.numero}</h2>
               </div>
               <p className="text-gray-400 text-xs text-right">
-                Iniciada el {new Date(temporadaActual.inicio).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}
+                Iniciada el {new Date(temporadaActual.inicio).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short", timeZone: "America/Bogota" })}
                 <br />
                 {(() => {
                   const fs = tipos.find((t) => t.slug === tier)?.fechaSorteo;
                   return fs
-                    ? <span className="text-[#1B4F8A] font-semibold">Próxima selección: {new Date(fs).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" })}</span>
+                    ? <span className="text-[#1B4F8A] font-semibold">Próxima selección: {new Date(fs).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short", timeZone: "America/Bogota" })} (hora Bogotá)</span>
                     : <span className="text-gray-300">Sin fecha de próxima selección programada</span>;
                 })()}
               </p>
