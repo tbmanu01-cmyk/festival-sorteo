@@ -37,7 +37,12 @@ function fila(label: string, valor: string) {
 // verificado, remitente rechazado, rate limit, etc.) — devuelve { data, error }
 // silenciosamente. Sin este chequeo, un envío fallido se veía igual que uno
 // exitoso para quien llamaba la función, y nunca quedaba rastro en los logs.
-async function enviarCorreo(payload: { to: string; subject: string; html: string }) {
+async function enviarCorreo(payload: {
+  to: string;
+  subject: string;
+  html: string;
+  attachments?: { filename: string; content: string }[];
+}) {
   const { data, error } = await resend().emails.send({ from: FROM, ...payload });
   if (error) {
     throw new Error(`Resend rechazó el envío a ${payload.to} ("${payload.subject}"): ${error.name} — ${error.message}`);
@@ -512,5 +517,36 @@ export async function enviarAlertaAdmin(opts: {
     to: correo,
     subject: `🚨 ${titulo} — Tienda 10K`,
     html: base(cuerpo, "#dc2626"),
+  });
+}
+
+// ── Backup diario (reemplaza el envío por SMTP crudo con nodemailer, que
+// dependía de variables EMAIL_HOST/USER/PASS que nunca existieron en
+// Vercel — el cron fallaba en silencio todos los días) ─────────────────────
+
+export async function enviarBackupDiario(opts: {
+  correo: string;
+  resumen: Record<string, number>;
+  jsonAdjunto: string;
+  nombreArchivo: string;
+}) {
+  const { correo, resumen, jsonAdjunto, nombreArchivo } = opts;
+  const filas = Object.entries(resumen)
+    .map(([label, valor]) => fila(label, String(valor)))
+    .join("");
+  const cuerpo = `
+    <h2 style="margin:0 0 4px;color:#1B4F8A;font-size:22px;">💾 Backup diario automático</h2>
+    <p style="margin:0 0 20px;color:#999;font-size:13px;">${new Date().toLocaleString("es-CO")}</p>
+    <table width="100%" cellpadding="0" cellspacing="0">${filas}</table>
+    <p style="margin:20px 0 0;color:#999;font-size:13px;line-height:1.6;">
+      El archivo JSON adjunto NO incluye contraseñas ni tokens de sesión/recuperación — esos campos se excluyen antes de generar el backup.
+    </p>`;
+  await enviarCorreo({
+    to: correo,
+    subject: `💾 Backup diario — Tienda 10K — ${new Date().toLocaleDateString("es-CO")}`,
+    html: base(cuerpo),
+    attachments: [
+      { filename: nombreArchivo, content: Buffer.from(jsonAdjunto).toString("base64") },
+    ],
   });
 }

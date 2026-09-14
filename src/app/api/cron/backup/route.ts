@@ -1,7 +1,18 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
 
 export const dynamic = "force-dynamic";
+
+// Campos de User que NUNCA deben salir del servidor, ni siquiera en un
+// backup dirigido a admins — hash de contraseña y cualquier token/código
+// vigente de sesión, 2FA o recuperación.
+const USER_SELECT = {
+  id: true, nombre: true, apellido: true, documento: true, correo: true,
+  celular: true, ciudad: true, departamento: true, fechaNacimiento: true,
+  cuentaBancaria: true, banco: true, tipoCuenta: true, whatsapp: true,
+  avatar: true, rol: true, saldoPuntos: true, activo: true, confirmado: true,
+  eliminado: true, eliminadoEn: true, fechaRegistro: true, codigoRef: true,
+  loginIntentos: true, bloqueadoHasta: true, sessionVersion: true,
+} as const;
 
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization");
@@ -16,7 +27,7 @@ export async function GET(req: Request) {
     sorteoAnticipados, referidos, cupones, giftCards, granSorteos,
     sorteosPreviosGran, notificaciones, conceptosRetencion,
   ] = await Promise.all([
-    prisma.user.findMany(),
+    prisma.user.findMany({ select: USER_SELECT }),
     prisma.caja.findMany(),
     prisma.transaccion.findMany(),
     prisma.sorteo.findMany(),
@@ -34,7 +45,7 @@ export async function GET(req: Request) {
   ]);
 
   const backup = {
-    version: "2.0",
+    version: "3.0",
     fecha: new Date().toISOString(),
     proyecto: "Tienda 10K — Backup Diario Automático",
     resumen: {
@@ -65,38 +76,32 @@ export async function GET(req: Request) {
   };
 
   const json = JSON.stringify(backup, null, 2);
+  const nombreArchivo = `backup-club10k-${new Date().toISOString().slice(0, 10)}.json`;
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: Number(process.env.EMAIL_PORT),
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+  const admins = await prisma.user.findMany({
+    where: { rol: "ADMIN", activo: true },
+    select: { correo: true },
   });
 
-  await transporter.sendMail({
-    from: `"Tienda 10K" <${process.env.EMAIL_USER}>`,
-    to: process.env.EMAIL_USER!,
-    subject: `[Backup] Tienda 10K — ${new Date().toLocaleDateString("es-CO")}`,
-    html: `
-      <h2>Backup diario automático — Tienda 10K</h2>
-      <p>Fecha: <strong>${new Date().toLocaleString("es-CO")}</strong></p>
-      <table style="border-collapse:collapse;font-size:14px">
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Usuarios</td><td><strong>${backup.resumen.usuarios}</strong></td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Membresías</td><td><strong>${backup.resumen.cajas}</strong></td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Transacciones</td><td><strong>${backup.resumen.transacciones}</strong></td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Retiros</td><td><strong>${backup.resumen.retiros}</strong></td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Referidos</td><td><strong>${backup.resumen.referidos}</strong></td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666">Gift cards</td><td><strong>${backup.resumen.giftCards}</strong></td></tr>
-      </table>
-      <p style="margin-top:16px">El archivo JSON completo con <strong>todas las tablas</strong> está adjunto.</p>
-    `,
-    attachments: [
-      {
-        filename: `backup-club10k-${new Date().toISOString().slice(0, 10)}.json`,
-        content: json,
-        contentType: "application/json",
-      },
-    ],
-  });
+  const { enviarBackupDiario } = await import("@/lib/email");
+  const resultados = await Promise.allSettled(
+    admins.map((a) =>
+      enviarBackupDiario({
+        correo: a.correo,
+        resumen: backup.resumen,
+        jsonAdjunto: json,
+        nombreArchivo,
+      })
+    )
+  );
 
-  return NextResponse.json({ ok: true, resumen: backup.resumen });
+  const fallidos = resultados.filter((r) => r.status === "rejected");
+  if (fallidos.length > 0) {
+    console.error("[cron backup] fallos al enviar a algunos admins:", fallidos);
+  }
+  if (fallidos.length === resultados.length && admins.length > 0) {
+    return NextResponse.json({ ok: false, error: "No se pudo enviar el backup a ningún admin." }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true, resumen: backup.resumen, enviadoA: admins.length - fallidos.length });
 }

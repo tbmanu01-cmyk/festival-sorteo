@@ -1,12 +1,21 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { verificarAdmin } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
+// Mismo criterio que /api/cron/backup: nunca exponer hash de contraseña ni
+// tokens/códigos de sesión, 2FA o recuperación, ni siquiera a un admin.
+const USER_SELECT = {
+  id: true, nombre: true, apellido: true, documento: true, correo: true,
+  celular: true, ciudad: true, departamento: true, fechaNacimiento: true,
+  cuentaBancaria: true, banco: true, tipoCuenta: true, whatsapp: true,
+  avatar: true, rol: true, saldoPuntos: true, activo: true, confirmado: true,
+  eliminado: true, eliminadoEn: true, fechaRegistro: true, codigoRef: true,
+  loginIntentos: true, bloqueadoHasta: true, sessionVersion: true,
+} as const;
+
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session || (session.user as { rol?: string }).rol !== "ADMIN") {
+  if (!(await verificarAdmin())) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -17,7 +26,7 @@ export async function GET() {
     sorteoAnticipados, referidos, cupones, giftCards, granSorteos,
     sorteosPreviosGran, notificaciones, conceptosRetencion,
   ] = await Promise.all([
-    prisma.user.findMany(),
+    prisma.user.findMany({ select: USER_SELECT }),
     prisma.caja.findMany(),
     prisma.transaccion.findMany(),
     prisma.sorteo.findMany(),
@@ -35,7 +44,7 @@ export async function GET() {
   ]);
 
   const backup = {
-    version: "2.0",
+    version: "3.0",
     fecha: new Date().toISOString(),
     proyecto: "Tienda 10K",
     resumen: {
