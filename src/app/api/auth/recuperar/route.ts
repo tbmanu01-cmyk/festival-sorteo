@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { obtenerIP, registrarAuditoria } from "@/lib/auditoria";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const RESP_OK = { mensaje: "Si el correo existe, recibirás un enlace en breve." };
 const LIMITE_MINUTOS = 15;
 
 export async function POST(req: NextRequest) {
   const ip = obtenerIP(req);
+
+  // Límite por IP además del límite por cuenta de abajo — sin esto, una sola
+  // IP puede spamear el endpoint contra muchas cuentas distintas sin que
+  // nada lo frene (no compromete cuentas, pero agota cuota de envíos).
+  const rl = checkRateLimit(`recuperar-ip:${ip}`, 10, 15 * 60 * 1000);
+  if (!rl.allowed) return NextResponse.json(RESP_OK);
+
   try {
     const { correo } = await req.json() as { correo?: string };
     if (!correo) return NextResponse.json({ mensaje: "Correo requerido." }, { status: 400 });
