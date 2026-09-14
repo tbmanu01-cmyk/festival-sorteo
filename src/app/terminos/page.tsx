@@ -60,8 +60,8 @@ export default function TerminosPage() {
               <p>
                 Entidad operadora: <strong>Comercializadora Multimarcas.com S.A.S.</strong>, sociedad comercial
                 identificada con NIT <span className="font-mono text-sm">902.065.208-6</span>, domiciliada en Bogotá
-                D.C., Colombia. <Pendiente>confirmar el representante legal registrado según el certificado de
-                Cámara de Comercio antes de tratar este documento como definitivo</Pendiente>.
+                D.C., Colombia. Representante legal: <strong>Jairo Alonso González Bautista</strong>, C.C.{" "}
+                <span className="font-mono text-sm">79.706.637</span>.
               </p>
               <p>
                 Al registrarte y usar la plataforma aceptás estos Términos en su totalidad. Si no estás de acuerdo,
