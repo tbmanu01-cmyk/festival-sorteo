@@ -78,10 +78,14 @@ export async function GET(req: Request) {
   const json = JSON.stringify(backup, null, 2);
   const nombreArchivo = `backup-club10k-${new Date().toISOString().slice(0, 10)}.json`;
 
-  const admins = await prisma.user.findMany({
-    where: { rol: "ADMIN", activo: true },
-    select: { correo: true },
-  });
+  // admin@tienda10k.com es una cuenta de acceso sin buzón real: el backup rebotaba ahí a diario.
+  const SIN_BUZON = new Set(["admin@tienda10k.com"]);
+  const admins = (
+    await prisma.user.findMany({
+      where: { rol: "ADMIN", activo: true },
+      select: { correo: true },
+    })
+  ).filter((a) => !SIN_BUZON.has(a.correo.toLowerCase()));
 
   const { enviarBackupDiario } = await import("@/lib/email");
   const resultados = await Promise.allSettled(
