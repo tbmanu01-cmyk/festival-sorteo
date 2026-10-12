@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import CountdownHero from "@/components/CountdownHero";
+import RuletaSorteo from "@/components/RuletaSorteo";
 import ModalConfirmar from "@/components/ModalConfirmar";
 
 type EstadoCaja = "DISPONIBLE" | "RESERVADA" | "VENDIDA";
@@ -32,6 +33,7 @@ interface TipoMembresiaAPI {
   precio: number;
   fechaSorteo: string | null;
   vendidasTotal: number;
+  obsequiadasTotal?: number;
   freezeActivo: boolean;
   freezeMinutos: number | null;
 }
@@ -421,6 +423,11 @@ function MembresiasInner() {
   const [reservaConfirmada, setReservaConfirmada] = useState(false);
   const [buscandoAleatoria, setBuscandoAleatoria] = useState(false);
   const [esSorpresa, setEsSorpresa] = useState(false);
+  // Número al azar que se revela con la ruleta antes de abrir la reserva.
+  const [numeroRuleta, setNumeroRuleta] = useState<string | null>(null);
+  // Ref aparte: el cierre automático y "Saltar animación" pueden coincidir, y
+  // solo el primero debe abrir la reserva.
+  const numeroRuletaRef = useRef<string | null>(null);
   const [confirmado, setConfirmado] = useState<boolean | null>(null);
 
   // Tamaños de paquete ofrecidos al comprador — mismo set que valida el
@@ -459,6 +466,7 @@ function MembresiasInner() {
   const tierActual = tiposMembresia.find((t) => t.slug === tier) ?? tiposMembresia[0] ?? null;
   const precioCaja = tierActual?.precio ?? 0;
   const vendidasTotal = tierActual?.vendidasTotal ?? 0;
+  const obsequiadasTotal = tierActual?.obsequiadasTotal ?? 0;
   const fechaSorteoISO = tierActual?.fechaSorteo ?? null;
   const freezeActivo = tierActual?.freezeActivo ?? false;
   const freezeMinutos = tierActual?.freezeMinutos ?? null;
@@ -542,14 +550,23 @@ function MembresiasInner() {
       const res = await fetch(`/api/cajas/aleatoria?tier=${tier}`);
       const json = await res.json();
       if (!res.ok || !json.caja) return;
-      setEsSorpresa(true);
-      setCajaSeleccionada({ numero: json.caja.numero, estado: "DISPONIBLE" });
-      setResultadoReserva(null);
-      setExpiraReserva(null);
-      setReservaConfirmada(false);
+      numeroRuletaRef.current = json.caja.numero;
+      setNumeroRuleta(json.caja.numero);
     } finally {
       setBuscandoAleatoria(false);
     }
+  };
+
+  const abrirNumeroRuleta = () => {
+    const numero = numeroRuletaRef.current;
+    if (!numero) return;
+    numeroRuletaRef.current = null;
+    setEsSorpresa(true);
+    setCajaSeleccionada({ numero, estado: "DISPONIBLE" });
+    setResultadoReserva(null);
+    setExpiraReserva(null);
+    setReservaConfirmada(false);
+    setNumeroRuleta(null);
   };
 
   const toggleEnPaquete = (caja: Caja) => {
@@ -718,20 +735,20 @@ function MembresiasInner() {
           className="text-white"
           style={{ background: "linear-gradient(135deg, #102463 0%, #173592 55%, #1e44b8 100%)", padding: "56px 0 48px" }}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#ffbd1f", background: "rgba(255,189,31,0.12)", border: "1px solid rgba(255,189,31,0.30)", borderRadius: 999, padding: "4px 14px", marginBottom: 16 }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <span style={{ display: "inline-block", fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#ffbd1f", background: "rgba(255,189,31,0.12)", border: "1px solid rgba(255,189,31,0.30)", borderRadius: 999, padding: "4px 14px", marginBottom: 16 }}>
               Tienda de membresías 10K
             </span>
             <h1 style={{ fontSize: "clamp(32px,4vw,52px)", fontWeight: 800, lineHeight: 1.08, letterSpacing: "-0.02em", margin: "0 0 14px" }}>
               Tu membresía,{" "}
               <span style={{ color: "#ffbd1f" }}>tu oportunidad</span>
             </h1>
-            <p style={{ fontSize: 17, color: "rgba(255,255,255,0.85)", margin: "0 0 24px", maxWidth: 480, lineHeight: 1.65 }}>
-              10,000 membresías numeradas. Coincide con el número de la selección aleatoria en 4, 3, 2 o 1 cifra y gana parte del recaudo.
+            <p style={{ fontSize: 19, color: "rgba(255,255,255,0.88)", margin: "0 auto 26px", maxWidth: 560, lineHeight: 1.6 }}>
+              10.000 membresías numeradas. Coincide con el número de la selección aleatoria en 4, 3, 2 o 1 cifra y gana parte del recaudo.
             </p>
 
             {tiposMembresia.length > 1 && (
-              <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap", justifyContent: "center" }}>
                 {tiposMembresia.map((t) => (
                   <button
                     key={t.slug}
@@ -754,7 +771,7 @@ function MembresiasInner() {
             )}
 
             {/* Pills de stats */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: fechaSorteoISO ? 24 : 0 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: fechaSorteoISO ? 24 : 0, justifyContent: "center" }}>
               <div style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "8px 18px", backdropFilter: "blur(8px)" }}>
                 <span style={{ fontWeight: 800, color: "#ffbd1f" }}>{(10000 - vendidasTotal).toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>{" "}
                 <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>disponibles</span>
@@ -762,6 +779,14 @@ function MembresiasInner() {
               <div style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "8px 18px", backdropFilter: "blur(8px)" }}>
                 <span style={{ fontWeight: 800, color: "#ffbd1f" }}>{((vendidasTotal / 10000) * 100).toFixed(1)}%</span>{" "}
                 <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>vendido</span>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "8px 18px", backdropFilter: "blur(8px)" }}>
+                <span style={{ fontWeight: 800, color: "#ffbd1f" }}>{vendidasTotal.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>{" "}
+                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>vendidas</span>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "8px 18px", backdropFilter: "blur(8px)" }}>
+                <span style={{ fontWeight: 800, color: "#ffbd1f" }}>{obsequiadasTotal.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>{" "}
+                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.70)" }}>obsequiadas</span>
               </div>
               <div style={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 999, padding: "8px 18px", backdropFilter: "blur(8px)" }}>
                 <span style={{ fontWeight: 800, color: "white" }}>${precioCaja.toLocaleString("es-CO", { maximumFractionDigits: 0 })}</span>{" "}
@@ -772,10 +797,12 @@ function MembresiasInner() {
             {/* Countdown */}
             {fechaSorteoISO && (
               <div style={{ marginTop: 20 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.60)", marginBottom: 10 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.60)", marginBottom: 10 }}>
                   Próximo resultado principal
                 </p>
-                <CountdownHero fecha={fechaSorteoISO} />
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <CountdownHero fecha={fechaSorteoISO} />
+                </div>
               </div>
             )}
           </div>
@@ -795,25 +822,34 @@ function MembresiasInner() {
         )}
 
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="bg-gradient-to-r from-[#ffbd1f] to-yellow-300 rounded-2xl p-4 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="bg-white border-2 border-[#102463]/10 rounded-2xl p-5 mb-4 text-center shadow-sm">
+            <p className="text-3xl mb-1">🎉</p>
+            <p className="font-extrabold text-[#102463] text-xl mb-1.5">¡Bienvenido a la selección de membresías Tienda 10K!</p>
+            <p className="text-gray-600 text-base leading-relaxed max-w-2xl mx-auto">
+              Elige tu número del 0000 al 9999 y participa. La selección del número ganador se hace{" "}
+              <strong className="text-[#102463]">en vivo, en un evento presencial con los miembros</strong>, girando la ruleta en pantalla gigante.
+            </p>
+          </div>
+
+          <div className="bg-gradient-to-r from-[#ffbd1f] to-yellow-300 rounded-2xl p-5 mb-4 flex flex-col items-center text-center gap-3">
             <div>
-              <p className="font-extrabold text-[#102463] text-base">¿No sabes cuál elegir?</p>
-              <p className="text-[#102463]/70 text-sm">Deja que la suerte decida por ti — te asignamos un número disponible al azar.</p>
+              <p className="font-extrabold text-[#102463] text-xl">¿No sabes cuál elegir?</p>
+              <p className="text-[#102463]/75 text-base mt-1">Deja que la suerte decida por ti: gira la ruleta y te asignamos un número disponible al azar.</p>
             </div>
             <button
               onClick={elegirAleatoria}
               disabled={buscandoAleatoria || modoPaquete}
-              className="shrink-0 bg-[#102463] hover:bg-[#173592] disabled:opacity-60 text-white font-bold px-6 py-3 rounded-full text-sm transition-all shadow-md flex items-center gap-2 whitespace-nowrap"
+              className="shrink-0 bg-[#102463] hover:bg-[#173592] disabled:opacity-60 text-white font-bold px-8 py-4 rounded-full text-base transition-all shadow-md flex items-center gap-2 whitespace-nowrap"
             >
               <span className={buscandoAleatoria ? "animate-spin inline-block" : "inline-block"}>🎲</span>
-              {buscandoAleatoria ? "Eligiendo..." : "Membresía aleatoria"}
+              {buscandoAleatoria ? "Eligiendo..." : "Girar la ruleta"}
             </button>
           </div>
 
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-2xl p-4 mb-4">
-            <div className="mb-3">
-              <p className="font-extrabold text-green-800 text-base mb-1">Compra varias membresías en un solo pago</p>
-              <p className="text-green-700/80 text-sm mb-2.5">
+            <div className="mb-3 text-center">
+              <p className="font-extrabold text-green-800 text-xl mb-1">Compra varias membresías en un solo pago</p>
+              <p className="text-green-700/80 text-base mb-3">
                 Elige cuántas quieres{tamanoPaquete >= 5 ? " — por cada 5, te regalamos una gift card adicional." : "."}
               </p>
               <div className="flex items-center gap-4">
@@ -838,17 +874,17 @@ function MembresiasInner() {
             </div>
 
             {!modoPaquete ? (
-              <div className="flex flex-col sm:flex-row items-center justify-end gap-2 pt-2 border-t border-green-200/70">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3 border-t border-green-200/70">
                 <button
                   onClick={() => setModoPaquete(true)}
-                  className="bg-white border-2 border-green-600 text-green-700 hover:bg-green-50 font-bold px-4 py-2.5 rounded-full text-sm transition-all whitespace-nowrap"
+                  className="bg-white border-2 border-green-600 text-green-700 hover:bg-green-50 font-bold px-6 py-3 rounded-full text-base transition-all whitespace-nowrap"
                 >
                   Elegir yo mismo
                 </button>
                 <button
                   onClick={completarPaqueteAleatorio}
                   disabled={cargandoPaquete}
-                  className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold px-4 py-2.5 rounded-full text-sm transition-all shadow-md whitespace-nowrap flex items-center gap-1.5"
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold px-6 py-3 rounded-full text-base transition-all shadow-md whitespace-nowrap flex items-center gap-1.5"
                 >
                   <span className={cargandoPaquete ? "animate-spin inline-block" : "inline-block"}>🎲</span>
                   {tamanoPaquete} al azar
@@ -857,12 +893,12 @@ function MembresiasInner() {
             ) : (
               <div className="pt-2 border-t border-green-200/70">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="font-extrabold text-green-800 text-base">Tu paquete ({paquete.length}/{tamanoPaquete})</p>
+                  <p className="font-extrabold text-green-800 text-lg">Tu paquete ({paquete.length}/{tamanoPaquete})</p>
                   <button onClick={cancelarPaquete} className="text-sm text-gray-500 hover:text-gray-700 font-medium">Cancelar</button>
                 </div>
-                <div className="flex flex-wrap gap-2 mb-3">
+                <div className="flex flex-wrap justify-center gap-2 mb-3">
                   {paquete.length === 0 && (
-                    <span className="text-sm text-green-700/70">Toca hasta {tamanoPaquete} números disponibles en la grilla de abajo, o usa &quot;{tamanoPaquete} al azar&quot;.</span>
+                    <span className="text-base text-green-700/80 text-center">Toca hasta {tamanoPaquete} números disponibles en la grilla de abajo, o usa &quot;{tamanoPaquete} al azar&quot;.</span>
                   )}
                   {paquete.map((n) => (
                     <span key={n} className="inline-flex items-center gap-1.5 bg-white border border-green-400 rounded-full pl-3 pr-1.5 py-1 text-sm font-bold text-green-800">
@@ -880,12 +916,12 @@ function MembresiasInner() {
                 {errorPaquete && (
                   <p className="text-red-600 text-xs font-semibold mb-3">⚠ {errorPaquete}</p>
                 )}
-                <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex flex-col items-center justify-center gap-3 text-center">
                   {paquete.length < tamanoPaquete ? (
                     <button
                       onClick={completarPaqueteAleatorio}
                       disabled={cargandoPaquete}
-                      className="text-sm font-semibold text-green-700 hover:text-green-900 underline disabled:opacity-60"
+                      className="text-base font-semibold text-green-700 hover:text-green-900 underline disabled:opacity-60"
                     >
                       🎲 Completar con {tamanoPaquete - paquete.length} al azar
                     </button>
@@ -894,12 +930,12 @@ function MembresiasInner() {
                     <button
                       onClick={continuarPaquete}
                       disabled={reservandoPaquete}
-                      className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold px-6 py-2.5 rounded-full text-sm shadow-md transition-all"
+                      className="bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold px-7 py-3.5 rounded-full text-base shadow-md transition-all"
                     >
                       {reservandoPaquete ? "Reservando..." : `Continuar al pago — $${(precioCaja * tamanoPaquete).toLocaleString("es-CO", { maximumFractionDigits: 0 })}`}
                     </button>
                   ) : (
-                    <span className="text-sm text-green-700/70">Selecciona {tamanoPaquete - paquete.length} más</span>
+                    <span className="text-base text-green-700/80">Selecciona {tamanoPaquete - paquete.length} más</span>
                   )}
                 </div>
               </div>
@@ -934,7 +970,7 @@ function MembresiasInner() {
                 )}
               </form>
 
-              <div className="flex gap-2 flex-shrink-0 flex-wrap">
+              <div className="flex gap-2 flex-shrink-0 flex-wrap justify-center">
                 {(["todos", "disponibles", "ocupados"] as Filtro[]).map((f) => (
                   <button
                     key={f}
@@ -960,7 +996,7 @@ function MembresiasInner() {
               </div>
             </div>
 
-            <div className="flex gap-4 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+            <div className="flex justify-center gap-4 mt-3 pt-3 border-t border-gray-100 text-sm text-gray-500">
               <span className="flex items-center gap-1.5">
                 <span className="w-4 h-4 rounded bg-green-50 border border-green-300 inline-block" />
                 Disponible
@@ -1034,6 +1070,30 @@ function MembresiasInner() {
       </main>
 
       <Footer />
+
+      {numeroRuleta && (
+        <div className="fixed inset-0 z-[60] bg-black/90 flex flex-col items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <RuletaSorteo
+              numeroGanador={numeroRuleta}
+              activo
+              compacto
+              onTerminado={() => setTimeout(abrirNumeroRuleta, 1200)}
+              textos={{
+                girando: "Buscando tu membresía al azar...",
+                listo: "¡Esta es tu membresía!",
+                etiqueta: "🎟️ TU MEMBRESÍA 🎟️",
+              }}
+            />
+          </div>
+          <button
+            onClick={abrirNumeroRuleta}
+            className="mt-4 text-white/50 hover:text-white/80 text-sm px-4 py-2"
+          >
+            Saltar animación
+          </button>
+        </div>
+      )}
 
       <ModalReserva
         caja={cajaSeleccionada}

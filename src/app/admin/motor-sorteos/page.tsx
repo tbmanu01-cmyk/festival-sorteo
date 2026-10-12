@@ -144,6 +144,26 @@ function OverlayAnimacion({
   textoBoton?: string;
   modoDemo?: boolean;
 }) {
+  // Modo evento: en pantalla completa (proyector/TV del salón) la ruleta se
+  // agranda para llenar la pantalla y se ocultan los correos de los ganadores,
+  // que no deben verse en público.
+  const [escala, setEscala] = useState(1);
+  const [pantallaCompleta, setPantallaCompleta] = useState(false);
+  useEffect(() => {
+    if (!activo) return;
+    const calcular = () =>
+      setEscala(Math.max(1, Math.min(window.innerWidth / 600, window.innerHeight / 780)));
+    const alCambiar = () => setPantallaCompleta(!!document.fullscreenElement);
+    calcular();
+    alCambiar();
+    window.addEventListener("resize", calcular);
+    document.addEventListener("fullscreenchange", alCambiar);
+    return () => {
+      window.removeEventListener("resize", calcular);
+      document.removeEventListener("fullscreenchange", alCambiar);
+    };
+  }, [activo]);
+
   if (!activo) return null;
   return (
     <div style={{
@@ -152,7 +172,20 @@ function OverlayAnimacion({
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center", padding: "16px",
     }}>
-      <div style={{ maxWidth: "520px", width: "100%" }}>
+      {!pantallaCompleta && (
+        <button
+          onClick={() => document.documentElement.requestFullscreen?.().catch(() => undefined)}
+          style={{
+            position: "absolute", top: "16px", right: "16px",
+            background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)",
+            color: "#fff", borderRadius: "10px", padding: "8px 14px",
+            fontSize: "13px", fontWeight: 700, cursor: "pointer",
+          }}
+        >
+          ⛶ Pantalla completa (evento)
+        </button>
+      )}
+      <div style={{ maxWidth: "520px", width: "100%", transform: `scale(${escala})`, transformOrigin: "center" }}>
         {badge && (
           <div style={{ textAlign: "center", marginBottom: "12px" }}>
             <span style={{
@@ -207,7 +240,9 @@ function OverlayAnimacion({
                   <p style={{ color: "#fff", fontWeight: 700, fontSize: "13px", margin: 0 }}>
                     {g.nombre} {g.apellido}
                   </p>
-                  <p style={{ color: "#7eb3e8", fontSize: "11px", margin: 0 }}>{g.correo}</p>
+                  {!pantallaCompleta && (
+                    <p style={{ color: "#7eb3e8", fontSize: "11px", margin: 0 }}>{g.correo}</p>
+                  )}
                 </div>
                 <div style={{
                   fontFamily: "'Courier New', monospace",

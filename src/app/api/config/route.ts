@@ -22,7 +22,11 @@ export async function GET() {
     ]);
 
     const tiposMembresia = await Promise.all(tiposMembresiaDb.map(async (t) => {
-      const vendidas = await prisma.caja.count({ where: { tipoMembresiaId: t.id, estado: "VENDIDA" } });
+      // Obsequiadas = vendidas cubiertas 100% con gift card (montoPagado 0, ver modelo Caja).
+      const [vendidas, obsequiadas] = await Promise.all([
+        prisma.caja.count({ where: { tipoMembresiaId: t.id, estado: "VENDIDA" } }),
+        prisma.caja.count({ where: { tipoMembresiaId: t.id, estado: "VENDIDA", montoPagado: 0 } }),
+      ]);
       const freeze = calcularFreezeSeleccion(t.fechaSorteo);
       return {
         slug: t.slug,
@@ -30,6 +34,7 @@ export async function GET() {
         precio: t.precio,
         fechaSorteo: t.fechaSorteo,
         vendidasTotal: vendidas,
+        obsequiadasTotal: obsequiadas,
         freezeActivo: freeze.activo,
         freezeMinutos: freeze.minutosParaInicio,
       };
@@ -47,10 +52,11 @@ export async function GET() {
       precioCaja: primario?.precio ?? null,
       fechaSorteo: primario?.fechaSorteo ?? null,
       vendidasTotal: primario?.vendidasTotal ?? 0,
+      obsequiadasTotal: primario?.obsequiadasTotal ?? 0,
       freezeActivo: primario?.freezeActivo ?? false,
       freezeMinutos: primario?.freezeMinutos ?? null,
     });
   } catch {
-    return NextResponse.json({ ...DEFAULTS, tiposMembresia: [], vendidasTotal: 0, freezeActivo: false, freezeMinutos: null });
+    return NextResponse.json({ ...DEFAULTS, tiposMembresia: [], vendidasTotal: 0, obsequiadasTotal: 0, freezeActivo: false, freezeMinutos: null });
   }
 }

@@ -42,16 +42,17 @@ interface SlotProps {
   stopped: boolean;
   shaking: boolean;
   label: string;
+  compacto?: boolean;
 }
 
-function Slot({ digit, animKey, stopped, shaking, label }: SlotProps) {
+function Slot({ digit, animKey, stopped, shaking, label, compacto = false }: SlotProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
       {/* Etiqueta de cifra */}
       <span style={{
-        fontSize: "10px",
+        fontSize: compacto ? "9px" : "10px",
         fontWeight: 700,
-        letterSpacing: "3px",
+        letterSpacing: compacto ? "1px" : "3px",
         textTransform: "uppercase",
         color: stopped ? "#F5A623" : "#243d5c",
         transition: "color 0.4s",
@@ -62,8 +63,8 @@ function Slot({ digit, animKey, stopped, shaking, label }: SlotProps) {
       {/* Caja del slot */}
       <div style={{
         position: "relative",
-        width: "82px",
-        height: "102px",
+        width: compacto ? "64px" : "82px",
+        height: compacto ? "84px" : "102px",
         borderRadius: "14px",
         background: stopped
           ? "linear-gradient(180deg,#0e1e0e,#07120a)"
@@ -105,7 +106,7 @@ function Slot({ digit, animKey, stopped, shaking, label }: SlotProps) {
         <span
           key={animKey}
           style={{
-            fontSize: "66px",
+            fontSize: compacto ? "50px" : "66px",
             fontWeight: 900,
             lineHeight: 1,
             fontFamily: "'Courier New', Courier, monospace",
@@ -135,11 +136,21 @@ interface Props {
   numeroGanador: string; // exactamente 4 dígitos "0000"-"9999"
   activo: boolean;
   onTerminado?: () => void;
+  /** Textos de la animación; por defecto los de la selección del número ganador. */
+  textos?: { girando: string; listo: string; etiqueta: string };
+  /** Slots más angostos para que los 4 quepan en una fila en celular. */
+  compacto?: boolean;
 }
+
+const TEXTOS_GANADOR = {
+  girando: "Seleccionando número ganador...",
+  listo: "¡Número ganador seleccionado!",
+  etiqueta: "🏆 NÚMERO GANADOR 🏆",
+};
 
 const LABELS = ["Millares", "Centenas", "Decenas", "Unidades"];
 
-export default function RuletaSorteo({ numeroGanador, activo, onTerminado }: Props) {
+export default function RuletaSorteo({ numeroGanador, activo, onTerminado, textos = TEXTOS_GANADOR, compacto = false }: Props) {
   const [digits,  setDigits]  = useState(["?", "?", "?", "?"]);
   const [keys,    setKeys]    = useState([0, 0, 0, 0]);
   const [stopped, setStopped] = useState([false, false, false, false]);
@@ -277,9 +288,9 @@ export default function RuletaSorteo({ numeroGanador, activo, onTerminado }: Pro
           minHeight: "20px",
         }}>
           {done
-            ? "¡Número ganador seleccionado!"
+            ? textos.listo
             : activo
-            ? "Seleccionando número ganador..."
+            ? textos.girando
             : "Iniciando..."}
         </p>
       </div>
@@ -287,7 +298,7 @@ export default function RuletaSorteo({ numeroGanador, activo, onTerminado }: Pro
       {/* Los 4 slots */}
       <div style={{
         display: "flex",
-        gap: "12px",
+        gap: compacto ? "8px" : "12px",
         alignItems: "center",
         justifyContent: "center",
         marginBottom: "28px",
@@ -302,6 +313,7 @@ export default function RuletaSorteo({ numeroGanador, activo, onTerminado }: Pro
             stopped={stopped[i]}
             shaking={shaking[i]}
             label={LABELS[i]}
+            compacto={compacto}
           />
         ))}
       </div>
@@ -332,7 +344,7 @@ export default function RuletaSorteo({ numeroGanador, activo, onTerminado }: Pro
             marginTop: "14px",
             textShadow: "0 2px 8px rgba(0,0,0,0.7)",
           }}>
-            🏆 NÚMERO GANADOR 🏆
+            {textos.etiqueta}
           </p>
         </div>
       )}

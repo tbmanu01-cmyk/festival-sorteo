@@ -97,12 +97,12 @@ export default function CarouselInicio({ vendidas, precioCaja, fechaSorteo, pct4
           <p className="text-[#1B4F8A] font-extrabold text-xl md:text-2xl mb-6">
             Gana hasta el {Math.round(pct4 * 100)}% del recaudo
           </p>
-          <a
-            href="#como-funciona"
+          <Link
+            href="/probabilidades#como-funciona"
             className="inline-block bg-[#1B4F8A] hover:bg-[#0d3b6e] text-white font-extrabold px-8 py-3 rounded-xl text-base md:text-lg transition-all shadow-lg"
           >
             ¿Cómo funciona?
-          </a>
+          </Link>
         </div>
       </div>
 

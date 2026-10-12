@@ -27,6 +27,25 @@ const P3   = (REC * 0.20) / W3;   // ~$5.555.556 c/u
 const P2   = (REC * 0.15) / W2;   // ~$416.667  c/u
 const P1   = PRECIO;              // 1 cifra no reparte plata — cada ganador recibe una membresía gratis ($25.000 en gift card)
 
+// Escenarios de venta parcial: con menos membresías vendidas el premio de 4 cifras
+// baja (es un % del recaudo y hay un solo ganador), pero los de 3 y 2 cifras se
+// mantienen casi iguales porque también hay proporcionalmente menos ganadores
+// entre quienes repartir. Los conteos de ganadores son el valor esperado.
+const ESCENARIOS = [2_500, 5_000, 7_500, 10_000].map((vendidas) => {
+  const f = vendidas / TOTAL_CAJAS;
+  const recaudo = vendidas * PRECIO;
+  return {
+    vendidas,
+    recaudo,
+    p4: recaudo * 0.25,
+    g3: W3 * f,
+    p3: (recaudo * 0.20) / (W3 * f),
+    g2: W2 * f,
+    p2: (recaudo * 0.15) / (W2 * f),
+    g1: W1 * f,
+  };
+});
+
 // ── Funciones de cálculo ─────────────────────────────────────────────────────
 function pWin(n: number, w: number) {
   return 1 - Math.pow((TOTAL_CAJAS - w) / TOTAL_CAJAS, n);
@@ -145,6 +164,65 @@ export default function PaginaProbabilidades() {
                   <p className="text-gray-500 text-sm leading-relaxed">{paso.texto}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── SECCIÓN 1.6: Cuánto se gana según las ventas ────────────────── */}
+        <section id="escenarios" className="py-16 px-4 bg-gray-50">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-10">
+              <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#F5A623] bg-[#F5A623]/10 rounded-full px-4 py-1 mb-3">
+                Según las ventas
+              </span>
+              <h2 className="text-3xl font-extrabold text-[#1B4F8A] mb-2">¿Cuánto se puede ganar?</h2>
+              <p className="text-gray-500 text-base max-w-2xl mx-auto">
+                Los premios salen del recaudo real de la temporada. Así quedan si se venden 2.500, 5.000, 7.500 o
+                las 10.000 membresías, todas a ${fmt(PRECIO)}.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {ESCENARIOS.map((e) => (
+                <div
+                  key={e.vendidas}
+                  className={`bg-white rounded-2xl border shadow-sm p-6 text-center ${
+                    e.vendidas === TOTAL_CAJAS ? "border-[#F5A623] ring-2 ring-[#F5A623]/30" : "border-gray-100"
+                  }`}
+                >
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Si se venden</p>
+                  <p className="text-3xl font-extrabold text-[#1B4F8A]">{fmt(e.vendidas)}</p>
+                  <p className="text-sm text-gray-500 mb-5">membresías · recaudo ${fmt(e.recaudo)}</p>
+
+                  <div className="rounded-xl bg-[#1B4F8A] text-white py-4 px-3 mb-4">
+                    <p className="text-xs uppercase tracking-widest text-blue-200 mb-1">🏆 Gran ganador 4 cifras</p>
+                    <p className="text-2xl font-extrabold text-[#F5A623]">${fmt(e.p4)}</p>
+                  </div>
+
+                  <div className="space-y-3 text-left">
+                    <div className="flex justify-between gap-2 text-sm">
+                      <span className="text-gray-600">🥈 3 cifras <span className="text-gray-400">(≈{fmt(e.g3)})</span></span>
+                      <span className="font-bold text-gray-800">${fmt(e.p3)} c/u</span>
+                    </div>
+                    <div className="flex justify-between gap-2 text-sm">
+                      <span className="text-gray-600">🥉 2 cifras <span className="text-gray-400">(≈{fmt(e.g2)})</span></span>
+                      <span className="font-bold text-gray-800">${fmt(e.p2)} c/u</span>
+                    </div>
+                    <div className="flex justify-between gap-2 text-sm">
+                      <span className="text-gray-600">🎫 1 cifra <span className="text-gray-400">(≈{fmt(e.g1)})</span></span>
+                      <span className="font-bold text-green-700">1 membresía gratis</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 bg-white rounded-2xl border border-gray-100 p-5 text-sm text-gray-600 leading-relaxed max-w-3xl mx-auto text-center">
+              <strong className="text-[#1B4F8A]">En resumen:</strong> el premio de 4 cifras crece con cada membresía
+              vendida (es el 25% del recaudo para un solo ganador). Los de 3 cifras (20%) y 2 cifras (15%) pagan casi
+              lo mismo en cualquier escenario, porque con menos ventas también hay menos ganadores entre quienes
+              repartir. Entre paréntesis, el número aproximado de ganadores. Las membresías obsequiadas con gift card no
+              suman al recaudo.
             </div>
           </div>
         </section>
@@ -484,7 +562,7 @@ export default function PaginaProbabilidades() {
                 Registrarse gratis →
               </Link>
               <Link
-                href="/#como-funciona"
+                href="#como-funciona"
                 className="border-2 border-white/30 hover:border-white/60 text-white font-semibold px-8 py-4 rounded-xl text-lg transition-all"
               >
                 ¿Cómo funciona?
