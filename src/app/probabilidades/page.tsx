@@ -202,15 +202,15 @@ export default function PaginaProbabilidades() {
                   <div className="space-y-3 text-left">
                     <div className="flex justify-between gap-2 text-sm">
                       <span className="text-gray-600">🥈 3 cifras <span className="text-gray-400">(≈{fmt(e.g3)})</span></span>
-                      <span className="font-bold text-gray-800">${fmt(e.p3)} c/u</span>
+                      <span className="whitespace-nowrap text-right font-bold text-gray-800">${fmt(e.p3)} c/u</span>
                     </div>
                     <div className="flex justify-between gap-2 text-sm">
                       <span className="text-gray-600">🥉 2 cifras <span className="text-gray-400">(≈{fmt(e.g2)})</span></span>
-                      <span className="font-bold text-gray-800">${fmt(e.p2)} c/u</span>
+                      <span className="whitespace-nowrap text-right font-bold text-gray-800">${fmt(e.p2)} c/u</span>
                     </div>
                     <div className="flex justify-between gap-2 text-sm">
                       <span className="text-gray-600">🎫 1 cifra <span className="text-gray-400">(≈{fmt(e.g1)})</span></span>
-                      <span className="font-bold text-green-700">1 membresía gratis</span>
+                      <span className="whitespace-nowrap text-right font-bold text-green-700">1 membresía gratis</span>
                     </div>
                   </div>
                 </div>
