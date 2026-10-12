@@ -7,7 +7,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import CountdownHero from "@/components/CountdownHero";
-import RuletaSorteo from "@/components/RuletaSorteo";
 import ModalConfirmar from "@/components/ModalConfirmar";
 
 type EstadoCaja = "DISPONIBLE" | "RESERVADA" | "VENDIDA";
@@ -423,11 +422,6 @@ function MembresiasInner() {
   const [reservaConfirmada, setReservaConfirmada] = useState(false);
   const [buscandoAleatoria, setBuscandoAleatoria] = useState(false);
   const [esSorpresa, setEsSorpresa] = useState(false);
-  // Número al azar que se revela con la ruleta antes de abrir la reserva.
-  const [numeroRuleta, setNumeroRuleta] = useState<string | null>(null);
-  // Ref aparte: el cierre automático y "Saltar animación" pueden coincidir, y
-  // solo el primero debe abrir la reserva.
-  const numeroRuletaRef = useRef<string | null>(null);
   const [confirmado, setConfirmado] = useState<boolean | null>(null);
 
   // Tamaños de paquete ofrecidos al comprador — mismo set que valida el
@@ -550,23 +544,14 @@ function MembresiasInner() {
       const res = await fetch(`/api/cajas/aleatoria?tier=${tier}`);
       const json = await res.json();
       if (!res.ok || !json.caja) return;
-      numeroRuletaRef.current = json.caja.numero;
-      setNumeroRuleta(json.caja.numero);
+      setEsSorpresa(true);
+      setCajaSeleccionada({ numero: json.caja.numero, estado: "DISPONIBLE" });
+      setResultadoReserva(null);
+      setExpiraReserva(null);
+      setReservaConfirmada(false);
     } finally {
       setBuscandoAleatoria(false);
     }
-  };
-
-  const abrirNumeroRuleta = () => {
-    const numero = numeroRuletaRef.current;
-    if (!numero) return;
-    numeroRuletaRef.current = null;
-    setEsSorpresa(true);
-    setCajaSeleccionada({ numero, estado: "DISPONIBLE" });
-    setResultadoReserva(null);
-    setExpiraReserva(null);
-    setReservaConfirmada(false);
-    setNumeroRuleta(null);
   };
 
   const toggleEnPaquete = (caja: Caja) => {
@@ -834,7 +819,7 @@ function MembresiasInner() {
           <div className="bg-gradient-to-r from-[#ffbd1f] to-yellow-300 rounded-2xl p-5 mb-4 flex flex-col items-center text-center gap-3">
             <div>
               <p className="font-extrabold text-[#102463] text-xl">¿No sabes cuál elegir?</p>
-              <p className="text-[#102463]/75 text-base mt-1">Deja que la suerte decida por ti: gira la ruleta y te asignamos un número disponible al azar.</p>
+              <p className="text-[#102463]/75 text-base mt-1">Deja que la suerte decida por ti: te asignamos un número disponible al azar.</p>
             </div>
             <button
               onClick={elegirAleatoria}
@@ -842,7 +827,7 @@ function MembresiasInner() {
               className="shrink-0 bg-[#102463] hover:bg-[#173592] disabled:opacity-60 text-white font-bold px-8 py-4 rounded-full text-base transition-all shadow-md flex items-center gap-2 whitespace-nowrap"
             >
               <span className={buscandoAleatoria ? "animate-spin inline-block" : "inline-block"}>🎲</span>
-              {buscandoAleatoria ? "Eligiendo..." : "Girar la ruleta"}
+              {buscandoAleatoria ? "Eligiendo..." : "Membresía aleatoria"}
             </button>
           </div>
 
@@ -1071,29 +1056,6 @@ function MembresiasInner() {
 
       <Footer />
 
-      {numeroRuleta && (
-        <div className="fixed inset-0 z-[60] bg-black/90 flex flex-col items-center justify-center p-4">
-          <div className="w-full max-w-md">
-            <RuletaSorteo
-              numeroGanador={numeroRuleta}
-              activo
-              compacto
-              onTerminado={() => setTimeout(abrirNumeroRuleta, 1200)}
-              textos={{
-                girando: "Buscando tu membresía al azar...",
-                listo: "¡Esta es tu membresía!",
-                etiqueta: "🎟️ TU MEMBRESÍA 🎟️",
-              }}
-            />
-          </div>
-          <button
-            onClick={abrirNumeroRuleta}
-            className="mt-4 text-white/50 hover:text-white/80 text-sm px-4 py-2"
-          >
-            Saltar animación
-          </button>
-        </div>
-      )}
 
       <ModalReserva
         caja={cajaSeleccionada}
